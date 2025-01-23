@@ -26,18 +26,31 @@ const Register = () => {
             plan: "free",
             follower_plan: "none",
           },
+          emailRedirectTo: window.location.origin + "/login",
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.status === 429) {
+          toast({
+            variant: "destructive",
+            title: "Too many attempts",
+            description: "Please wait a moment before trying again.",
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
 
       toast({
         title: "Success",
-        description: "Registration successful! You can now log in.",
+        description: "Please check your email to confirm your registration before logging in.",
       });
       
       navigate("/login");
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         variant: "destructive",
         title: "Error",

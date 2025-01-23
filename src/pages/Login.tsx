@@ -23,7 +23,22 @@ const Login = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            variant: "destructive",
+            title: "Email not confirmed",
+            description: "Please check your email and confirm your registration before logging in.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to log in. Please check your credentials.",
+          });
+        }
+        return;
+      }
 
       toast({
         title: "Success",
@@ -32,10 +47,11 @@ const Login = () => {
       
       navigate("/dashboard");
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to log in. Please check your credentials.",
+        description: "Failed to log in. Please try again.",
       });
     } finally {
       setIsLoading(false);
