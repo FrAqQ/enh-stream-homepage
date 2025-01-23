@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -18,43 +18,52 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      console.log("Attempting registration for email:", email);
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: window.location.origin + "/login",
           data: {
             plan: "free",
             follower_plan: "none",
           },
-          emailRedirectTo: window.location.origin + "/login",
         },
       });
 
       if (error) {
+        console.error("Registration error:", error);
+        
         if (error.status === 429) {
+          const waitTime = error.message.match(/\d+/)?.[0] || "few";
           toast({
             variant: "destructive",
             title: "Too many attempts",
-            description: "Please wait a moment before trying again.",
+            description: `Please wait ${waitTime} seconds before trying again.`,
           });
         } else {
-          throw error;
+          toast({
+            variant: "destructive",
+            title: "Registration failed",
+            description: "An error occurred during registration. Please try again.",
+          });
         }
         return;
       }
 
+      console.log("Registration successful, showing success toast");
       toast({
-        title: "Success",
+        title: "Registration successful",
         description: "Please check your email to confirm your registration before logging in.",
       });
       
       navigate("/login");
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Unexpected error during registration:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to register. Please try again.",
+        description: "An unexpected error occurred. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -73,6 +82,7 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -82,6 +92,7 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <Button className="w-full" type="submit" disabled={isLoading}>
