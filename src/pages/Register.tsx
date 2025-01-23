@@ -23,7 +23,6 @@ const Register = () => {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
           data: {
             email_confirmed: true
           }
@@ -34,7 +33,8 @@ const Register = () => {
         console.error("Registration error:", error);
         toast({
           title: "Registration failed",
-          description: "Please try again.",
+          description: error.message,
+          variant: "destructive"
         });
         return;
       }
