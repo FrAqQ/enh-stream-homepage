@@ -22,11 +22,6 @@ const Login = () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            email_confirmed: true
-          }
-        }
       });
 
       if (error) {
