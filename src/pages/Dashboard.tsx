@@ -8,7 +8,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis } from "recharts";
 
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
@@ -99,6 +99,29 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Stream Preview */}
+        <Card className="glass-morphism col-span-1 lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Stream Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="aspect-video w-full bg-black/20 rounded-lg overflow-hidden">
+              {streamUrl ? (
+                <iframe
+                  src={streamUrl}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="autoplay; encrypted-media"
+                ></iframe>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No stream URL configured
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stream Settings */}
         <Card className="glass-morphism">
           <CardHeader>
@@ -174,9 +197,7 @@ const Dashboard = () => {
                     axisLine={false}
                     tickFormatter={(value) => `${value}`}
                   />
-                  <ChartTooltip>
-                    <ChartTooltipContent />
-                  </ChartTooltip>
+                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Area
                     type="monotone"
                     dataKey="viewers"
