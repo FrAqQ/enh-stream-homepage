@@ -43,15 +43,22 @@ const Register = () => {
             follower_plan: "none",
           },
           emailRedirectTo: undefined,
-          // Explicitly disable email confirmation
-          gotrue_meta_security: {
-            captcha_token: null
-          }
         },
       });
 
       if (error) {
         console.error("Registration error:", error);
+        
+        // Handle rate limit error specifically
+        if (error.status === 429) {
+          toast({
+            variant: "destructive",
+            title: "Too many attempts",
+            description: "Please wait a few minutes before trying again",
+          });
+          return;
+        }
+        
         toast({
           variant: "destructive",
           title: "Registration failed",
