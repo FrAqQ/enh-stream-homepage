@@ -22,21 +22,39 @@ const Login = () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          data: {
+            email_confirmed: true
+          }
+        }
       });
 
       if (error) {
         console.error("Login error:", error);
+        
+        // Spezifische Fehlermeldung für nicht bestätigte E-Mail
+        if (error.message === "Email not confirmed") {
+          toast({
+            title: "E-Mail nicht bestätigt",
+            description: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Allgemeine Fehlermeldung
         toast({
-          title: "Login failed",
-          description: "Please check your credentials and try again.",
+          title: "Login fehlgeschlagen",
+          description: "Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
+          variant: "destructive"
         });
         return;
       }
 
       console.log("Login successful:", data);
       toast({
-        title: "Success",
-        description: "You have been logged in successfully",
+        title: "Erfolg",
+        description: "Sie wurden erfolgreich eingeloggt",
       });
       
       navigate("/dashboard");
@@ -53,7 +71,7 @@ const Login = () => {
           <div>
             <Input
               type="email"
-              placeholder="Email"
+              placeholder="E-Mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -63,7 +81,7 @@ const Login = () => {
           <div>
             <Input
               type="password"
-              placeholder="Password"
+              placeholder="Passwort"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -75,7 +93,7 @@ const Login = () => {
             type="submit" 
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "Anmeldung läuft..." : "Anmelden"}
           </Button>
         </form>
       </Card>
