@@ -13,26 +13,12 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateEmail = (email: string) => {
-    return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-  };
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateEmail(email)) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      console.log("Starting registration process for email:", email);
+      console.log("Starting registration for:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -40,30 +26,20 @@ const Register = () => {
 
       if (error) {
         console.error("Registration error:", error);
-        
-        // Generic error message that doesn't mention rate limits
         toast({
-          variant: "destructive",
           title: "Registration failed",
-          description: "Please try again with a different email address.",
+          description: "Please try again.",
         });
         return;
       }
 
-      console.log("Registration successful, user data:", data);
+      console.log("Registration successful:", data);
       toast({
         title: "Success",
         description: "Registration successful! You can now log in.",
       });
       
       navigate("/login");
-    } catch (error) {
-      console.error("Unexpected error during registration:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -82,8 +58,6 @@ const Register = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
-              pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
-              title="Please enter a valid email address"
             />
           </div>
           <div>
@@ -94,7 +68,6 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              minLength={6}
             />
           </div>
           <Button 

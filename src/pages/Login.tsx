@@ -18,7 +18,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting login for email:", email);
+      console.log("Attempting login for:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -27,27 +27,19 @@ const Login = () => {
       if (error) {
         console.error("Login error:", error);
         toast({
-          variant: "destructive",
           title: "Login failed",
-          description: "Invalid email or password. Please try again.",
+          description: "Please check your credentials and try again.",
         });
         return;
       }
 
-      console.log("Login successful, user data:", data);
+      console.log("Login successful:", data);
       toast({
         title: "Success",
         description: "You have been logged in successfully",
       });
       
       navigate("/dashboard");
-    } catch (error) {
-      console.error("Unexpected login error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to log in. Please try again.",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +58,6 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
-              pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
-              title="Please enter a valid email address"
             />
           </div>
           <div>
@@ -78,10 +68,13 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              minLength={6}
             />
           </div>
-          <Button className="w-full" type="submit" disabled={isLoading}>
+          <Button 
+            className="w-full" 
+            type="submit" 
+            disabled={isLoading}
+          >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
