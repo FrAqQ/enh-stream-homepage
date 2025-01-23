@@ -23,7 +23,6 @@ const Register = () => {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin + "/login",
           data: {
             plan: "free",
             follower_plan: "none",
@@ -33,28 +32,18 @@ const Register = () => {
 
       if (error) {
         console.error("Registration error:", error);
-        
-        if (error.status === 429) {
-          const waitTime = error.message.match(/\d+/)?.[0] || "few";
-          toast({
-            variant: "destructive",
-            title: "Too many attempts",
-            description: `Please wait ${waitTime} seconds before trying again.`,
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Registration failed",
-            description: "An error occurred during registration. Please try again.",
-          });
-        }
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: "An error occurred during registration. Please try again.",
+        });
         return;
       }
 
-      console.log("Registration successful, showing success toast");
+      console.log("Registration successful");
       toast({
-        title: "Registration successful",
-        description: "Please check your email to confirm your registration before logging in.",
+        title: "Success",
+        description: "Registration successful! You can now log in.",
       });
       
       navigate("/login");
