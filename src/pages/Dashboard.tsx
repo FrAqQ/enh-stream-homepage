@@ -51,8 +51,8 @@ const Dashboard = () => {
     <div className="container mx-auto px-4 pt-20 pb-8">
       <h1 className="text-4xl font-bold mb-8 text-gradient">Dashboard</h1>
       
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Stats Cards */}
         <Card className="glass-morphism">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Viewers</CardTitle>
@@ -157,62 +157,9 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Viewer Analytics */}
-        <Card className="glass-morphism">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Viewer Analytics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[240px]">
-              <ChartContainer
-                config={{
-                  viewers: {
-                    label: "Viewers",
-                    theme: {
-                      light: "#8B5CF6",
-                      dark: "#8B5CF6",
-                    },
-                  },
-                }}
-              >
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="viewerGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="time"
-                    stroke="#888888"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#888888"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value}`}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Area
-                    type="monotone"
-                    dataKey="viewers"
-                    stroke="#8B5CF6"
-                    fillOpacity={1}
-                    fill="url(#viewerGradient)"
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Bot Controls */}
         <Card className="glass-morphism">
           <CardHeader>
@@ -244,6 +191,59 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Viewer Analytics */}
+      <Card className="glass-morphism col-span-2">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">Viewer Analytics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[240px]">
+            <ChartContainer
+              config={{
+                viewers: {
+                  label: "Viewers",
+                  theme: {
+                    light: "#8B5CF6",
+                    dark: "#8B5CF6",
+                  },
+                },
+              }}
+            >
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="viewerGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="time"
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                  type="monotone"
+                  dataKey="viewers"
+                  stroke="#8B5CF6"
+                  fillOpacity={1}
+                  fill="url(#viewerGradient)"
+                />
+              </AreaChart>
+            </ChartContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
