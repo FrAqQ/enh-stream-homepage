@@ -10,6 +10,7 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldownActive, setCooldownActive] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -17,11 +18,27 @@ const Register = () => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
+  const startCooldown = () => {
+    setCooldownActive(true);
+    setTimeout(() => {
+      setCooldownActive(false);
+    }, 60000); // 1 minute cooldown
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (cooldownActive) {
+      toast({
+        variant: "destructive",
+        title: "Please wait",
+        description: "Please wait a minute before trying again",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // Validate email format first
     if (!validateEmail(email)) {
       toast({
         variant: "destructive",
@@ -49,12 +66,13 @@ const Register = () => {
       if (error) {
         console.error("Registration error:", error);
         
-        // Handle rate limit error specifically
         if (error.status === 429) {
+          console.log("Rate limit hit, activating cooldown");
+          startCooldown();
           toast({
             variant: "destructive",
             title: "Too many attempts",
-            description: "Please wait a few minutes before trying again",
+            description: "Please wait a minute before trying again. This helps prevent spam and protect our service.",
           });
           return;
         }
@@ -98,7 +116,7 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={isLoading}
+              disabled={isLoading || cooldownActive}
               pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
               title="Please enter a valid email address"
             />
@@ -110,12 +128,16 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={isLoading}
+              disabled={isLoading || cooldownActive}
               minLength={6}
             />
           </div>
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading ? "Registering..." : "Register"}
+          <Button 
+            className="w-full" 
+            type="submit" 
+            disabled={isLoading || cooldownActive}
+          >
+            {cooldownActive ? "Please wait..." : isLoading ? "Registering..." : "Register"}
           </Button>
         </form>
       </Card>
