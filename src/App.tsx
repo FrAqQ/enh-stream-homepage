@@ -32,9 +32,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <div className="min-h-screen bg-background text-foreground">
-        <Navbar />
-        <BrowserRouter>
+      <BrowserRouter>
+        <div className="min-h-screen bg-background text-foreground">
+          <Navbar />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={
@@ -51,10 +51,10 @@ const App = () => (
               </ProtectedRoute>
             } />
           </Routes>
-        </BrowserRouter>
-      </div>
-      <Toaster />
-      <Sonner />
+        </div>
+        <Toaster />
+        <Sonner />
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
