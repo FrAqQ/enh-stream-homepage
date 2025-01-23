@@ -19,7 +19,7 @@ const Login = () => {
 
     try {
       console.log("Attempting login for email:", email);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -34,7 +34,7 @@ const Login = () => {
         return;
       }
 
-      console.log("Login successful");
+      console.log("Login successful, user data:", data);
       toast({
         title: "Success",
         description: "You have been logged in successfully",

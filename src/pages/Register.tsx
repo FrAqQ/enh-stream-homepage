@@ -18,8 +18,8 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting registration for email:", email);
-      const { error } = await supabase.auth.signUp({
+      console.log("Starting registration process for email:", email);
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -35,12 +35,12 @@ const Register = () => {
         toast({
           variant: "destructive",
           title: "Registration failed",
-          description: "An error occurred during registration. Please try again.",
+          description: error.message || "An error occurred during registration. Please try again.",
         });
         return;
       }
 
-      console.log("Registration successful");
+      console.log("Registration successful, user data:", data);
       toast({
         title: "Success",
         description: "Registration successful! You can now log in.",
@@ -82,6 +82,7 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              minLength={6}
             />
           </div>
           <Button className="w-full" type="submit" disabled={isLoading}>
