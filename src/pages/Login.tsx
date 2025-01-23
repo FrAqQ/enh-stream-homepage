@@ -66,6 +66,8 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+              title="Please enter a valid email address"
             />
           </div>
           <div>
@@ -76,6 +78,7 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              minLength={6}
             />
           </div>
           <Button className="w-full" type="submit" disabled={isLoading}>

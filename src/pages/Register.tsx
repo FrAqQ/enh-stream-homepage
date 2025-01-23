@@ -13,9 +13,24 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const validateEmail = (email: string) => {
+    return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Validate email format first
+    if (!validateEmail(email)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       console.log("Starting registration process for email:", email);
@@ -27,6 +42,7 @@ const Register = () => {
             plan: "free",
             follower_plan: "none",
           },
+          emailRedirectTo: undefined
         },
       });
 
@@ -72,6 +88,8 @@ const Register = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+              title="Please enter a valid email address"
             />
           </div>
           <div>
