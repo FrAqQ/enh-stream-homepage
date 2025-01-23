@@ -3,12 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon } from "lucide-react";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis } from "recharts";
 
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
@@ -24,16 +18,6 @@ const Dashboard = () => {
     email: "demo@example.com",
     plan: "Starter",
   };
-
-  // Mock data for the chart
-  const chartData = [
-    { time: "00:00", viewers: 10 },
-    { time: "01:00", viewers: 25 },
-    { time: "02:00", viewers: 15 },
-    { time: "03:00", viewers: 30 },
-    { time: "04:00", viewers: 45 },
-    { time: "05:00", viewers: 35 },
-  ];
 
   const handleSaveUrl = () => {
     console.log("Saving stream URL:", streamUrl);
@@ -159,7 +143,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bot Controls */}
         <Card className="glass-morphism">
           <CardHeader>
@@ -191,59 +175,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Viewer Analytics */}
-      <Card className="glass-morphism col-span-2">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">Viewer Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[240px]">
-            <ChartContainer
-              config={{
-                viewers: {
-                  label: "Viewers",
-                  theme: {
-                    light: "#8B5CF6",
-                    dark: "#8B5CF6",
-                  },
-                },
-              }}
-            >
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="viewerGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="time"
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}`}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Area
-                  type="monotone"
-                  dataKey="viewers"
-                  stroke="#8B5CF6"
-                  fillOpacity={1}
-                  fill="url(#viewerGradient)"
-                />
-              </AreaChart>
-            </ChartContainer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
