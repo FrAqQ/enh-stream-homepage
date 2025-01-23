@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,12 +18,15 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log("Attempting login for email:", email);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
+
         if (error.message.includes("Email not confirmed")) {
           toast({
             variant: "destructive",
@@ -46,6 +49,7 @@ const Login = () => {
         return;
       }
 
+      console.log("Login successful");
       toast({
         title: "Success",
         description: "You have been logged in successfully",
@@ -53,7 +57,7 @@ const Login = () => {
       
       navigate("/dashboard");
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Unexpected login error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -76,6 +80,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -85,6 +90,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <Button className="w-full" type="submit" disabled={isLoading}>
