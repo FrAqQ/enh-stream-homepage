@@ -23,6 +23,7 @@ const Register = () => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/login`,
           data: {
             email_confirmed: true
           }
@@ -32,7 +33,7 @@ const Register = () => {
       if (error) {
         console.error("Registration error:", error);
         toast({
-          title: "Registration failed",
+          title: "Registrierung fehlgeschlagen",
           description: error.message,
           variant: "destructive"
         });
@@ -41,8 +42,8 @@ const Register = () => {
 
       console.log("Registration successful:", data);
       toast({
-        title: "Success",
-        description: "Registration successful! You can now log in.",
+        title: "Erfolg",
+        description: "Registrierung erfolgreich! Sie können sich jetzt einloggen.",
       });
       
       navigate("/login");
@@ -54,12 +55,12 @@ const Register = () => {
   return (
     <div className="min-h-screen pt-16 flex items-center justify-center">
       <Card className="w-full max-w-md p-6 bg-card/50 backdrop-blur">
-        <h1 className="text-2xl font-bold text-center mb-6">Register</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">Registrierung</h1>
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <Input
               type="email"
-              placeholder="Email"
+              placeholder="E-Mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -69,7 +70,7 @@ const Register = () => {
           <div>
             <Input
               type="password"
-              placeholder="Password"
+              placeholder="Passwort"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -81,7 +82,7 @@ const Register = () => {
             type="submit" 
             disabled={isLoading}
           >
-            {isLoading ? "Registering..." : "Register"}
+            {isLoading ? "Registriere..." : "Registrieren"}
           </Button>
         </form>
       </Card>
