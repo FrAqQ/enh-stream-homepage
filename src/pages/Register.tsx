@@ -42,7 +42,11 @@ const Register = () => {
             plan: "free",
             follower_plan: "none",
           },
-          emailRedirectTo: undefined
+          emailRedirectTo: undefined,
+          // Explicitly disable email confirmation
+          gotrue_meta_security: {
+            captcha_token: null
+          }
         },
       });
 
