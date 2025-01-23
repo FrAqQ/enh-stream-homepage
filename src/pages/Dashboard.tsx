@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { StatsCards } from "@/components/dashboard/StatsCards";
-import { StreamPreview } from "@/components/dashboard/StreamPreview";
-import { ViewerAnalytics } from "@/components/dashboard/ViewerAnalytics";
+import { Users, MessageSquare, TrendingUp, Activity } from "lucide-react";
+import StatsCard from "@/components/dashboard/StatsCard";
+import StreamPreview from "@/components/dashboard/StreamPreview";
+import ViewerAnalytics from "@/components/dashboard/ViewerAnalytics";
 
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
@@ -40,23 +41,46 @@ const Dashboard = () => {
     <div className="container mx-auto px-4 pt-20 pb-8">
       <h1 className="text-4xl font-bold mb-8 text-gradient">Dashboard</h1>
       
-      <StatsCards 
-        viewerCount={viewerCount}
-        chatterCount={chatterCount}
-      />
-      
-      <StreamPreview 
-        streamUrl={streamUrl}
-        onStreamUrlChange={setStreamUrl}
-        onSaveUrl={handleSaveUrl}
-        userData={userData}
-      />
-      
-      <ViewerAnalytics 
-        chartData={chartData}
-        onAddViewers={addViewers}
-        onAddChatters={addChatters}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatsCard
+          title="Total Viewers"
+          value={viewerCount}
+          subtitle="+20.1% from last month"
+          icon={Users}
+        />
+        <StatsCard
+          title="Active Chatters"
+          value={chatterCount}
+          subtitle="+15% from last hour"
+          icon={MessageSquare}
+        />
+        <StatsCard
+          title="Growth Rate"
+          value="+12.5%"
+          subtitle="Increased by 7.2%"
+          icon={TrendingUp}
+        />
+        <StatsCard
+          title="Stream Health"
+          value="98%"
+          subtitle="Excellent condition"
+          icon={Activity}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <StreamPreview
+          streamUrl={streamUrl}
+          setStreamUrl={setStreamUrl}
+          handleSaveUrl={handleSaveUrl}
+          userData={userData}
+        />
+        <ViewerAnalytics
+          chartData={chartData}
+          onAddViewers={addViewers}
+          onAddChatters={addChatters}
+        />
+      </div>
     </div>
   );
 };
