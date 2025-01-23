@@ -1,7 +1,14 @@
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon } from "lucide-react";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
@@ -18,9 +25,18 @@ const Dashboard = () => {
     plan: "Starter",
   };
 
+  // Mock data for the chart
+  const chartData = [
+    { time: "00:00", viewers: 10 },
+    { time: "01:00", viewers: 25 },
+    { time: "02:00", viewers: 15 },
+    { time: "03:00", viewers: 30 },
+    { time: "04:00", viewers: 45 },
+    { time: "05:00", viewers: 35 },
+  ];
+
   const handleSaveUrl = () => {
     console.log("Saving stream URL:", streamUrl);
-    // Implementation for saving URL will come later
   };
 
   const addViewers = (count: number) => {
@@ -32,85 +48,179 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 pt-20">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* User Information */}
-        <Card className="p-6 bg-card/50 backdrop-blur">
-          <h2 className="text-xl font-bold mb-4">User Information</h2>
-          <div className="space-y-2">
-            <p><span className="font-medium">Username:</span> {userData.username}</p>
-            <p><span className="font-medium">User ID:</span> {userData.userId}</p>
-            <p><span className="font-medium">Email:</span> {userData.email}</p>
-            <p><span className="font-medium">Current Plan:</span> {userData.plan}</p>
-            <div className="flex gap-2 mt-4">
-              <Input 
-                placeholder="Enter stream URL" 
-                value={streamUrl}
-                onChange={(e) => setStreamUrl(e.target.value)}
-              />
-              <Button onClick={handleSaveUrl}>Save URL</Button>
-            </div>
-          </div>
+    <div className="container mx-auto px-4 pt-20 pb-8">
+      <h1 className="text-4xl font-bold mb-8 text-gradient">Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Stats Cards */}
+        <Card className="glass-morphism">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Viewers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{viewerCount}</div>
+            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+          </CardContent>
         </Card>
-
-        {/* Stream Preview & Stats */}
-        <Card className="p-6 bg-card/50 backdrop-blur">
-          <h2 className="text-xl font-bold mb-4">Stream Preview & Stats</h2>
-          <div className="aspect-video bg-black/50 rounded-lg mb-4"></div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Viewers</p>
-              <p className="text-xl font-bold">{viewerCount}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Chatters</p>
-              <p className="text-xl font-bold">{chatterCount}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Followers</p>
-              <p className="text-xl font-bold">0</p>
-            </div>
-          </div>
+        
+        <Card className="glass-morphism">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Active Chatters</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{chatterCount}</div>
+            <p className="text-xs text-muted-foreground">+15% from last hour</p>
+          </CardContent>
         </Card>
-
-        {/* Viewer Bot Controls */}
-        <Card className="p-6 bg-card/50 backdrop-blur">
-          <h2 className="text-xl font-bold mb-4">Viewer Bot Controls</h2>
-          <Input className="mb-4" placeholder="Stream URL" />
-          <div className="flex gap-2">
-            <Button onClick={() => addViewers(1)}>+1 Viewer</Button>
-            <Button onClick={() => addViewers(3)}>+3 Viewers</Button>
-            <Button onClick={() => addViewers(5)}>+5 Viewers</Button>
-          </div>
+        
+        <Card className="glass-morphism">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+12.5%</div>
+            <p className="text-xs text-muted-foreground">Increased by 7.2%</p>
+          </CardContent>
         </Card>
-
-        {/* Chatter Bot Controls */}
-        <Card className="p-6 bg-card/50 backdrop-blur">
-          <h2 className="text-xl font-bold mb-4">Chatter Bot Controls</h2>
-          <Input className="mb-4" placeholder="Stream URL" />
-          <div className="flex gap-2">
-            <Button onClick={() => addChatters(1)}>+1 Chatter</Button>
-            <Button onClick={() => addChatters(3)}>+3 Chatters</Button>
-            <Button onClick={() => addChatters(5)}>+5 Chatters</Button>
-          </div>
+        
+        <Card className="glass-morphism">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Stream Health</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">98%</div>
+            <p className="text-xs text-muted-foreground">Excellent condition</p>
+          </CardContent>
         </Card>
+      </div>
 
-        {/* Follower Controls */}
-        <Card className="col-span-full p-6 bg-card/50 backdrop-blur">
-          <h2 className="text-xl font-bold mb-4">Follower Controls</h2>
-          {followerPlan ? (
-            <>
-              <div className="w-full bg-secondary rounded-full h-2 mb-4">
-                <div 
-                  className="bg-primary h-full rounded-full" 
-                  style={{ width: `${followerProgress}%` }}
-                ></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Stream Settings */}
+        <Card className="glass-morphism">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+              <LinkIcon className="h-5 w-5" />
+              Stream Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Stream URL</label>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Enter stream URL" 
+                    value={streamUrl}
+                    onChange={(e) => setStreamUrl(e.target.value)}
+                    className="bg-background/50"
+                  />
+                  <Button onClick={handleSaveUrl}>Save</Button>
+                </div>
               </div>
-              <p className="text-center">{followerProgress}/100 followers</p>
-            </>
-          ) : (
-            <p className="text-center text-muted-foreground">No active follower plan</p>
-          )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Username</label>
+                  <p className="text-sm text-muted-foreground">{userData.username}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Plan</label>
+                  <p className="text-sm text-muted-foreground">{userData.plan}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Viewer Analytics */}
+        <Card className="glass-morphism">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Viewer Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[240px]">
+              <ChartContainer
+                config={{
+                  viewers: {
+                    label: "Viewers",
+                    theme: {
+                      light: "#8B5CF6",
+                      dark: "#8B5CF6",
+                    },
+                  },
+                }}
+              >
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="viewerGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="time"
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `${value}`}
+                  />
+                  <ChartTooltip>
+                    <ChartTooltipContent />
+                  </ChartTooltip>
+                  <Area
+                    type="monotone"
+                    dataKey="viewers"
+                    stroke="#8B5CF6"
+                    fillOpacity={1}
+                    fill="url(#viewerGradient)"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bot Controls */}
+        <Card className="glass-morphism">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Viewer Bot Controls</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => addViewers(1)} variant="outline">+1 Viewer</Button>
+                <Button onClick={() => addViewers(3)} variant="outline">+3 Viewers</Button>
+                <Button onClick={() => addViewers(5)} variant="outline">+5 Viewers</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-morphism">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Chatter Bot Controls</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => addChatters(1)} variant="outline">+1 Chatter</Button>
+                <Button onClick={() => addChatters(3)} variant="outline">+3 Chatters</Button>
+                <Button onClick={() => addChatters(5)} variant="outline">+5 Chatters</Button>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
