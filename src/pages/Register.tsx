@@ -11,6 +11,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [cooldownActive, setCooldownActive] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(60); // 60 seconds cooldown
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -20,9 +21,18 @@ const Register = () => {
 
   const startCooldown = () => {
     setCooldownActive(true);
-    setTimeout(() => {
-      setCooldownActive(false);
-    }, 60000); // 1 minute cooldown
+    setCooldownTime(60);
+    
+    const interval = setInterval(() => {
+      setCooldownTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setCooldownActive(false);
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -32,12 +42,10 @@ const Register = () => {
       toast({
         variant: "destructive",
         title: "Please wait",
-        description: "Please wait a minute before trying again",
+        description: `Please wait ${cooldownTime} seconds before trying again`,
       });
       return;
     }
-
-    setIsLoading(true);
 
     if (!validateEmail(email)) {
       toast({
@@ -45,9 +53,10 @@ const Register = () => {
         title: "Invalid Email",
         description: "Please enter a valid email address",
       });
-      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
 
     try {
       console.log("Starting registration process for email:", email);
@@ -59,7 +68,6 @@ const Register = () => {
             plan: "free",
             follower_plan: "none",
           },
-          emailRedirectTo: undefined,
         },
       });
 
@@ -72,7 +80,7 @@ const Register = () => {
           toast({
             variant: "destructive",
             title: "Too many attempts",
-            description: "Please wait a minute before trying again. This helps prevent spam and protect our service.",
+            description: `Please wait ${cooldownTime} seconds before trying again. This helps prevent spam and protect our service.`,
           });
           return;
         }
@@ -137,7 +145,11 @@ const Register = () => {
             type="submit" 
             disabled={isLoading || cooldownActive}
           >
-            {cooldownActive ? "Please wait..." : isLoading ? "Registering..." : "Register"}
+            {cooldownActive 
+              ? `Please wait ${cooldownTime}s` 
+              : isLoading 
+                ? "Registering..." 
+                : "Register"}
           </Button>
         </form>
       </Card>
