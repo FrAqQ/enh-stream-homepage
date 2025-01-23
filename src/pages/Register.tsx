@@ -36,20 +36,16 @@ const Register = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            plan: "free",
-            follower_plan: "none",
-          },
-        },
       });
 
       if (error) {
         console.error("Registration error:", error);
+        
+        // Generic error message that doesn't mention rate limits
         toast({
           variant: "destructive",
           title: "Registration failed",
-          description: error.message || "An error occurred during registration. Please try again.",
+          description: "Please try again with a different email address.",
         });
         return;
       }
