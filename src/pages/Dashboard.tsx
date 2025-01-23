@@ -100,12 +100,12 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Stream Preview */}
-        <Card className="glass-morphism col-span-1 lg:col-span-2">
+        <Card className="glass-morphism">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Stream Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="aspect-video w-full bg-black/20 rounded-lg overflow-hidden">
+            <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
               {streamUrl ? (
                 <iframe
                   src={streamUrl}
