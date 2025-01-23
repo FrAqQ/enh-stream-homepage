@@ -30,11 +30,17 @@ const Login = () => {
             title: "Email not confirmed",
             description: "Please check your email and confirm your registration before logging in.",
           });
+        } else if (error.message.includes("Invalid login credentials")) {
+          toast({
+            variant: "destructive",
+            title: "Invalid credentials",
+            description: "The email or password you entered is incorrect. Please try again.",
+          });
         } else {
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to log in. Please check your credentials.",
+            description: "Failed to log in. Please try again later.",
           });
         }
         return;
