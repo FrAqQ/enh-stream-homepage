@@ -10,8 +10,6 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [cooldownActive, setCooldownActive] = useState(false);
-  const [cooldownTime, setCooldownTime] = useState(60); // 60 seconds cooldown
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -19,33 +17,8 @@ const Register = () => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
-  const startCooldown = () => {
-    setCooldownActive(true);
-    setCooldownTime(60);
-    
-    const interval = setInterval(() => {
-      setCooldownTime((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setCooldownActive(false);
-          return 60;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (cooldownActive) {
-      toast({
-        variant: "destructive",
-        title: "Please wait",
-        description: `Please wait ${cooldownTime} seconds before trying again`,
-      });
-      return;
-    }
 
     if (!validateEmail(email)) {
       toast({
@@ -73,18 +46,6 @@ const Register = () => {
 
       if (error) {
         console.error("Registration error:", error);
-        
-        if (error.status === 429) {
-          console.log("Rate limit hit, activating cooldown");
-          startCooldown();
-          toast({
-            variant: "destructive",
-            title: "Too many attempts",
-            description: `Please wait ${cooldownTime} seconds before trying again. This helps prevent spam and protect our service.`,
-          });
-          return;
-        }
-        
         toast({
           variant: "destructive",
           title: "Registration failed",
@@ -124,7 +85,7 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={isLoading || cooldownActive}
+              disabled={isLoading}
               pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
               title="Please enter a valid email address"
             />
@@ -136,20 +97,16 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={isLoading || cooldownActive}
+              disabled={isLoading}
               minLength={6}
             />
           </div>
           <Button 
             className="w-full" 
             type="submit" 
-            disabled={isLoading || cooldownActive}
+            disabled={isLoading}
           >
-            {cooldownActive 
-              ? `Please wait ${cooldownTime}s` 
-              : isLoading 
-                ? "Registering..." 
-                : "Register"}
+            {isLoading ? "Registering..." : "Register"}
           </Button>
         </form>
       </Card>
