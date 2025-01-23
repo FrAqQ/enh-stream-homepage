@@ -22,12 +22,6 @@ const Register = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`,
-          data: {
-            email_confirmed: true
-          }
-        }
       });
 
       if (error) {
