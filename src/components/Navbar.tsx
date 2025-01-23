@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
 
 const Navbar = () => {
   const { user } = useUser();
