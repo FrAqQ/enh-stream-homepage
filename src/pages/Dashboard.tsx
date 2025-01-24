@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
 import { useUser } from "@/lib/useUser";
+import { supabase } from "@/lib/supabaseClient";
 
 // Define Twitch types
 declare global {
@@ -31,13 +32,36 @@ const Dashboard = () => {
   const [twitchChannel, setTwitchChannel] = useState("");
   const [embed, setEmbed] = useState<any>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [userPlan, setUserPlan] = useState("Free");
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (user?.id) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user plan:', error);
+          setUserPlan("Free"); // Fallback to Free plan if there's an error
+          return;
+        }
+
+        setUserPlan(profile?.plan || "Free");
+      }
+    };
+
+    fetchUserPlan();
+  }, [user]);
 
   // Define userData at the component level
   const userData = {
     username: user?.email?.split('@')[0] || "DemoUser",
     userId: user?.id || "12345",
     email: user?.email || "demo@example.com",
-    plan: "Starter",
+    plan: userPlan, // Use the userPlan state instead of hardcoded value
   };
 
   useEffect(() => {
