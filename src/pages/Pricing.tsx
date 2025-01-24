@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useUser } from "@/lib/useUser";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
 
 const PricingCard = ({ 
   title, 
@@ -13,29 +17,71 @@ const PricingCard = ({
   viewers: number;
   chatters: number;
   isPopular?: boolean;
-}) => (
-  <Card className={`p-6 relative ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
-    {isPopular && (
-      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
-        Most Popular
-      </span>
-    )}
-    <h3 className="text-xl font-bold mb-2">{title}</h3>
-    <p className="text-3xl font-bold mb-6">€{price.toFixed(2)}</p>
-    <ul className="space-y-2 mb-6">
-      <li className="flex items-center gap-2">
-        <span className="text-primary">✓</span> {viewers} Viewers
-      </li>
-      <li className="flex items-center gap-2">
-        <span className="text-primary">✓</span> {chatters} Chatters
-      </li>
-      <li className="flex items-center gap-2">
-        <span className="text-primary">✓</span> Duration: 1 Month
-      </li>
-    </ul>
-    <Button className="w-full">Select Plan</Button>
-  </Card>
-);
+}) => {
+  const { user } = useUser();
+  const navigate = useNavigate();
+
+  const handleSelectPlan = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        'https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      const { url, error } = await response.json();
+      
+      if (error) throw new Error(error);
+      
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Fehler beim Erstellen der Checkout-Session");
+    }
+  };
+
+  return (
+    <Card className={`p-6 relative ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+      {isPopular && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
+          Most Popular
+        </span>
+      )}
+      <h3 className="text-xl font-bold mb-2">{title}</h3>
+      <p className="text-3xl font-bold mb-6">€{price.toFixed(2)}</p>
+      <ul className="space-y-2 mb-6">
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> {viewers} Viewers
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> {chatters} Chatters
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> Duration: 1 Month
+        </li>
+      </ul>
+      <Button 
+        className="w-full" 
+        onClick={handleSelectPlan}
+      >
+        Select Plan
+      </Button>
+    </Card>
+  );
+};
 
 const FollowerPricingCard = ({ 
   title, 
