@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon } from "lucide-react";
+import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock } from "lucide-react";
 
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
@@ -143,7 +144,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Bot Controls */}
         <Card className="glass-morphism">
           <CardHeader>
@@ -175,6 +176,30 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Follower Plan Progress */}
+      <Card className="glass-morphism">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Follower Plan Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">24-Hour Progress</span>
+              <span className="text-sm font-medium">12/50 Followers</span>
+            </div>
+            <Progress value={25} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0h</span>
+              <span>12h</span>
+              <span>24h</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
