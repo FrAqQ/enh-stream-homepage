@@ -106,8 +106,9 @@ const Dashboard = () => {
   const createEmbed = (channelName: string) => {
     try {
       console.log("Creating Twitch embed with channel:", channelName);
-      const currentDomain = window.location.hostname;
-      console.log("Current domain:", currentDomain);
+      // Get full hostname without port number
+      const currentDomain = window.location.hostname.split(':')[0];
+      console.log("Current domain for Twitch embed:", currentDomain);
       
       if (window.Twitch) {
         const newEmbed = new window.Twitch.Embed("twitch-embed", {
@@ -117,7 +118,15 @@ const Dashboard = () => {
           layout: "video",
           autoplay: true,
           muted: true,
-          parent: [currentDomain, 'localhost'],
+          // Add all possible development and production domains
+          parent: [
+            currentDomain, 
+            'localhost', 
+            'lovable.app',
+            'lovableproject.com',
+            currentDomain.endsWith('lovableproject.com') ? currentDomain : '',
+            currentDomain.endsWith('lovable.app') ? currentDomain : ''
+          ].filter(Boolean), // Remove empty strings
           theme: "dark"
         });
 
