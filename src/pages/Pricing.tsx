@@ -141,20 +141,20 @@ const Pricing = () => {
         />
         <PricingCard 
           title="Professional" 
-          price={49.99} 
+          price={79.99} 
           viewers={100} 
           chatters={30}
           isPopular 
         />
         <PricingCard 
           title="Expert" 
-          price={129.99} 
+          price={159.99} 
           viewers={300} 
           chatters={90}
         />
         <PricingCard 
           title="Ultimate" 
-          price={219.99} 
+          price={249.99} 
           viewers={600} 
           chatters={200}
         />
@@ -178,20 +178,20 @@ const Pricing = () => {
         />
         <FollowerPricingCard 
           title="Professional" 
-          price={99.99} 
+          price={129.99} 
           followers={250} 
           duration="2 Months"
           isPopular 
         />
         <FollowerPricingCard 
           title="Expert" 
-          price={179.99} 
+          price={209.99} 
           followers={500} 
           duration="2 Months"
         />
         <FollowerPricingCard 
           title="Ultimate" 
-          price={399.99} 
+          price={429.99} 
           followers={1000} 
           duration="2 Months"
         />
