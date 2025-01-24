@@ -1,26 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
-import { useUser } from "@/lib/useUser";
-import { supabase } from "@/lib/supabaseClient";
-
-// Define Twitch types
-declare global {
-  interface Window {
-    Twitch: {
-      Embed: {
-        VIDEO_READY: string;
-        new (elementId: string, options: any): {
-          addEventListener: (event: string, callback: () => void) => void;
-          getPlayer: () => any;
-        };
-      };
-    };
-  }
-}
+import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useUser } from "@/lib/useUser"
+import { supabase } from "@/lib/supabaseClient"
+import { StatsCard } from "@/components/dashboard/StatsCard"
+import { StreamPreview } from "@/components/dashboard/StreamPreview"
+import { StreamSettings } from "@/components/dashboard/StreamSettings"
+import { BotControls } from "@/components/dashboard/BotControls"
+import { ProgressCard } from "@/components/dashboard/ProgressCard"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -264,192 +250,78 @@ const Dashboard = () => {
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="glass-morphism">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Viewers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{viewerCount}</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-morphism">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Chatters</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{chatterCount}</div>
-            <p className="text-xs text-muted-foreground">+15% from last hour</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-morphism">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+12.5%</div>
-            <p className="text-xs text-muted-foreground">Increased by 7.2%</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-morphism">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Stream Health</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">98%</div>
-            <p className="text-xs text-muted-foreground">Excellent condition</p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Viewers"
+          value={viewerCount}
+          change="+20.1% from last month"
+          icon={Users}
+        />
+        <StatsCard
+          title="Active Chatters"
+          value={chatterCount}
+          change="+15% from last hour"
+          icon={MessageSquare}
+        />
+        <StatsCard
+          title="Growth Rate"
+          value="+12.5%"
+          change="Increased by 7.2%"
+          icon={TrendingUp}
+        />
+        <StatsCard
+          title="Stream Health"
+          value="98%"
+          change="Excellent condition"
+          icon={Activity}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Stream Preview */}
-        <Card className="glass-morphism">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Stream Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
-              <div id="twitch-embed" className="w-full h-full min-h-[400px]"></div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                <div>Current channel: {twitchChannel || 'None'}</div>
-                <div>Domain: {window.location.hostname || 'localhost'}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stream Settings */}
-        <Card className="glass-morphism">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
-              Stream Settings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Stream URL</label>
-                <div className="flex gap-2">
-                  <Input 
-                    placeholder="Enter Twitch channel name or URL" 
-                    value={streamUrl}
-                    onChange={(e) => setStreamUrl(e.target.value)}
-                    className="bg-background/50"
-                  />
-                  <Button onClick={handleSaveUrl}>Save</Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Username</label>
-                  <p className="text-sm text-muted-foreground">{userData.username}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Plan</label>
-                  <p className="text-sm text-muted-foreground">{userData.plan}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Follower Plan</label>
-                  <p className="text-sm text-muted-foreground">{userData.followerPlan}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StreamPreview
+          twitchChannel={twitchChannel}
+          isScriptLoaded={isScriptLoaded}
+          createEmbed={createEmbed}
+        />
+        <StreamSettings
+          streamUrl={streamUrl}
+          setStreamUrl={setStreamUrl}
+          handleSaveUrl={handleSaveUrl}
+          userData={userData}
+        />
       </div>
 
-      {/* Bot Controls and Progress sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Bot Controls */}
-        <Card className="glass-morphism">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Viewer Bot Controls</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={() => addViewers(1)} variant="outline">+1 Viewer</Button>
-                <Button onClick={() => addViewers(3)} variant="outline">+3 Viewers</Button>
-                <Button onClick={() => addViewers(5)} variant="outline">+5 Viewers</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-morphism">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Chatter Bot Controls</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={() => addChatters(1)} variant="outline">+1 Chatter</Button>
-                <Button onClick={() => addChatters(3)} variant="outline">+3 Chatters</Button>
-                <Button onClick={() => addChatters(5)} variant="outline">+5 Chatters</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <BotControls
+          title="Viewer Bot Controls"
+          onAdd={addViewers}
+          type="viewer"
+        />
+        <BotControls
+          title="Chatter Bot Controls"
+          onAdd={addChatters}
+          type="chatter"
+        />
       </div>
 
-      {/* Follower Plan Progress */}
-      <Card className="glass-morphism mb-8">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Daily Follower Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">24-Hour Progress</span>
-              <span className="text-sm font-medium">12/50 Followers</span>
-            </div>
-            <Progress value={25} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0h</span>
-              <span>12h</span>
-              <span>24h</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ProgressCard
+        title="Daily Follower Progress"
+        icon={Clock}
+        current={12}
+        total={50}
+        timeLabels={["0h", "12h", "24h"]}
+      />
 
-      {/* Monthly Follower Progress */}
-      <Card className="glass-morphism">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Monthly Follower Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">30-Day Progress</span>
-              <span className="text-sm font-medium">145/500 Followers</span>
-            </div>
-            <Progress value={29} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Day 1</span>
-              <span>Day 15</span>
-              <span>Day 30</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mt-8">
+        <ProgressCard
+          title="Monthly Follower Progress"
+          icon={Calendar}
+          current={145}
+          total={500}
+          timeLabels={["Day 1", "Day 15", "Day 30"]}
+        />
+      </div>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
