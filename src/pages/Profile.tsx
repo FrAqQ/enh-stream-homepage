@@ -6,18 +6,18 @@ import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/useUser";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Smile, Laugh, Heart, Star, Party, Coffee, Pizza, Ghost, Robot, Rainbow } from "lucide-react";
+import { Smile, Laugh, Heart, Star, Music, Coffee, Pizza, Ghost, Bot, Rainbow } from "lucide-react";
 
 const EMOTE_OPTIONS = [
   { icon: Smile, label: "Happy" },
   { icon: Laugh, label: "Laugh" },
   { icon: Heart, label: "Love" },
   { icon: Star, label: "Star" },
-  { icon: Party, label: "Party" },
+  { icon: Music, label: "Music" },
   { icon: Coffee, label: "Coffee" },
   { icon: Pizza, label: "Pizza" },
   { icon: Ghost, label: "Ghost" },
-  { icon: Robot, label: "Robot" },
+  { icon: Bot, label: "Bot" },
   { icon: Rainbow, label: "Rainbow" },
 ];
 
