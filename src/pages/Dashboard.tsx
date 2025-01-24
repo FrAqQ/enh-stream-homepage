@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock } from "lucide-react";
+import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
 
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
@@ -178,11 +178,11 @@ const Dashboard = () => {
       </div>
 
       {/* Follower Plan Progress */}
-      <Card className="glass-morphism">
+      <Card className="glass-morphism mb-8">
         <CardHeader>
           <CardTitle className="text-xl font-semibold flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Follower Plan Progress
+            Daily Follower Progress
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -196,6 +196,30 @@ const Dashboard = () => {
               <span>0h</span>
               <span>12h</span>
               <span>24h</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Monthly Follower Progress */}
+      <Card className="glass-morphism">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Monthly Follower Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">30-Day Progress</span>
+              <span className="text-sm font-medium">145/500 Followers</span>
+            </div>
+            <Progress value={29} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Day 1</span>
+              <span>Day 15</span>
+              <span>Day 30</span>
             </div>
           </div>
         </CardContent>
