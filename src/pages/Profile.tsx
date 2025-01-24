@@ -1,58 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/useUser";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserRound, User, UserPlus, UserMinus, Users, UsersRound, Mail, IdCard, List } from "lucide-react";
+import { Smile, Laugh, Heart, Star, Party, Coffee, Pizza, Ghost, Robot, Rainbow } from "lucide-react";
 
-const AI_AVATAR_OPTIONS = [
-  { icon: UserRound, label: "Modern" },
-  { icon: User, label: "Classic" },
-  { icon: UserPlus, label: "Friendly" },
-  { icon: UserMinus, label: "Minimal" },
-  { icon: Users, label: "Social" },
-  { icon: UsersRound, label: "Rounded" },
+const EMOTE_OPTIONS = [
+  { icon: Smile, label: "Happy" },
+  { icon: Laugh, label: "Laugh" },
+  { icon: Heart, label: "Love" },
+  { icon: Star, label: "Star" },
+  { icon: Party, label: "Party" },
+  { icon: Coffee, label: "Coffee" },
+  { icon: Pizza, label: "Pizza" },
+  { icon: Ghost, label: "Ghost" },
+  { icon: Robot, label: "Robot" },
+  { icon: Rainbow, label: "Rainbow" },
 ];
 
 const Profile = () => {
   const { user } = useUser();
   const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
-  const [selectedAvatar, setSelectedAvatar] = useState<string>("UserRound");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedEmote, setSelectedEmote] = useState<string>(
+    user?.user_metadata?.emote || EMOTE_OPTIONS[Math.floor(Math.random() * EMOTE_OPTIONS.length)].label
+  );
   const { toast } = useToast();
 
-  const handleUpdateProfile = async () => {
+  useEffect(() => {
+    // Set initial emote for new users
+    if (user && !user.user_metadata?.emote) {
+      const randomEmote = EMOTE_OPTIONS[Math.floor(Math.random() * EMOTE_OPTIONS.length)].label;
+      handleUpdateProfile({ emoteOnly: true, newEmote: randomEmote });
+    }
+  }, [user]);
+
+  const handleUpdateProfile = async ({ emoteOnly = false, newEmote = selectedEmote }) => {
     try {
-      const updates = {
-        email: email !== user?.email ? email : undefined,
-        avatar_style: selectedAvatar,
+      const updates: any = {
+        data: { emote: newEmote },
       };
 
-      if (password) {
-        await supabase.auth.updateUser({ password });
+      if (!emoteOnly) {
+        if (email !== user?.email) {
+          updates.email = email;
+        }
+
+        if (password) {
+          if (password !== confirmPassword) {
+            toast({
+              title: "Error",
+              description: "Passwords do not match",
+              variant: "destructive"
+            });
+            return;
+          }
+          await supabase.auth.updateUser({ password });
+        }
       }
 
-      if (updates.email || updates.avatar_style) {
-        const { error } = await supabase.auth.updateUser({
-          email: updates.email,
-          data: { avatar_style: updates.avatar_style },
-        });
+      const { error } = await supabase.auth.updateUser(updates);
 
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Erfolg",
-        description: "Profil wurde erfolgreich aktualisiert",
+        title: "Success",
+        description: "Profile updated successfully",
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Fehler",
-        description: "Profil konnte nicht aktualisiert werden",
+        title: "Error",
+        description: "Profile could not be updated",
       });
     }
   };
@@ -63,22 +86,25 @@ const Profile = () => {
         {/* Profile Settings Card */}
         <Card className="bg-card/50 backdrop-blur">
           <CardHeader>
-            <h1 className="text-2xl font-bold">Profil Einstellungen</h1>
+            <h1 className="text-2xl font-bold">Profile Settings</h1>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Avatar Selection */}
+            {/* Emote Selection */}
             <div>
-              <h2 className="text-lg font-semibold mb-4">Avatar</h2>
-              <div className="grid grid-cols-3 gap-4">
-                {AI_AVATAR_OPTIONS.map(({ icon: Icon, label }) => (
+              <h2 className="text-lg font-semibold mb-4">Select Emote</h2>
+              <div className="grid grid-cols-5 gap-4">
+                {EMOTE_OPTIONS.map(({ icon: Icon, label }) => (
                   <Button
                     key={label}
-                    variant={selectedAvatar === label ? "default" : "outline"}
+                    variant={selectedEmote === label ? "default" : "outline"}
                     className="flex flex-col items-center p-4 h-auto gap-2"
-                    onClick={() => setSelectedAvatar(label)}
+                    onClick={() => {
+                      setSelectedEmote(label);
+                      handleUpdateProfile({ emoteOnly: true, newEmote: label });
+                    }}
                   >
                     <Icon className="h-8 w-8" />
-                    <span className="text-sm">{label}</span>
+                    <span className="text-xs">{label}</span>
                   </Button>
                 ))}
               </div>
@@ -97,18 +123,27 @@ const Profile = () => {
 
             {/* Password Update */}
             <div>
-              <h2 className="text-lg font-semibold mb-2">Passwort</h2>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Neues Passwort eingeben"
-                className="mb-2"
-              />
+              <h2 className="text-lg font-semibold mb-2">Password</h2>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="New password"
+                  className="mb-2"
+                />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="mb-2"
+                />
+              </div>
             </div>
 
-            <Button onClick={handleUpdateProfile}>
-              Änderungen speichern
+            <Button onClick={() => handleUpdateProfile({})}>
+              Save Changes
             </Button>
           </CardContent>
         </Card>
@@ -116,11 +151,26 @@ const Profile = () => {
         {/* User Information Card */}
         <Card className="bg-card/50 backdrop-blur">
           <CardHeader>
-            <h1 className="text-2xl font-bold">Benutzer Informationen</h1>
+            <h1 className="text-2xl font-bold">User Information</h1>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-              <Mail className="h-5 w-5 text-muted-foreground" />
+              <Avatar className="h-12 w-12">
+                {selectedEmote && (
+                  <AvatarFallback>
+                    {EMOTE_OPTIONS.find(e => e.label === selectedEmote)?.icon({
+                      className: "h-6 w-6"
+                    })}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">Current Emote</p>
+                <p className="text-sm text-muted-foreground">{selectedEmote}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
               <div>
                 <p className="text-sm font-medium">Email</p>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
@@ -128,22 +178,20 @@ const Profile = () => {
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-              <IdCard className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Benutzer ID</p>
+                <p className="text-sm font-medium">User ID</p>
                 <p className="text-sm text-muted-foreground">{user?.id}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-              <List className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Aktuelle Pläne</p>
+                <p className="text-sm font-medium">Current Plans</p>
                 <p className="text-sm text-muted-foreground">
-                  Stream Plan: {user?.user_metadata?.plan || "Kostenlos"}
+                  Stream Plan: {user?.user_metadata?.plan || "Free"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Follower Plan: {user?.user_metadata?.follower_plan || "Keiner"}
+                  Follower Plan: {user?.user_metadata?.follower_plan || "None"}
                 </p>
               </div>
             </div>
