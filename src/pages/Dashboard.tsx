@@ -39,6 +39,27 @@ const Dashboard = () => {
     plan: "Starter",
   };
 
+  useEffect(() => {
+    // Load Twitch embed script
+    const script = document.createElement('script');
+    script.src = "https://embed.twitch.tv/embed/v1.js";
+    script.async = true;
+    
+    script.onload = () => {
+      console.log("Twitch embed script loaded");
+      if (twitchChannel) {
+        createEmbed(twitchChannel);
+      }
+    };
+    
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup script when component unmounts
+      document.body.removeChild(script);
+    };
+  }, []); // Run only once on mount
+
   const initTwitchEmbed = (channelName: string) => {
     try {
       if (!channelName) return;
@@ -51,19 +72,8 @@ const Dashboard = () => {
         container.innerHTML = '';
       }
 
-      // Load Twitch embed script if not already loaded
-      if (!window.Twitch) {
-        const script = document.createElement('script');
-        script.src = "https://embed.twitch.tv/embed/v1.js";
-        script.async = true;
-        document.body.appendChild(script);
-        
-        script.onload = () => {
-          createEmbed(channelName);
-        };
-      } else {
-        createEmbed(channelName);
-      }
+      createEmbed(channelName);
+      
     } catch (error) {
       console.error('Error initializing Twitch embed:', error);
     }
@@ -92,6 +102,8 @@ const Dashboard = () => {
         newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
           console.log('Twitch embed is ready');
         });
+      } else {
+        console.error('Twitch embed script not loaded');
       }
     } catch (error) {
       console.error('Error creating Twitch embed:', error);
@@ -194,7 +206,7 @@ const Dashboard = () => {
             <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
               <div id="twitch-embed" className="w-full h-full min-h-[400px]"></div>
               <div className="mt-2 text-sm text-muted-foreground">
-                <div>Current channel: {twitchChannel}</div>
+                <div>Current channel: {twitchChannel || 'None'}</div>
                 <div>Domain: {window.location.hostname || 'localhost'}</div>
               </div>
             </div>
@@ -238,6 +250,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
+      {/* Bot Controls and Progress sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Bot Controls */}
         <Card className="glass-morphism">
