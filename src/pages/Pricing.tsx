@@ -108,21 +108,21 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5} 
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
         <PricingCard 
           title="Basic" 
           price={17.99} 
           viewers={35} 
           chatters={10} 
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
         <PricingCard 
           title="Professional" 
           price={49.99} 
           viewers={100} 
           chatters={30} 
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
           isPopular 
         />
         <PricingCard 
@@ -130,14 +130,14 @@ const Pricing = () => {
           price={129.99} 
           viewers={300} 
           chatters={90} 
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
         <PricingCard 
           title="Ultimate" 
           price={219.99} 
           viewers={600} 
           chatters={200} 
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
       </div>
 
@@ -150,21 +150,21 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
         <FollowerPricingCard 
           title="Basic" 
           price={29.99} 
           followers={100} 
           duration="1 Month"
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
         <FollowerPricingCard 
           title="Professional" 
           price={99.99} 
           followers={250} 
           duration="2 Months"
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
           isPopular 
         />
         <FollowerPricingCard 
@@ -172,14 +172,14 @@ const Pricing = () => {
           price={179.99} 
           followers={500} 
           duration="2 Months"
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
         <FollowerPricingCard 
           title="Ultimate" 
           price={399.99} 
           followers={1000} 
           duration="2 Months"
-          paymentLink="https://buy.stripe.com/test_14kdRxbrd3rN9vqdQQ"
+          paymentLink="https://buy.stripe.com/test_14k14L3YLd2n22Y289"
         />
       </div>
     </div>
