@@ -121,8 +121,6 @@ const FollowerPricingCard = ({
 };
 
 const Pricing = () => {
-  const priceId = "price_1QklwW01379EnnGJmIt7iAEU";
-
   return (
     <div className="container mx-auto px-4 py-20">
       <h1 className="text-4xl font-bold text-center mb-4">Viewer & Chatter Plans</h1>
@@ -133,37 +131,32 @@ const Pricing = () => {
           title="Starter" 
           price={9.99} 
           viewers={15} 
-          chatters={5} 
-          priceId={priceId}
+          chatters={5}
         />
         <PricingCard 
           title="Basic" 
           price={17.99} 
           viewers={35} 
-          chatters={10} 
-          priceId={priceId}
+          chatters={10}
         />
         <PricingCard 
           title="Professional" 
           price={49.99} 
           viewers={100} 
-          chatters={30} 
-          priceId={priceId}
+          chatters={30}
           isPopular 
         />
         <PricingCard 
           title="Expert" 
           price={129.99} 
           viewers={300} 
-          chatters={90} 
-          priceId={priceId}
+          chatters={90}
         />
         <PricingCard 
           title="Ultimate" 
           price={219.99} 
           viewers={600} 
-          chatters={200} 
-          priceId={priceId}
+          chatters={200}
         />
       </div>
 
@@ -176,21 +169,18 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
-          priceId={priceId}
         />
         <FollowerPricingCard 
           title="Basic" 
           price={29.99} 
           followers={100} 
           duration="1 Month"
-          priceId={priceId}
         />
         <FollowerPricingCard 
           title="Professional" 
           price={99.99} 
           followers={250} 
           duration="2 Months"
-          priceId={priceId}
           isPopular 
         />
         <FollowerPricingCard 
@@ -198,14 +188,12 @@ const Pricing = () => {
           price={179.99} 
           followers={500} 
           duration="2 Months"
-          priceId={priceId}
         />
         <FollowerPricingCard 
           title="Ultimate" 
           price={399.99} 
           followers={1000} 
           duration="2 Months"
-          priceId={priceId}
         />
       </div>
     </div>
