@@ -1,80 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useUser } from "@/lib/useUser";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
-import { toast } from "sonner";
 
 const PricingCard = ({ 
   title, 
   price, 
   viewers, 
   chatters, 
-  priceId,
+  paymentLink,
   isPopular 
 }: { 
   title: string;
   price: number;
   viewers: number;
   chatters: number;
-  priceId: string;
+  paymentLink: string;
   isPopular?: boolean;
 }) => {
-  const { user } = useUser();
-  const navigate = useNavigate();
-
-  const handleSelectPlan = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      console.log('Fetching session...');
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
-        throw new Error('No access token found');
-      }
-
-      console.log('Creating checkout session...');
-      const response = await fetch(
-        'https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ priceId }),
-          mode: 'cors',
-          credentials: 'include'
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Error response:', errorData);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        console.error('Checkout error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      if (data.url) {
-        console.log('Redirecting to checkout:', data.url);
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error("Error creating checkout session. Please try again later.");
-    }
+  const handleSelectPlan = () => {
+    window.location.href = paymentLink;
   };
 
   return (
@@ -98,7 +41,7 @@ const PricingCard = ({
         </li>
       </ul>
       <Button 
-        className="w-full" 
+        className="w-full"
         onClick={handleSelectPlan}
       >
         Select Plan
@@ -112,71 +55,18 @@ const FollowerPricingCard = ({
   price, 
   followers,
   duration,
-  priceId,
+  paymentLink,
   isPopular 
 }: { 
   title: string;
   price: number;
   followers: number;
   duration: string;
-  priceId: string;
+  paymentLink: string;
   isPopular?: boolean;
 }) => {
-  const { user } = useUser();
-  const navigate = useNavigate();
-
-  const handleSelectPlan = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      console.log('Fetching session...');
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
-        throw new Error('No access token found');
-      }
-
-      console.log('Creating checkout session...');
-      const response = await fetch(
-        'https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ priceId }),
-          mode: 'cors',
-          credentials: 'include'
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Error response:', errorData);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        console.error('Checkout error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      if (data.url) {
-        console.log('Redirecting to checkout:', data.url);
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error("Error creating checkout session. Please try again later.");
-    }
+  const handleSelectPlan = () => {
+    window.location.href = paymentLink;
   };
 
   return (
@@ -218,21 +108,21 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5} 
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-starter-plan-link"
         />
         <PricingCard 
           title="Basic" 
           price={17.99} 
           viewers={35} 
           chatters={10} 
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-basic-plan-link"
         />
         <PricingCard 
           title="Professional" 
           price={49.99} 
           viewers={100} 
           chatters={30} 
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-professional-plan-link"
           isPopular 
         />
         <PricingCard 
@@ -240,14 +130,14 @@ const Pricing = () => {
           price={129.99} 
           viewers={300} 
           chatters={90} 
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-expert-plan-link"
         />
         <PricingCard 
           title="Ultimate" 
           price={219.99} 
           viewers={600} 
           chatters={200} 
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-ultimate-plan-link"
         />
       </div>
 
@@ -260,21 +150,21 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-follower-starter-link"
         />
         <FollowerPricingCard 
           title="Basic" 
           price={29.99} 
           followers={100} 
           duration="1 Month"
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-follower-basic-link"
         />
         <FollowerPricingCard 
           title="Professional" 
           price={99.99} 
           followers={250} 
           duration="2 Months"
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-follower-professional-link"
           isPopular 
         />
         <FollowerPricingCard 
@@ -282,14 +172,14 @@ const Pricing = () => {
           price={179.99} 
           followers={500} 
           duration="2 Months"
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-follower-expert-link"
         />
         <FollowerPricingCard 
           title="Ultimate" 
           price={399.99} 
           followers={1000} 
           duration="2 Months"
-          priceId="price_1Qklku01379EnnGJtin4BVcc"
+          paymentLink="https://buy.stripe.com/your-follower-ultimate-link"
         />
       </div>
     </div>
