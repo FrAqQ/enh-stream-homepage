@@ -20,6 +20,20 @@ const Dashboard = () => {
     plan: "Starter",
   };
 
+  const formatTwitchUrl = (url: string) => {
+    try {
+      // Extract channel name from Twitch URL
+      const channelName = url.split('twitch.tv/')[1];
+      if (channelName) {
+        return `https://player.twitch.tv/?channel=${channelName}&parent=${window.location.hostname}`;
+      }
+      return url;
+    } catch (error) {
+      console.error('Error formatting Twitch URL:', error);
+      return url;
+    }
+  };
+
   const handleSaveUrl = () => {
     console.log("Saving stream URL:", streamUrl);
   };
@@ -93,7 +107,7 @@ const Dashboard = () => {
             <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
               {streamUrl ? (
                 <iframe
-                  src={streamUrl}
+                  src={formatTwitchUrl(streamUrl)}
                   className="w-full h-full"
                   allowFullScreen
                   allow="autoplay; encrypted-media"
