@@ -28,28 +28,47 @@ const PricingCard = ({
     }
 
     try {
+      console.log('Fetching session...');
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        throw new Error('No access token found');
+      }
+
+      console.log('Creating checkout session...');
       const response = await fetch(
         'https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session',
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${session?.access_token}`,
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
 
-      const { url, error } = await response.json();
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      if (error) throw new Error(error);
+      if (data.error) {
+        console.error('Checkout error:', data.error);
+        throw new Error(data.error);
+      }
       
-      if (url) {
-        window.location.href = url;
+      if (data.url) {
+        console.log('Redirecting to checkout:', data.url);
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error("Fehler beim Erstellen der Checkout-Session");
+      console.error('Error creating checkout session:', error);
+      toast.error("Fehler beim Erstellen der Checkout-Session. Bitte versuchen Sie es später erneut.");
     }
   };
 
