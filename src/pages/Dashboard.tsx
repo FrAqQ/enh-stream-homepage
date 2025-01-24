@@ -37,19 +37,48 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('plan')
-          .eq('id', user.id)
-          .single();
+        try {
+          console.log("Fetching user plan for ID:", user.id);
+          
+          // First try to get the profile
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('plan')
+            .eq('id', user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching user plan:', error);
-          setUserPlan("Free"); // Fallback to Free plan if there's an error
-          return;
+          if (error) {
+            console.error('Error fetching user plan:', error);
+            
+            // If profile doesn't exist, create it
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+              console.log("Profiles table not found or profile doesn't exist, creating profile...");
+              const { error: insertError } = await supabase
+                .from('profiles')
+                .insert([
+                  { id: user.id, email: user.email, plan: 'Free' }
+                ]);
+              
+              if (insertError) {
+                console.error('Error creating profile:', insertError);
+                setUserPlan("Free");
+                return;
+              }
+              
+              setUserPlan("Free");
+              return;
+            }
+            
+            setUserPlan("Free"); // Fallback to Free plan if there's an error
+            return;
+          }
+
+          console.log("Fetched profile:", profile);
+          setUserPlan(profile?.plan || "Free");
+        } catch (err) {
+          console.error("Unexpected error fetching user plan:", err);
+          setUserPlan("Free");
         }
-
-        setUserPlan(profile?.plan || "Free");
       }
     };
 
