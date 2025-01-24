@@ -1,24 +1,63 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useUser } from "@/lib/useUser";
+import { useToast } from "@/components/ui/use-toast";
 
 const PricingCard = ({ 
   title, 
   price, 
   viewers, 
   chatters, 
-  paymentLink,
+  priceId,
   isPopular 
 }: { 
   title: string;
   price: number;
   viewers: number;
   chatters: number;
-  paymentLink: string;
+  priceId: string;
   isPopular?: boolean;
 }) => {
-  const handleSelectPlan = () => {
-    console.log('Opening payment link:', paymentLink);
-    window.open(paymentLink, '_blank');
+  const { user } = useUser();
+  const { toast } = useToast();
+
+  const handleSelectPlan = async () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to subscribe to this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      const { url, error } = await response.json();
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create checkout session. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -56,19 +95,56 @@ const FollowerPricingCard = ({
   price, 
   followers,
   duration,
-  paymentLink,
+  priceId,
   isPopular 
 }: { 
   title: string;
   price: number;
   followers: number;
   duration: string;
-  paymentLink: string;
+  priceId: string;
   isPopular?: boolean;
 }) => {
-  const handleSelectPlan = () => {
-    console.log('Opening payment link:', paymentLink);
-    window.open(paymentLink, '_blank');
+  const { user } = useUser();
+  const { toast } = useToast();
+
+  const handleSelectPlan = async () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to subscribe to this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      const { url, error } = await response.json();
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create checkout session. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -99,7 +175,7 @@ const FollowerPricingCard = ({
 };
 
 const Pricing = () => {
-  const paymentLink = "https://buy.stripe.com/test_14k14L3YLd2n22Y289";
+  const priceId = "price_1QklwW01379EnnGJmIt7iAEU";
 
   return (
     <div className="container mx-auto px-4 py-20">
@@ -112,21 +188,21 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5} 
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
         <PricingCard 
           title="Basic" 
           price={17.99} 
           viewers={35} 
           chatters={10} 
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
         <PricingCard 
           title="Professional" 
           price={49.99} 
           viewers={100} 
           chatters={30} 
-          paymentLink={paymentLink}
+          priceId={priceId}
           isPopular 
         />
         <PricingCard 
@@ -134,14 +210,14 @@ const Pricing = () => {
           price={129.99} 
           viewers={300} 
           chatters={90} 
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
         <PricingCard 
           title="Ultimate" 
           price={219.99} 
           viewers={600} 
           chatters={200} 
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
       </div>
 
@@ -154,21 +230,21 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
         <FollowerPricingCard 
           title="Basic" 
           price={29.99} 
           followers={100} 
           duration="1 Month"
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
         <FollowerPricingCard 
           title="Professional" 
           price={99.99} 
           followers={250} 
           duration="2 Months"
-          paymentLink={paymentLink}
+          priceId={priceId}
           isPopular 
         />
         <FollowerPricingCard 
@@ -176,14 +252,14 @@ const Pricing = () => {
           price={179.99} 
           followers={500} 
           duration="2 Months"
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
         <FollowerPricingCard 
           title="Ultimate" 
           price={399.99} 
           followers={1000} 
           duration="2 Months"
-          paymentLink={paymentLink}
+          priceId={priceId}
         />
       </div>
     </div>
