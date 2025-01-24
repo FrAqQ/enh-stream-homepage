@@ -12,29 +12,33 @@ const Dashboard = () => {
   const [followerProgress, setFollowerProgress] = useState(0);
   const [followerPlan, setFollowerPlan] = useState(null);
   const [embedUrl, setEmbedUrl] = useState("");
-
-  // Mock data for demonstration
-  const userData = {
-    username: "DemoUser",
-    userId: "12345",
-    email: "demo@example.com",
-    plan: "Starter",
-  };
+  const [twitchChannel, setTwitchChannel] = useState("");
 
   const formatTwitchUrl = (url: string) => {
     try {
       if (!url) return "";
       
-      // Extract channel name from Twitch URL
-      const channelName = url.split('twitch.tv/')[1];
-      if (!channelName) return "";
+      // Extract channel name from various Twitch URL formats
+      let channelName = "";
+      if (url.includes('twitch.tv/')) {
+        channelName = url.split('twitch.tv/')[1].split('/')[0].split('?')[0];
+      } else {
+        channelName = url.trim();
+      }
+      
+      if (!channelName) {
+        console.error('No channel name found in URL');
+        return "";
+      }
 
-      // Get window location for the parent parameter
-      const currentDomain = window.location.hostname;
+      setTwitchChannel(channelName);
+      
+      // Get current domain for the parent parameter
+      const currentDomain = window.location.hostname === '' ? 'localhost' : window.location.hostname;
       console.log("Current domain:", currentDomain);
       
       // Build the embed URL with required parameters
-      const embedUrl = `https://player.twitch.tv/?channel=${channelName}&parent=${currentDomain}&muted=false&autoplay=true`;
+      const embedUrl = `https://player.twitch.tv/?channel=${channelName}&parent=${currentDomain}&muted=true`;
       console.log("Generated embed URL:", embedUrl);
       
       return embedUrl;
@@ -126,7 +130,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
               {embedUrl ? (
-                <>
+                <div className="relative w-full h-full">
                   <iframe
                     src={embedUrl}
                     className="w-full h-full"
@@ -135,9 +139,11 @@ const Dashboard = () => {
                     sandbox="allow-modals allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                   ></iframe>
                   <div className="mt-2 text-sm text-muted-foreground">
-                    Current embed URL: {embedUrl}
+                    <div>Current channel: {twitchChannel}</div>
+                    <div>Current embed URL: {embedUrl}</div>
+                    <div>Domain: {window.location.hostname || 'localhost'}</div>
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   No stream URL configured
