@@ -6,17 +6,32 @@ import { useState, useEffect } from "react";
 import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
 import { useUser } from "@/lib/useUser";
 
+// Define Twitch types
+declare global {
+  interface Window {
+    Twitch: {
+      Embed: {
+        VIDEO_READY: string;
+        new (elementId: string, options: any): {
+          addEventListener: (event: string, callback: () => void) => void;
+          getPlayer: () => any;
+        };
+      };
+    };
+  }
+}
+
 const Dashboard = () => {
   const { user } = useUser();
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
   const [followerProgress, setFollowerProgress] = useState(0);
-  const [followerPlan, setFollowerPlan] = useState(null);
+  const [followerPlan, setFollowerPlan] = useState<any>(null);
   const [twitchChannel, setTwitchChannel] = useState("");
   const [embed, setEmbed] = useState<any>(null);
 
-  // Mock user data as fallback if no user is logged in
+  // Define userData at the component level
   const userData = {
     username: user?.email?.split('@')[0] || "DemoUser",
     userId: user?.id || "12345",
@@ -59,24 +74,25 @@ const Dashboard = () => {
       console.log("Creating Twitch embed with channel:", channelName);
       const currentDomain = window.location.hostname || 'localhost';
       
-      const newEmbed = new window.Twitch.Embed("twitch-embed", {
-        width: "100%",
-        height: "100%",
-        channel: channelName,
-        layout: "video",
-        autoplay: true,
-        muted: true,
-        parent: [currentDomain],
-        theme: "dark"
-      });
+      if (window.Twitch) {
+        const newEmbed = new window.Twitch.Embed("twitch-embed", {
+          width: "100%",
+          height: "100%",
+          channel: channelName,
+          layout: "video",
+          autoplay: true,
+          muted: true,
+          parent: [currentDomain],
+          theme: "dark"
+        });
 
-      setEmbed(newEmbed);
-      setTwitchChannel(channelName);
+        setEmbed(newEmbed);
+        setTwitchChannel(channelName);
 
-      newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
-        console.log('Twitch embed is ready');
-      });
-
+        newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
+          console.log('Twitch embed is ready');
+        });
+      }
     } catch (error) {
       console.error('Error creating Twitch embed:', error);
     }
