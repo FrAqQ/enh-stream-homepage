@@ -25,7 +25,8 @@ const Dashboard = () => {
       // Extract channel name from Twitch URL
       const channelName = url.split('twitch.tv/')[1];
       if (channelName) {
-        return `https://player.twitch.tv/?channel=${channelName}&parent=${window.location.hostname}`;
+        // Explicitly set parent to localhost for development
+        return `https://player.twitch.tv/?channel=${channelName}&parent=localhost`;
       }
       return url;
     } catch (error) {
