@@ -218,21 +218,21 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5} 
-          priceId="price_starter"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <PricingCard 
           title="Basic" 
           price={17.99} 
           viewers={35} 
           chatters={10} 
-          priceId="price_basic"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <PricingCard 
           title="Professional" 
           price={49.99} 
           viewers={100} 
           chatters={30} 
-          priceId="price_professional"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
           isPopular 
         />
         <PricingCard 
@@ -240,14 +240,14 @@ const Pricing = () => {
           price={129.99} 
           viewers={300} 
           chatters={90} 
-          priceId="price_expert"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <PricingCard 
           title="Ultimate" 
           price={219.99} 
           viewers={600} 
           chatters={200} 
-          priceId="price_ultimate"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
       </div>
 
@@ -260,21 +260,21 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
-          priceId="price_follower_starter"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <FollowerPricingCard 
           title="Basic" 
           price={29.99} 
           followers={100} 
           duration="1 Month"
-          priceId="price_follower_basic"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <FollowerPricingCard 
           title="Professional" 
           price={99.99} 
           followers={250} 
           duration="2 Months"
-          priceId="price_follower_professional"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
           isPopular 
         />
         <FollowerPricingCard 
@@ -282,14 +282,14 @@ const Pricing = () => {
           price={179.99} 
           followers={500} 
           duration="2 Months"
-          priceId="price_follower_expert"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <FollowerPricingCard 
           title="Ultimate" 
           price={399.99} 
           followers={1000} 
           duration="2 Months"
-          priceId="price_follower_ultimate"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
       </div>
     </div>
