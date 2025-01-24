@@ -80,6 +80,9 @@ const Profile = () => {
     }
   };
 
+  // Find the icon component for the selected emote
+  const SelectedIcon = EMOTE_OPTIONS.find(e => e.label === selectedEmote)?.icon || Smile;
+
   return (
     <div className="container mx-auto px-4 pt-20">
       <div className="grid gap-6 md:grid-cols-2">
@@ -156,13 +159,9 @@ const Profile = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
               <Avatar className="h-12 w-12">
-                {selectedEmote && (
-                  <AvatarFallback>
-                    {EMOTE_OPTIONS.find(e => e.label === selectedEmote)?.icon({
-                      className: "h-6 w-6"
-                    })}
-                  </AvatarFallback>
-                )}
+                <AvatarFallback>
+                  <SelectedIcon className="h-6 w-6" />
+                </AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-sm font-medium">Current Emote</p>
