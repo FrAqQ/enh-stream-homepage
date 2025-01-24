@@ -1,27 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useUser } from "@/lib/useUser";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const PricingCard = ({ 
   title, 
   price, 
   viewers, 
-  chatters, 
-  priceId,
+  chatters,
   isPopular 
 }: { 
   title: string;
   price: number;
   viewers: number;
   chatters: number;
-  priceId: string;
   isPopular?: boolean;
 }) => {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const handleSelectPlan = async () => {
+  const handleSelectPlan = () => {
     if (!user) {
       toast({
         title: "Login Required",
@@ -31,33 +29,8 @@ const PricingCard = ({
       return;
     }
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      const { url, error } = await response.json();
-      
-      if (error) {
-        throw new Error(error);
-      }
-
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create checkout session. Please try again.",
-        variant: "destructive",
-      });
-    }
+    // Open Stripe payment link in new tab
+    window.open('https://buy.stripe.com/test_14k14L3YLd2n22Y289', '_blank');
   };
 
   return (
@@ -95,20 +68,18 @@ const FollowerPricingCard = ({
   price, 
   followers,
   duration,
-  priceId,
   isPopular 
 }: { 
   title: string;
   price: number;
   followers: number;
   duration: string;
-  priceId: string;
   isPopular?: boolean;
 }) => {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const handleSelectPlan = async () => {
+  const handleSelectPlan = () => {
     if (!user) {
       toast({
         title: "Login Required",
@@ -118,33 +89,8 @@ const FollowerPricingCard = ({
       return;
     }
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      const { url, error } = await response.json();
-      
-      if (error) {
-        throw new Error(error);
-      }
-
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create checkout session. Please try again.",
-        variant: "destructive",
-      });
-    }
+    // Open Stripe payment link in new tab
+    window.open('https://buy.stripe.com/test_14k14L3YLd2n22Y289', '_blank');
   };
 
   return (
