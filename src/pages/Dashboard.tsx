@@ -106,15 +106,12 @@ const Dashboard = () => {
   const createEmbed = (channelName: string) => {
     try {
       console.log("Creating Twitch embed with channel:", channelName);
-      // Get full hostname without port number
       const currentDomain = window.location.hostname.split(':')[0];
       console.log("Current domain for Twitch embed:", currentDomain);
       
-      // Get the protocol (http or https)
       const protocol = window.location.protocol;
       console.log("Current protocol:", protocol);
       
-      // Check if we're in development mode
       const isDevelopment = process.env.NODE_ENV === 'development';
       console.log("Development mode:", isDevelopment);
       
@@ -123,8 +120,12 @@ const Dashboard = () => {
         const container = document.getElementById('twitch-embed');
         if (container) {
           container.innerHTML = '';
+          // Add security attributes to the container
+          container.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms');
+          container.setAttribute('loading', 'lazy');
         }
 
+        // Include all possible parent domains
         const parentDomains = [
           currentDomain,
           'localhost',
@@ -132,12 +133,13 @@ const Dashboard = () => {
           'lovable.app',
           'lovableproject.com',
           currentDomain.endsWith('lovableproject.com') ? currentDomain : '',
-          currentDomain.endsWith('lovable.app') ? currentDomain : ''
+          currentDomain.endsWith('lovable.app') ? currentDomain : '',
+          window.location.host // Include the full host with port if present
         ].filter(Boolean);
 
         console.log("Using parent domains:", parentDomains);
 
-        const newEmbed = new window.Twitch.Embed("twitch-embed", {
+        const embedOptions = {
           width: "100%",
           height: "100%",
           channel: channelName,
@@ -146,7 +148,11 @@ const Dashboard = () => {
           muted: true,
           parent: parentDomains,
           theme: "dark"
-        });
+        };
+
+        console.log("Creating embed with options:", embedOptions);
+
+        const newEmbed = new window.Twitch.Embed("twitch-embed", embedOptions);
 
         console.log("Twitch embed created with parent domains:", parentDomains);
 
