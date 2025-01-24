@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
 
 const Dashboard = () => {
@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [chatterCount, setChatterCount] = useState(0);
   const [followerProgress, setFollowerProgress] = useState(0);
   const [followerPlan, setFollowerPlan] = useState(null);
+  const [embedUrl, setEmbedUrl] = useState("");
 
   // Mock data for demonstration
   const userData = {
@@ -22,22 +23,39 @@ const Dashboard = () => {
 
   const formatTwitchUrl = (url: string) => {
     try {
+      if (!url) return "";
+      
       // Extract channel name from Twitch URL
       const channelName = url.split('twitch.tv/')[1];
-      if (channelName) {
-        // Get the current hostname and add multiple possible parent domains
-        const parents = ['localhost', '35569a1b-a46d-46f9-8d7c-c169f2694962.lovableproject.com'].join('&parent=');
-        return `https://player.twitch.tv/?channel=${channelName}&parent=${parents}`;
-      }
-      return url;
+      if (!channelName) return "";
+
+      // Get window location for the parent parameter
+      const currentDomain = window.location.hostname;
+      console.log("Current domain:", currentDomain);
+      
+      // Build the embed URL with all possible parent domains
+      const embedUrl = `https://player.twitch.tv/?channel=${channelName}&parent=${currentDomain}`;
+      console.log("Generated embed URL:", embedUrl);
+      
+      return embedUrl;
     } catch (error) {
       console.error('Error formatting Twitch URL:', error);
-      return url;
+      return "";
     }
   };
 
+  useEffect(() => {
+    if (streamUrl) {
+      const formatted = formatTwitchUrl(streamUrl);
+      console.log("Setting embed URL to:", formatted);
+      setEmbedUrl(formatted);
+    }
+  }, [streamUrl]);
+
   const handleSaveUrl = () => {
     console.log("Saving stream URL:", streamUrl);
+    const formatted = formatTwitchUrl(streamUrl);
+    setEmbedUrl(formatted);
   };
 
   const addViewers = (count: number) => {
@@ -107,13 +125,18 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
-              {streamUrl ? (
-                <iframe
-                  src={formatTwitchUrl(streamUrl)}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; encrypted-media"
-                ></iframe>
+              {embedUrl ? (
+                <>
+                  <iframe
+                    src={embedUrl}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="autoplay; encrypted-media"
+                  ></iframe>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Current embed URL: {embedUrl}
+                  </div>
+                </>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   No stream URL configured
