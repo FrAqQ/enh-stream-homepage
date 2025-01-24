@@ -29,6 +29,9 @@ const PricingCard = ({
       <li className="flex items-center gap-2">
         <span className="text-primary">✓</span> {chatters} Chatters
       </li>
+      <li className="flex items-center gap-2">
+        <span className="text-primary">✓</span> Duration: 1 Month
+      </li>
     </ul>
     <Button className="w-full">Select Plan</Button>
   </Card>
