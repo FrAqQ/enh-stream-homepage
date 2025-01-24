@@ -8,6 +8,13 @@ interface StreamPreviewProps {
 }
 
 export function StreamPreview({ twitchChannel, isScriptLoaded, createEmbed }: StreamPreviewProps) {
+  useEffect(() => {
+    if (isScriptLoaded && twitchChannel) {
+      console.log("StreamPreview: Creating embed for channel", twitchChannel);
+      createEmbed(twitchChannel);
+    }
+  }, [isScriptLoaded, twitchChannel, createEmbed]);
+
   return (
     <Card className="glass-morphism">
       <CardHeader>
