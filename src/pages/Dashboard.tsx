@@ -91,6 +91,7 @@ const Dashboard = () => {
     userId: user?.id || "12345",
     email: user?.email || "demo@example.com",
     plan: userPlan, // Use the userPlan state instead of hardcoded value
+    followerPlan: "None"
   };
 
   useEffect(() => {
@@ -347,7 +348,7 @@ const Dashboard = () => {
                   <Button onClick={handleSaveUrl}>Save</Button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Username</label>
                   <p className="text-sm text-muted-foreground">{userData.username}</p>
@@ -355,6 +356,10 @@ const Dashboard = () => {
                 <div>
                   <label className="text-sm font-medium mb-2 block">Plan</label>
                   <p className="text-sm text-muted-foreground">{userData.plan}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Follower Plan</label>
+                  <p className="text-sm text-muted-foreground">{userData.followerPlan}</p>
                 </div>
               </div>
             </div>
