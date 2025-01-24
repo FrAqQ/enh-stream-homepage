@@ -4,22 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
-
-// Mock data for demonstration
-const mockUserData = {
-  username: "DemoUser",
-  userId: "12345",
-  email: "demo@example.com",
-  plan: "Starter",
-};
-
-declare global {
-  interface Window {
-    Twitch?: any;
-  }
-}
+import { useUser } from "@/lib/useUser";
 
 const Dashboard = () => {
+  const { user } = useUser();
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
@@ -27,6 +15,14 @@ const Dashboard = () => {
   const [followerPlan, setFollowerPlan] = useState(null);
   const [twitchChannel, setTwitchChannel] = useState("");
   const [embed, setEmbed] = useState<any>(null);
+
+  // Mock user data as fallback if no user is logged in
+  const userData = {
+    username: user?.email?.split('@')[0] || "DemoUser",
+    userId: user?.id || "12345",
+    email: user?.email || "demo@example.com",
+    plan: "Starter",
+  };
 
   const initTwitchEmbed = (channelName: string) => {
     try {
@@ -214,11 +210,11 @@ const Dashboard = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Username</label>
-                  <p className="text-sm text-muted-foreground">{mockUserData.username}</p>
+                  <p className="text-sm text-muted-foreground">{userData.username}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Plan</label>
-                  <p className="text-sm text-muted-foreground">{mockUserData.plan}</p>
+                  <p className="text-sm text-muted-foreground">{userData.plan}</p>
                 </div>
               </div>
             </div>
