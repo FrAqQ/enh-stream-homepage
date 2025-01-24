@@ -30,6 +30,7 @@ const Dashboard = () => {
   const [followerPlan, setFollowerPlan] = useState<any>(null);
   const [twitchChannel, setTwitchChannel] = useState("");
   const [embed, setEmbed] = useState<any>(null);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   // Define userData at the component level
   const userData = {
@@ -40,29 +41,47 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    // Check if script is already loaded
+    if (document.querySelector('script[src="https://embed.twitch.tv/embed/v1.js"]')) {
+      console.log("Twitch script already exists");
+      setIsScriptLoaded(true);
+      return;
+    }
+
     // Load Twitch embed script
     const script = document.createElement('script');
     script.src = "https://embed.twitch.tv/embed/v1.js";
     script.async = true;
     
     script.onload = () => {
-      console.log("Twitch embed script loaded");
+      console.log("Twitch embed script loaded successfully");
+      setIsScriptLoaded(true);
       if (twitchChannel) {
+        console.log("Initializing existing channel:", twitchChannel);
         createEmbed(twitchChannel);
       }
+    };
+
+    script.onerror = (error) => {
+      console.error("Error loading Twitch script:", error);
     };
     
     document.body.appendChild(script);
 
     return () => {
-      // Cleanup script when component unmounts
-      document.body.removeChild(script);
+      const existingScript = document.querySelector('script[src="https://embed.twitch.tv/embed/v1.js"]');
+      if (existingScript) {
+        document.body.removeChild(existingScript);
+      }
     };
   }, []); // Run only once on mount
 
   const initTwitchEmbed = (channelName: string) => {
     try {
-      if (!channelName) return;
+      if (!channelName) {
+        console.log("No channel name provided");
+        return;
+      }
       
       console.log("Initializing Twitch embed for channel:", channelName);
       
@@ -70,6 +89,11 @@ const Dashboard = () => {
       const container = document.getElementById('twitch-embed');
       if (container) {
         container.innerHTML = '';
+      }
+
+      if (!isScriptLoaded) {
+        console.log("Waiting for Twitch script to load...");
+        return;
       }
 
       createEmbed(channelName);
@@ -82,7 +106,8 @@ const Dashboard = () => {
   const createEmbed = (channelName: string) => {
     try {
       console.log("Creating Twitch embed with channel:", channelName);
-      const currentDomain = window.location.hostname || 'localhost';
+      const currentDomain = window.location.hostname;
+      console.log("Current domain:", currentDomain);
       
       if (window.Twitch) {
         const newEmbed = new window.Twitch.Embed("twitch-embed", {
@@ -92,15 +117,14 @@ const Dashboard = () => {
           layout: "video",
           autoplay: true,
           muted: true,
-          parent: [currentDomain],
+          parent: [currentDomain, 'localhost'],
           theme: "dark"
         });
 
-        setEmbed(newEmbed);
-        setTwitchChannel(channelName);
-
         newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
           console.log('Twitch embed is ready');
+          setEmbed(newEmbed);
+          setTwitchChannel(channelName);
         });
       } else {
         console.error('Twitch embed script not loaded');
