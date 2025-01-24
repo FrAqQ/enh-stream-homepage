@@ -114,12 +114,28 @@ const Dashboard = () => {
       const protocol = window.location.protocol;
       console.log("Current protocol:", protocol);
       
+      // Check if we're in development mode
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      console.log("Development mode:", isDevelopment);
+      
       if (window.Twitch) {
         // Cleanup any existing embed
         const container = document.getElementById('twitch-embed');
         if (container) {
           container.innerHTML = '';
         }
+
+        const parentDomains = [
+          currentDomain,
+          'localhost',
+          '127.0.0.1',
+          'lovable.app',
+          'lovableproject.com',
+          currentDomain.endsWith('lovableproject.com') ? currentDomain : '',
+          currentDomain.endsWith('lovable.app') ? currentDomain : ''
+        ].filter(Boolean);
+
+        console.log("Using parent domains:", parentDomains);
 
         const newEmbed = new window.Twitch.Embed("twitch-embed", {
           width: "100%",
@@ -128,26 +144,11 @@ const Dashboard = () => {
           layout: "video",
           autoplay: true,
           muted: true,
-          // Add all possible development and production domains
-          parent: [
-            currentDomain, 
-            'localhost', 
-            '127.0.0.1',
-            'lovable.app',
-            'lovableproject.com',
-            currentDomain.endsWith('lovableproject.com') ? currentDomain : '',
-            currentDomain.endsWith('lovable.app') ? currentDomain : ''
-          ].filter(Boolean), // Remove empty strings
+          parent: parentDomains,
           theme: "dark"
         });
 
-        console.log("Twitch embed created with parent domains:", [
-          currentDomain, 
-          'localhost', 
-          '127.0.0.1',
-          'lovable.app',
-          'lovableproject.com'
-        ]);
+        console.log("Twitch embed created with parent domains:", parentDomains);
 
         newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
           console.log('Twitch embed is ready');
