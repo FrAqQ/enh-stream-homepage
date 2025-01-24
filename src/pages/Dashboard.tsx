@@ -110,7 +110,17 @@ const Dashboard = () => {
       const currentDomain = window.location.hostname.split(':')[0];
       console.log("Current domain for Twitch embed:", currentDomain);
       
+      // Get the protocol (http or https)
+      const protocol = window.location.protocol;
+      console.log("Current protocol:", protocol);
+      
       if (window.Twitch) {
+        // Cleanup any existing embed
+        const container = document.getElementById('twitch-embed');
+        if (container) {
+          container.innerHTML = '';
+        }
+
         const newEmbed = new window.Twitch.Embed("twitch-embed", {
           width: "100%",
           height: "100%",
@@ -122,6 +132,7 @@ const Dashboard = () => {
           parent: [
             currentDomain, 
             'localhost', 
+            '127.0.0.1',
             'lovable.app',
             'lovableproject.com',
             currentDomain.endsWith('lovableproject.com') ? currentDomain : '',
@@ -129,6 +140,14 @@ const Dashboard = () => {
           ].filter(Boolean), // Remove empty strings
           theme: "dark"
         });
+
+        console.log("Twitch embed created with parent domains:", [
+          currentDomain, 
+          'localhost', 
+          '127.0.0.1',
+          'lovable.app',
+          'lovableproject.com'
+        ]);
 
         newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
           console.log('Twitch embed is ready');
