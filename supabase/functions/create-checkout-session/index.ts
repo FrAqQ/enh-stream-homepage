@@ -35,6 +35,11 @@ serve(async (req) => {
       throw new Error('No email found')
     }
 
+    const { priceId } = await req.json();
+    if (!priceId) {
+      throw new Error('No price ID provided');
+    }
+
     console.log('Initializing Stripe...');
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -45,11 +50,6 @@ serve(async (req) => {
       email: email,
       limit: 1
     })
-
-    const { priceId } = await req.json();
-    if (!priceId) {
-      throw new Error('No price ID provided');
-    }
 
     let customer_id = undefined
     if (customers.data.length > 0) {
