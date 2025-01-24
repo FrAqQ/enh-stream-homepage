@@ -44,6 +44,7 @@ const PricingCard = ({
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include'
         }
       );
 
