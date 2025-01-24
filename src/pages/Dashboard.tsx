@@ -33,8 +33,8 @@ const Dashboard = () => {
       const currentDomain = window.location.hostname;
       console.log("Current domain:", currentDomain);
       
-      // Build the embed URL with all possible parent domains
-      const embedUrl = `https://player.twitch.tv/?channel=${channelName}&parent=${currentDomain}`;
+      // Build the embed URL with required parameters
+      const embedUrl = `https://player.twitch.tv/?channel=${channelName}&parent=${currentDomain}&muted=false&autoplay=true`;
       console.log("Generated embed URL:", embedUrl);
       
       return embedUrl;
@@ -132,6 +132,7 @@ const Dashboard = () => {
                     className="w-full h-full"
                     allowFullScreen
                     allow="autoplay; encrypted-media"
+                    sandbox="allow-modals allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                   ></iframe>
                   <div className="mt-2 text-sm text-muted-foreground">
                     Current embed URL: {embedUrl}
