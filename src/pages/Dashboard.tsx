@@ -5,20 +5,91 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Users, MessageSquare, TrendingUp, Activity, Link as LinkIcon, Clock, Calendar } from "lucide-react";
 
+// Mock data for demonstration
+const mockUserData = {
+  username: "DemoUser",
+  userId: "12345",
+  email: "demo@example.com",
+  plan: "Starter",
+};
+
+declare global {
+  interface Window {
+    Twitch?: any;
+  }
+}
+
 const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
   const [followerProgress, setFollowerProgress] = useState(0);
   const [followerPlan, setFollowerPlan] = useState(null);
-  const [embedUrl, setEmbedUrl] = useState("");
   const [twitchChannel, setTwitchChannel] = useState("");
+  const [embed, setEmbed] = useState<any>(null);
 
-  const formatTwitchUrl = (url: string) => {
+  const initTwitchEmbed = (channelName: string) => {
+    try {
+      if (!channelName) return;
+      
+      console.log("Initializing Twitch embed for channel:", channelName);
+      
+      // Cleanup any existing embed
+      const container = document.getElementById('twitch-embed');
+      if (container) {
+        container.innerHTML = '';
+      }
+
+      // Load Twitch embed script if not already loaded
+      if (!window.Twitch) {
+        const script = document.createElement('script');
+        script.src = "https://embed.twitch.tv/embed/v1.js";
+        script.async = true;
+        document.body.appendChild(script);
+        
+        script.onload = () => {
+          createEmbed(channelName);
+        };
+      } else {
+        createEmbed(channelName);
+      }
+    } catch (error) {
+      console.error('Error initializing Twitch embed:', error);
+    }
+  };
+
+  const createEmbed = (channelName: string) => {
+    try {
+      console.log("Creating Twitch embed with channel:", channelName);
+      const currentDomain = window.location.hostname || 'localhost';
+      
+      const newEmbed = new window.Twitch.Embed("twitch-embed", {
+        width: "100%",
+        height: "100%",
+        channel: channelName,
+        layout: "video",
+        autoplay: true,
+        muted: true,
+        parent: [currentDomain],
+        theme: "dark"
+      });
+
+      setEmbed(newEmbed);
+      setTwitchChannel(channelName);
+
+      newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
+        console.log('Twitch embed is ready');
+      });
+
+    } catch (error) {
+      console.error('Error creating Twitch embed:', error);
+    }
+  };
+
+  const extractChannelName = (url: string): string => {
     try {
       if (!url) return "";
       
-      // Extract channel name from various Twitch URL formats
       let channelName = "";
       if (url.includes('twitch.tv/')) {
         channelName = url.split('twitch.tv/')[1].split('/')[0].split('?')[0];
@@ -26,40 +97,20 @@ const Dashboard = () => {
         channelName = url.trim();
       }
       
-      if (!channelName) {
-        console.error('No channel name found in URL');
-        return "";
-      }
-
-      setTwitchChannel(channelName);
-      
-      // Get current domain for the parent parameter
-      const currentDomain = window.location.hostname === '' ? 'localhost' : window.location.hostname;
-      console.log("Current domain:", currentDomain);
-      
-      // Build the embed URL with required parameters
-      const embedUrl = `https://player.twitch.tv/?channel=${channelName}&parent=${currentDomain}&muted=true`;
-      console.log("Generated embed URL:", embedUrl);
-      
-      return embedUrl;
+      console.log("Extracted channel name:", channelName);
+      return channelName;
     } catch (error) {
-      console.error('Error formatting Twitch URL:', error);
+      console.error('Error extracting channel name:', error);
       return "";
     }
   };
 
-  useEffect(() => {
-    if (streamUrl) {
-      const formatted = formatTwitchUrl(streamUrl);
-      console.log("Setting embed URL to:", formatted);
-      setEmbedUrl(formatted);
-    }
-  }, [streamUrl]);
-
   const handleSaveUrl = () => {
     console.log("Saving stream URL:", streamUrl);
-    const formatted = formatTwitchUrl(streamUrl);
-    setEmbedUrl(formatted);
+    const channelName = extractChannelName(streamUrl);
+    if (channelName) {
+      initTwitchEmbed(channelName);
+    }
   };
 
   const addViewers = (count: number) => {
@@ -129,26 +180,11 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
-              {embedUrl ? (
-                <div className="relative w-full h-full">
-                  <iframe
-                    src={embedUrl}
-                    className="w-full h-full"
-                    allowFullScreen
-                    allow="autoplay; encrypted-media"
-                    sandbox="allow-modals allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                  ></iframe>
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    <div>Current channel: {twitchChannel}</div>
-                    <div>Current embed URL: {embedUrl}</div>
-                    <div>Domain: {window.location.hostname || 'localhost'}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  No stream URL configured
-                </div>
-              )}
+              <div id="twitch-embed" className="w-full h-full min-h-[400px]"></div>
+              <div className="mt-2 text-sm text-muted-foreground">
+                <div>Current channel: {twitchChannel}</div>
+                <div>Domain: {window.location.hostname || 'localhost'}</div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -167,7 +203,7 @@ const Dashboard = () => {
                 <label className="text-sm font-medium mb-2 block">Stream URL</label>
                 <div className="flex gap-2">
                   <Input 
-                    placeholder="Enter stream URL" 
+                    placeholder="Enter Twitch channel name or URL" 
                     value={streamUrl}
                     onChange={(e) => setStreamUrl(e.target.value)}
                     className="bg-background/50"
@@ -178,11 +214,11 @@ const Dashboard = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Username</label>
-                  <p className="text-sm text-muted-foreground">{userData.username}</p>
+                  <p className="text-sm text-muted-foreground">{mockUserData.username}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Plan</label>
-                  <p className="text-sm text-muted-foreground">{userData.plan}</p>
+                  <p className="text-sm text-muted-foreground">{mockUserData.plan}</p>
                 </div>
               </div>
             </div>
