@@ -152,15 +152,15 @@ const Pricing = () => {
         />
         <PricingCard 
           title="Basic" 
-          price={17.99} 
+          price={29.99} 
           viewers={35} 
-          chatters={10}
+          chatters={8}
         />
         <PricingCard 
           title="Professional" 
-          price={79.99} 
+          price={89.99} 
           viewers={100} 
-          chatters={30}
+          chatters={20}
           isPopular 
         />
         <PricingCard 
