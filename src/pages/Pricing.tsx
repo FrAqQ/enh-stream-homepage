@@ -8,13 +8,15 @@ const PricingCard = ({
   price, 
   viewers, 
   chatters,
-  isPopular 
+  isPopular,
+  isFree
 }: { 
   title: string;
   price: number;
   viewers: number;
   chatters: number;
   isPopular?: boolean;
+  isFree?: boolean;
 }) => {
   const { user } = useUser();
   const { toast } = useToast();
@@ -25,6 +27,14 @@ const PricingCard = ({
         title: "Login Required",
         description: "Please login to subscribe to this plan",
         variant: "destructive",
+      });
+      return;
+    }
+
+    if (isFree) {
+      toast({
+        title: "Free Plan",
+        description: "You are already on the free plan",
       });
       return;
     }
@@ -41,7 +51,7 @@ const PricingCard = ({
         </span>
       )}
       <h3 className="text-xl font-bold mb-2">{title}</h3>
-      <p className="text-3xl font-bold mb-6">€{price.toFixed(2)}</p>
+      <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
       <ul className="space-y-2 mb-6">
         <li className="flex items-center gap-2">
           <span className="text-primary">✓</span> {viewers} Viewers
@@ -50,14 +60,14 @@ const PricingCard = ({
           <span className="text-primary">✓</span> {chatters} Chatters
         </li>
         <li className="flex items-center gap-2">
-          <span className="text-primary">✓</span> Duration: 1 Month
+          <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : '1 Month'}
         </li>
       </ul>
       <Button 
         className="w-full"
         onClick={handleSelectPlan}
       >
-        Select Plan
+        {isFree ? 'Current Plan' : 'Select Plan'}
       </Button>
     </Card>
   );
@@ -126,7 +136,14 @@ const Pricing = () => {
       <h1 className="text-4xl font-bold text-center mb-4">Viewer & Chatter Plans</h1>
       <p className="text-muted-foreground text-center mb-12">Choose the perfect plan for your streaming needs</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-20">
+        <PricingCard 
+          title="Free" 
+          price={0} 
+          viewers={10} 
+          chatters={2}
+          isFree
+        />
         <PricingCard 
           title="Starter" 
           price={9.99} 
