@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
 import { AlertCircle } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
 
 interface BotControlsProps {
   title: string
@@ -14,11 +16,25 @@ interface BotControlsProps {
 
 export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
   const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [currentViewers, setCurrentViewers] = useState(0);
   const { toast } = useToast();
   const { user } = useUser();
   const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
 
+  // Get the viewer limit based on the user's plan
+  const viewerLimit = PLAN_VIEWER_LIMITS[user?.plan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+
   const addViewer = async (viewerCount: number) => {
+    // Check if adding viewers would exceed the limit
+    if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
+      toast({
+        title: "Viewer Limit Reached",
+        description: `You can't add more viewers. Your plan allows a maximum of ${viewerLimit} viewers.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       if (!hasShownCertWarning) {
         toast({
@@ -44,9 +60,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        mode: "cors", // Explizit CORS Mode setzen
+        mode: "cors",
         body: JSON.stringify({
-          user_id: user?.id || "123", // Fallback für Test
+          user_id: user?.id || "123",
           twitch_url: streamUrl,
           viewer_count: viewerCount
         })
@@ -74,6 +90,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         });
         return;
       }
+
+      // Update current viewers count
+      setCurrentViewers(prev => prev + viewerCount);
 
       toast({
         title: "Success",
@@ -130,6 +149,16 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }, 5000);
   };
 
+  // Calculate if specific buttons should be disabled based on remaining viewer capacity
+  const isButtonDisabled = (count: number) => {
+    if (count < 0) {
+      // For negative counts (removal), check if we have enough viewers to remove
+      return isOnCooldown || !streamUrl || Math.abs(count) > currentViewers;
+    }
+    // For positive counts (addition), check if we would exceed the limit
+    return isOnCooldown || !streamUrl || currentViewers + count > viewerLimit;
+  };
+
   return (
     <Card className="glass-morphism">
       <CardHeader>
@@ -142,25 +171,32 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Current Viewers</span>
+              <span>{currentViewers}/{viewerLimit}</span>
+            </div>
+            <Progress value={(currentViewers / viewerLimit) * 100} />
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button 
               onClick={() => handleButtonClick(1)} 
               variant="outline"
-              disabled={isOnCooldown || !streamUrl}
+              disabled={isButtonDisabled(1)}
             >
               +1 {type}
             </Button>
             <Button 
               onClick={() => handleButtonClick(3)} 
               variant="outline"
-              disabled={isOnCooldown || !streamUrl}
+              disabled={isButtonDisabled(3)}
             >
               +3 {type}s
             </Button>
             <Button 
               onClick={() => handleButtonClick(5)} 
               variant="outline"
-              disabled={isOnCooldown || !streamUrl}
+              disabled={isButtonDisabled(5)}
             >
               +5 {type}s
             </Button>
@@ -170,7 +206,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               onClick={() => handleButtonClick(-1)} 
               variant="outline" 
               className="text-red-500 hover:text-red-600"
-              disabled={isOnCooldown || !streamUrl}
+              disabled={isButtonDisabled(-1)}
             >
               -1 {type}
             </Button>
@@ -178,7 +214,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               onClick={() => handleButtonClick(-3)} 
               variant="outline" 
               className="text-red-500 hover:text-red-600"
-              disabled={isOnCooldown || !streamUrl}
+              disabled={isButtonDisabled(-3)}
             >
               -3 {type}s
             </Button>
@@ -186,7 +222,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               onClick={() => handleButtonClick(-5)} 
               variant="outline" 
               className="text-red-500 hover:text-red-600"
-              disabled={isOnCooldown || !streamUrl}
+              disabled={isButtonDisabled(-5)}
             >
               -5 {type}s
             </Button>
