@@ -21,9 +21,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("Adding viewers:", viewerCount);
       console.log("Stream URL:", streamUrl);
       console.log("User ID:", user?.id);
-
-      // Convert HTTP to HTTPS if needed
-      const apiUrl = "http://152.53.122.45:5000/add_viewer".replace('http://', 'https://');
+      
+      const apiUrl = "http://152.53.122.45:5000/add_viewer";
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -55,7 +54,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       let errorMessage = "Failed to add viewers. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage += "The viewer server appears to be offline or not accessible via HTTPS. Please contact support.";
+          errorMessage += "Please ensure the viewer server is running and accessible at http://152.53.122.45:5000. If the issue persists, contact support.";
         } else {
           errorMessage += error.message;
         }
