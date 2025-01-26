@@ -30,10 +30,12 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      console.log("Starting viewer addition request:");
-      console.log("- Viewer count:", viewerCount);
-      console.log("- Stream URL:", streamUrl);
-      console.log("- User ID:", user?.id);
+      console.log("Starting viewer addition request with details:");
+      console.log({
+        user_id: user?.id,
+        twitch_url: streamUrl,
+        viewer_count: viewerCount
+      });
       
       const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
@@ -61,10 +63,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("API Response data:", data);
 
       // Check if the message contains an error, regardless of status
-      if (data.message && data.message.toLowerCase().includes('fehler')) {
+      if (data.message && (
+        data.message.toLowerCase().includes('fehler') || 
+        data.message.toLowerCase().includes('error') ||
+        data.message.toLowerCase().includes('konnte nicht gestartet')
+      )) {
+        console.error("Server reported an error:", data.message);
         toast({
           title: "Warning",
-          description: "The viewer bot encountered an issue. Please try again or contact support if the problem persists.",
+          description: "The viewer bot encountered an issue. Server message: " + data.message,
           variant: "destructive",
         });
         return;
@@ -74,6 +81,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         title: "Success",
         description: data.message || "Viewers added successfully!",
       });
+      
+      // Call onAdd even if there was an error to update UI
+      onAdd(viewerCount);
     } catch (error) {
       console.error("Detailed error information:", {
         error,
@@ -116,7 +126,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       await addViewer(count);
     }
     
-    onAdd(count);
     setIsOnCooldown(true);
     
     setTimeout(() => {
