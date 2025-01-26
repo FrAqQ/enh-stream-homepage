@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
@@ -6,6 +6,7 @@ import { useUser } from "@/lib/useUser"
 import { AlertCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
+import { supabase } from "@/lib/supabaseClient"
 
 interface BotControlsProps {
   title: string
@@ -20,9 +21,34 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const { toast } = useToast();
   const { user } = useUser();
   const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>("Free");
+
+  // Fetch user's plan from profiles table
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (user?.id) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user plan:', error);
+          setUserPlan("Free"); // Fallback to Free plan
+          return;
+        }
+
+        console.log("Fetched user plan:", profile?.plan);
+        setUserPlan(profile?.plan || "Free");
+      }
+    };
+
+    fetchUserPlan();
+  }, [user]);
 
   // Get the viewer limit based on the user's plan
-  const viewerLimit = PLAN_VIEWER_LIMITS[user?.plan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+  const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
   const addViewer = async (viewerCount: number) => {
     // Check if adding viewers would exceed the limit
