@@ -60,6 +60,16 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       const data = await response.json();
       console.log("API Response data:", data);
 
+      // Check if the message contains an error, regardless of status
+      if (data.message && data.message.toLowerCase().includes('fehler')) {
+        toast({
+          title: "Warning",
+          description: "The viewer bot encountered an issue. Please try again or contact support if the problem persists.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Success",
         description: data.message || "Viewers added successfully!",
