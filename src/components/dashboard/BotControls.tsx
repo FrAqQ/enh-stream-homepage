@@ -34,7 +34,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
         if (error) {
           console.error('Error fetching user plan:', error);
-          setUserPlan("Free"); // Fallback to Free plan
+          setUserPlan("Free");
           return;
         }
 
@@ -46,11 +46,20 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     fetchUserPlan();
   }, [user]);
 
-  // Get the viewer limit based on the user's plan
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
   const addViewer = async (viewerCount: number) => {
-    // Check if adding viewers would exceed the limit
+    // For removing viewers, check if we have enough viewers to remove
+    if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
+      toast({
+        title: "Not Enough Viewers",
+        description: `You can't remove ${Math.abs(viewerCount)} viewers when you only have ${currentViewers}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For adding viewers, check against the limit
     if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
       toast({
         title: "Viewer Limit Reached",
@@ -71,7 +80,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      console.log("Starting viewer addition request with details:", {
+      console.log("Starting viewer addition/removal request with details:", {
         user_id: user?.id,
         twitch_url: streamUrl,
         viewer_count: viewerCount
@@ -89,7 +98,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         body: JSON.stringify({
           user_id: user?.id || "123",
           twitch_url: streamUrl,
-          viewer_count: viewerCount
+          viewer_count: viewerCount // This now can be negative
         })
       });
 
@@ -116,12 +125,14 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         return;
       }
 
-      // Update current viewers count
+      // Update current viewers count (now handles both addition and removal)
       setCurrentViewers(prev => prev + viewerCount);
 
       toast({
         title: "Success",
-        description: data.message || "Viewers added successfully!",
+        description: viewerCount > 0 
+          ? "Viewers added successfully!" 
+          : "Viewers removed successfully!",
       });
       
       onAdd(viewerCount);
@@ -132,7 +143,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         message: error instanceof Error ? error.message : 'Unknown error',
       });
       
-      let errorMessage = "Failed to add viewers. ";
+      let errorMessage = "Failed to modify viewers. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
           errorMessage = "Server connection failed. Please:\n" +
@@ -157,7 +168,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (isOnCooldown) {
       toast({
         title: "Cooldown Active",
-        description: "Please wait 5 seconds before adding more bots.",
+        description: "Please wait 5 seconds before modifying bots.",
         variant: "destructive",
       });
       return;
