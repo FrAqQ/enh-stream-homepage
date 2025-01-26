@@ -16,19 +16,19 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
-  const [hasShownHttpWarning, setHasShownHttpWarning] = useState(false);
+  const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
 
   const addViewer = async (viewerCount: number) => {
     try {
-      // Show HTTP warning only once
-      if (!hasShownHttpWarning) {
+      // Show certificate warning only once
+      if (!hasShownCertWarning) {
         toast({
           title: "Security Notice",
-          description: "This application is making requests to an HTTP endpoint. For security, consider upgrading to HTTPS.",
+          description: "This application is using a self-signed certificate. The connection is encrypted but not validated by a trusted authority.",
           duration: 6000,
-          variant: "destructive",
+          variant: "warning",
         });
-        setHasShownHttpWarning(true);
+        setHasShownCertWarning(true);
       }
 
       console.log("Starting viewer addition request:");
@@ -36,7 +36,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("- Stream URL:", streamUrl);
       console.log("- User ID:", user?.id);
       
-      const apiUrl = "http://152.53.122.45:5000/add_viewer";
+      const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
       console.log("Making fetch request to:", apiUrl);
       const response = await fetch(apiUrl, {
@@ -78,10 +78,10 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
           errorMessage += "Server connection failed. Please check:\n" +
-                         "1. The server is running at http://152.53.122.45:5000\n" +
-                         "2. Your browser allows mixed content (HTTP requests from HTTPS pages)\n" +
+                         "1. The server is running at https://152.53.122.45:5000\n" +
+                         "2. Accept the self-signed certificate by visiting the API URL directly\n" +
                          "3. The server is accessible from your network\n" +
-                         "4. Try opening your browser's developer tools (F12) and look for blocked mixed content\n" +
+                         "4. Try opening your browser's developer tools (F12) to see detailed errors\n" +
                          "If issues persist, contact support.";
         } else {
           errorMessage += error.message;
@@ -123,7 +123,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       <CardHeader>
         <CardTitle className="text-xl font-semibold flex items-center gap-2">
           {title}
-          {!hasShownHttpWarning && (
+          {!hasShownCertWarning && (
             <AlertCircle className="h-5 w-5 text-yellow-500" />
           )}
         </CardTitle>
