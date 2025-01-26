@@ -247,14 +247,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
             >
               -1 {type}
             </Button>
-            <Button 
-              onClick={() => handleButtonClick(-currentViewers)} 
-              variant="outline" 
-              className="text-red-500 hover:text-red-600"
-              disabled={isButtonDisabled(-currentViewers)}
-            >
-              Destroy all {type}s
-            </Button>
           </div>
         </div>
       </CardContent>
