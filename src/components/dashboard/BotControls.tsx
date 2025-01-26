@@ -48,7 +48,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
-  const addViewer = async (viewerCount: number) => {
+  const modifyViewers = async (viewerCount: number) => {
     // For removing viewers, check if we have enough viewers to remove
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
@@ -80,13 +80,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      console.log("Starting viewer addition/removal request with details:", {
+      // Determine which endpoint to use based on whether we're adding or removing viewers
+      const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
+      const apiUrl = `https://152.53.122.45:5000/${endpoint}`;
+      
+      console.log(`Starting viewer ${endpoint} request with details:`, {
         user_id: user?.id,
         twitch_url: streamUrl,
-        viewer_count: viewerCount
+        viewer_count: Math.abs(viewerCount) // Send positive number for both endpoints
       });
-      
-      const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -98,7 +100,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         body: JSON.stringify({
           user_id: user?.id || "123",
           twitch_url: streamUrl,
-          viewer_count: viewerCount // This now can be negative
+          viewer_count: Math.abs(viewerCount) // Always send positive number
         })
       });
 
@@ -125,7 +127,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         return;
       }
 
-      // Update current viewers count (now handles both addition and removal)
+      // Update current viewers count
       setCurrentViewers(prev => prev + viewerCount);
 
       toast({
@@ -175,7 +177,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
 
     if (type === "viewer") {
-      await addViewer(count);
+      await modifyViewers(count);
     }
     
     setIsOnCooldown(true);
