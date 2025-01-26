@@ -25,14 +25,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       const response = await fetch("http://152.53.122.45:5000/add_viewer", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Access-Control-Allow-Origin": "*"
         },
+        mode: "cors",
         body: JSON.stringify({
           user_id: user?.id,
           twitch_url: streamUrl,
           viewer_count: viewerCount
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
       console.log("API Response:", data);
@@ -43,9 +50,19 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       });
     } catch (error) {
       console.error("Error adding viewers:", error);
+      
+      let errorMessage = "Failed to add viewers. ";
+      if (error instanceof Error) {
+        if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
+          errorMessage += "The viewer server appears to be offline. Please try again later or contact support.";
+        } else {
+          errorMessage += error.message;
+        }
+      }
+
       toast({
         title: "Error",
-        description: "Failed to add viewers. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
