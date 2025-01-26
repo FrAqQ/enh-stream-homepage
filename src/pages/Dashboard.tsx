@@ -295,11 +295,13 @@ const Dashboard = () => {
           title="Viewer Bot Controls"
           onAdd={addViewers}
           type="viewer"
+          streamUrl={streamUrl}
         />
         <BotControls
           title="Chatter Bot Controls"
           onAdd={addChatters}
           type="chatter"
+          streamUrl={streamUrl}
         />
       </div>
 
