@@ -30,8 +30,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      console.log("Starting viewer addition request with details:");
-      console.log({
+      console.log("Starting viewer addition request with details:", {
         user_id: user?.id,
         twitch_url: streamUrl,
         viewer_count: viewerCount
@@ -39,18 +38,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       
       const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
-      console.log("Making fetch request to:", apiUrl);
-
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        mode: "cors",
-        credentials: "include",
+        mode: "cors", // Explizit CORS Mode setzen
         body: JSON.stringify({
-          user_id: user?.id,
+          user_id: user?.id || "123", // Fallback für Test
           twitch_url: streamUrl,
           viewer_count: viewerCount
         })
@@ -199,4 +195,3 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       </CardContent>
     </Card>
   )
-}
