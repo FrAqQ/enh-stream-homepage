@@ -23,7 +23,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("- Stream URL:", streamUrl);
       console.log("- User ID:", user?.id);
       
-      const apiUrl = "https://152.53.122.45:5000/add_viewer";
+      // Using HTTP instead of HTTPS
+      const apiUrl = "http://152.53.122.45:5000/add_viewer";
       
       console.log("Making fetch request to:", apiUrl);
       const response = await fetch(apiUrl, {
@@ -31,9 +32,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Accept"
         },
         mode: "cors",
         credentials: "omit",
@@ -68,9 +66,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
           errorMessage += "Server connection failed. Please check:\n" +
-                         "1. The server is running at https://152.53.122.45:5000\n" +
-                         "2. CORS is properly configured on the server\n" +
-                         "3. The server's SSL certificate is valid\n" +
+                         "1. The server is running at http://152.53.122.45:5000\n" +
+                         "2. Your browser allows mixed content (HTTP requests from HTTPS pages)\n" +
+                         "3. The server is accessible from your network\n" +
                          "If issues persist, contact support.";
         } else {
           errorMessage += error.message;
