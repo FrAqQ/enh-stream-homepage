@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Link } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface StreamSettingsProps {
   streamUrl: string
@@ -15,6 +16,24 @@ interface StreamSettingsProps {
 }
 
 export function StreamSettings({ streamUrl, setStreamUrl, handleSaveUrl, userData }: StreamSettingsProps) {
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    if (!streamUrl.includes('twitch.tv/')) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid Twitch URL (e.g., https://twitch.tv/username)",
+        variant: "destructive",
+      });
+      return;
+    }
+    handleSaveUrl();
+    toast({
+      title: "Success",
+      description: "Stream URL saved successfully!",
+    });
+  };
+
   return (
     <Card className="glass-morphism">
       <CardHeader>
@@ -29,12 +48,12 @@ export function StreamSettings({ streamUrl, setStreamUrl, handleSaveUrl, userDat
             <label className="text-sm font-medium mb-2 block">Stream URL</label>
             <div className="flex gap-2">
               <Input 
-                placeholder="Enter Twitch channel name or URL" 
+                placeholder="Enter Twitch URL (e.g., https://twitch.tv/username)" 
                 value={streamUrl}
                 onChange={(e) => setStreamUrl(e.target.value)}
                 className="bg-background/50"
               />
-              <Button onClick={handleSaveUrl}>Save</Button>
+              <Button onClick={handleSave}>Save</Button>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
