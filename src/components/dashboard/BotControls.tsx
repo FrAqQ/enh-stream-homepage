@@ -26,7 +26,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           title: "Security Notice",
           description: "This application is using a self-signed certificate. The connection is encrypted but not validated by a trusted authority.",
           duration: 6000,
-          variant: "warning",
+          variant: "default", // Changed from "warning" to "default"
         });
         setHasShownCertWarning(true);
       }
