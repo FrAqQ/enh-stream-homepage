@@ -45,7 +45,10 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
+        mode: "cors",
+        credentials: "include",
         body: JSON.stringify({
           user_id: user?.id,
           twitch_url: streamUrl,
@@ -62,7 +65,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       const data = await response.json();
       console.log("API Response data:", data);
 
-      // Check if the message contains an error, regardless of status
       if (data.message && (
         data.message.toLowerCase().includes('fehler') || 
         data.message.toLowerCase().includes('error') ||
@@ -82,7 +84,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         description: data.message || "Viewers added successfully!",
       });
       
-      // Call onAdd even if there was an error to update UI
       onAdd(viewerCount);
     } catch (error) {
       console.error("Detailed error information:", {
