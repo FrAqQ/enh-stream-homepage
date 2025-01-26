@@ -22,7 +22,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("Stream URL:", streamUrl);
       console.log("User ID:", user?.id);
 
-      const response = await fetch("http://localhost:5000/add_viewer", {
+      const response = await fetch("http://152.53.122.45:5000/add_viewer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
