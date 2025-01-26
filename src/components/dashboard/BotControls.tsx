@@ -18,18 +18,25 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const addViewer = async (viewerCount: number) => {
     try {
-      console.log("Adding viewers:", viewerCount);
-      console.log("Stream URL:", streamUrl);
-      console.log("User ID:", user?.id);
+      console.log("Starting viewer addition request:");
+      console.log("- Viewer count:", viewerCount);
+      console.log("- Stream URL:", streamUrl);
+      console.log("- User ID:", user?.id);
       
       const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
+      console.log("Making fetch request to:", apiUrl);
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Accept"
         },
+        mode: "cors",
+        credentials: "omit",
         body: JSON.stringify({
           user_id: user?.id,
           twitch_url: streamUrl,
@@ -37,24 +44,34 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         })
       });
 
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("API Response:", data);
+      console.log("API Response data:", data);
 
       toast({
         title: "Success",
         description: data.message || "Viewers added successfully!",
       });
     } catch (error) {
-      console.error("Error adding viewers:", error);
+      console.error("Detailed error information:", {
+        error,
+        type: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
       
       let errorMessage = "Failed to add viewers. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage += "Please ensure the viewer server is running and accessible at https://152.53.122.45:5000. If the issue persists, contact support.";
+          errorMessage += "Server connection failed. Please check:\n" +
+                         "1. The server is running at https://152.53.122.45:5000\n" +
+                         "2. CORS is properly configured on the server\n" +
+                         "3. The server's SSL certificate is valid\n" +
+                         "If issues persist, contact support.";
         } else {
           errorMessage += error.message;
         }
