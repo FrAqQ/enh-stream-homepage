@@ -22,7 +22,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("Stream URL:", streamUrl);
       console.log("User ID:", user?.id);
       
-      const apiUrl = "http://152.53.122.45:5000/add_viewer";
+      const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -54,7 +54,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       let errorMessage = "Failed to add viewers. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage += "Please ensure the viewer server is running and accessible at http://152.53.122.45:5000. If the issue persists, contact support.";
+          errorMessage += "Please ensure the viewer server is running and accessible at https://152.53.122.45:5000. If the issue persists, contact support.";
         } else {
           errorMessage += error.message;
         }
