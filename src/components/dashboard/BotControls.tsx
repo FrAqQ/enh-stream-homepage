@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
+import { AlertCircle } from "lucide-react"
 
 interface BotControlsProps {
   title: string
@@ -15,15 +16,26 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
+  const [hasShownHttpWarning, setHasShownHttpWarning] = useState(false);
 
   const addViewer = async (viewerCount: number) => {
     try {
+      // Show HTTP warning only once
+      if (!hasShownHttpWarning) {
+        toast({
+          title: "Security Notice",
+          description: "This application is making requests to an HTTP endpoint. For security, consider upgrading to HTTPS.",
+          duration: 6000,
+          variant: "destructive",
+        });
+        setHasShownHttpWarning(true);
+      }
+
       console.log("Starting viewer addition request:");
       console.log("- Viewer count:", viewerCount);
       console.log("- Stream URL:", streamUrl);
       console.log("- User ID:", user?.id);
       
-      // Using HTTP instead of HTTPS
       const apiUrl = "http://152.53.122.45:5000/add_viewer";
       
       console.log("Making fetch request to:", apiUrl);
@@ -69,6 +81,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                          "1. The server is running at http://152.53.122.45:5000\n" +
                          "2. Your browser allows mixed content (HTTP requests from HTTPS pages)\n" +
                          "3. The server is accessible from your network\n" +
+                         "4. Try opening your browser's developer tools (F12) and look for blocked mixed content\n" +
                          "If issues persist, contact support.";
         } else {
           errorMessage += error.message;
@@ -108,7 +121,12 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   return (
     <Card className="glass-morphism">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
+          {title}
+          {!hasShownHttpWarning && (
+            <AlertCircle className="h-5 w-5 text-yellow-500" />
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
