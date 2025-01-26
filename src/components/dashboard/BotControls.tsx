@@ -26,7 +26,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           title: "Security Notice",
           description: "This application is using a self-signed certificate. The connection is encrypted but not validated by a trusted authority.",
           duration: 6000,
-          variant: "default", // Changed from "warning" to "default"
+          variant: "default",
         });
         setHasShownCertWarning(true);
       }
@@ -78,10 +78,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
           errorMessage += "Server connection failed. Please check:\n" +
-                         "1. The server is running at https://152.53.122.45:5000\n" +
-                         "2. Accept the self-signed certificate by visiting the API URL directly\n" +
-                         "3. The server is accessible from your network\n" +
-                         "4. Try opening your browser's developer tools (F12) to see detailed errors\n" +
+                         "1. Visit https://152.53.122.45:5000 directly in your browser\n" +
+                         "2. Click 'Advanced' and 'Accept the Risk'\n" +
+                         "3. Return to this page and try again\n" +
                          "If issues persist, contact support.";
         } else {
           errorMessage += error.message;
