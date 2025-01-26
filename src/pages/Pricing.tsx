@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useUser } from "@/lib/useUser";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabaseClient";
 
 const PricingCard = ({ 
   title, 
@@ -21,7 +22,7 @@ const PricingCard = ({
   const { user } = useUser();
   const { toast } = useToast();
 
-  const handleSelectPlan = () => {
+  const handleSelectPlan = async () => {
     if (!user) {
       toast({
         title: "Login Required",
@@ -39,7 +40,33 @@ const PricingCard = ({
       return;
     }
 
-    // Open Stripe payment link in new tab
+    // For testing: If it's the Basic plan, update the user's plan directly
+    if (title === "Basic") {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ plan: 'Basic' })
+          .eq('id', user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Basic plan assigned for testing",
+        });
+        return;
+      } catch (error) {
+        console.error('Error updating plan:', error);
+        toast({
+          title: "Error",
+          description: "Failed to assign Basic plan",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // For other plans, open Stripe payment link
     window.open('https://buy.stripe.com/test_14k14L3YLd2n22Y289', '_blank');
   };
 
