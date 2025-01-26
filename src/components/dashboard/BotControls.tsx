@@ -23,7 +23,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
   const [userPlan, setUserPlan] = useState<string>("Free");
 
-  // Fetch user's plan from profiles table
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
@@ -175,7 +174,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }, 5000);
   };
 
-  // Calculate if specific buttons should be disabled based on remaining viewer capacity
   const isButtonDisabled = (count: number) => {
     if (count < 0) {
       // For negative counts (removal), check if we have enough viewers to remove
@@ -199,7 +197,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Current Viewers</span>
+              <span>Current {type === "viewer" ? "Viewers" : "Chatters"}</span>
               <span>{currentViewers}/{viewerLimit}</span>
             </div>
             <Progress value={(currentViewers / viewerLimit) * 100} />
