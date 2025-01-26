@@ -24,8 +24,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (!hasShownCertWarning) {
         toast({
           title: "Security Notice",
-          description: "This application is using a self-signed certificate. The connection is encrypted but not validated by a trusted authority.",
-          duration: 6000,
+          description: "Please visit https://152.53.122.45:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
+          duration: 10000,
           variant: "default",
         });
         setHasShownCertWarning(true);
@@ -39,11 +39,14 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       const apiUrl = "https://152.53.122.45:5000/add_viewer";
       
       console.log("Making fetch request to:", apiUrl);
+
+      // Add rejectUnauthorized: false to the request options
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          "Access-Control-Allow-Origin": "*"
         },
         mode: "cors",
         credentials: "omit",
@@ -77,11 +80,11 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       let errorMessage = "Failed to add viewers. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage += "Server connection failed. Please check:\n" +
-                         "1. Visit https://152.53.122.45:5000 directly in your browser\n" +
-                         "2. Click 'Advanced' and 'Accept the Risk'\n" +
-                         "3. Return to this page and try again\n" +
-                         "If issues persist, contact support.";
+          errorMessage = "Server connection failed. Please:\n" +
+                        "1. Visit https://152.53.122.45:5000 directly\n" +
+                        "2. Click 'Advanced' and 'Accept the Risk'\n" +
+                        "3. Return here and try again\n" +
+                        "If issues persist, contact support.";
         } else {
           errorMessage += error.message;
         }
