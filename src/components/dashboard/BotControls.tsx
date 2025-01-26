@@ -20,7 +20,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const addViewer = async (viewerCount: number) => {
     try {
-      // Show certificate warning only once
       if (!hasShownCertWarning) {
         toast({
           title: "Security Notice",
@@ -40,16 +39,11 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       
       console.log("Making fetch request to:", apiUrl);
 
-      // Add rejectUnauthorized: false to the request options
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Access-Control-Allow-Origin": "*"
         },
-        mode: "cors",
-        credentials: "omit",
         body: JSON.stringify({
           user_id: user?.id,
           twitch_url: streamUrl,
