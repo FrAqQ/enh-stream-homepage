@@ -248,20 +248,12 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               -1 {type}
             </Button>
             <Button 
-              onClick={() => handleButtonClick(-3)} 
+              onClick={() => handleButtonClick(-currentViewers)} 
               variant="outline" 
               className="text-red-500 hover:text-red-600"
-              disabled={isButtonDisabled(-3)}
+              disabled={isButtonDisabled(-currentViewers)}
             >
-              -3 {type}s
-            </Button>
-            <Button 
-              onClick={() => handleButtonClick(-5)} 
-              variant="outline" 
-              className="text-red-500 hover:text-red-600"
-              disabled={isButtonDisabled(-5)}
-            >
-              -5 {type}s
+              Destroy all {type}s
             </Button>
           </div>
         </div>
