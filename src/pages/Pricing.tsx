@@ -60,7 +60,6 @@ const PricingCard = ({
           description: "You have been switched to the Free plan",
         });
         
-        // Update the current plan state
         window.location.reload();
         return;
       } catch (error) {
@@ -89,10 +88,8 @@ const PricingCard = ({
         throw new Error('No session found');
       }
 
-      console.log('Starting checkout process for price:', priceId);
-      console.log('Session token:', session.access_token);
-      
-      const response = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session`, {
+      // First check if user is already subscribed to this plan
+      const response = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,13 +98,35 @@ const PricingCard = ({
         body: JSON.stringify({ priceId }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      const subscriptionData = await response.json();
+      
+      if (subscriptionData.subscribed) {
+        toast({
+          title: "Already Subscribed",
+          description: "You already have an active subscription to this plan",
+        });
+        return;
+      }
+
+      console.log('Starting checkout process for price:', priceId);
+      console.log('Session token:', session.access_token);
+      
+      const checkoutResponse = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!checkoutResponse.ok) {
+        const errorData = await checkoutResponse.json();
         console.error('Checkout error response:', errorData);
         throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
-      const { url } = await response.json();
+      const { url } = await checkoutResponse.json();
       if (url) {
         console.log('Redirecting to checkout URL:', url);
         window.open(url, '_blank');
