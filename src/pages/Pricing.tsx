@@ -48,34 +48,43 @@ const PricingCard = ({
 
     if (isFree) {
       try {
+        // First, try to cancel any active subscription
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error('No session found');
         }
 
-        console.log('Attempting to cancel subscription...');
-        const cancelResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/cancel-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          }
-        });
-
-        const cancelData = await cancelResponse.json();
-        
-        if (!cancelResponse.ok) {
-          throw new Error(cancelData.error || 'Failed to cancel subscription');
-        }
-
-        console.log('Subscription cancellation response:', cancelData);
-        
-        if (cancelData.cancelled_count > 0) {
-          toast({
-            title: "Subscription Cancelled",
-            description: "Your previous subscription has been cancelled",
+        try {
+          // Call the cancel-subscription endpoint
+          const cancelResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/cancel-subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            }
           });
+
+          if (!cancelResponse.ok) {
+            console.log('No active subscription to cancel or error cancelling');
+          } else {
+            console.log('Successfully cancelled active subscription');
+          }
+        } catch (error) {
+          console.error('Error cancelling subscription:', error);
+          // Continue with switching to free plan even if cancellation fails
         }
+
+        // Update profile to free plan
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            plan: 'Free',
+            subscription_status: 'inactive',
+            current_period_end: null
+          })
+          .eq('id', user.id);
+
+        if (error) throw error;
 
         toast({
           title: "Plan Updated",
@@ -88,7 +97,7 @@ const PricingCard = ({
         console.error('Error switching to free plan:', error);
         toast({
           title: "Error",
-          description: error.message || "Failed to switch to free plan. Please try again.",
+          description: "Failed to switch to free plan. Please try again.",
           variant: "destructive",
         });
         return;
@@ -110,36 +119,36 @@ const PricingCard = ({
         throw new Error('No session found');
       }
 
-      // First check subscription status
       console.log('Checking subscription status...');
-      const subscriptionResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      if (!subscriptionResponse.ok) {
-        const errorData = await subscriptionResponse.json();
-        console.error('Subscription check error response:', errorData);
-        // If we can't check subscription status, don't proceed with checkout
-        throw new Error(errorData.error || 'Failed to check subscription status');
-      }
-
-      const subscriptionData = await subscriptionResponse.json();
-      console.log('Subscription check response:', subscriptionData);
-      
-      if (subscriptionData.subscribed) {
-        toast({
-          title: "Already Subscribed",
-          description: "You already have an active subscription to this plan",
+      try {
+        const response = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ priceId }),
         });
-        return;
+
+        if (!response.ok) {
+          throw new Error(`Subscription check failed: ${response.status}`);
+        }
+
+        const subscriptionData = await response.json();
+        console.log('Subscription check response:', subscriptionData);
+        
+        if (subscriptionData.subscribed) {
+          toast({
+            title: "Already Subscribed",
+            description: "You already have an active subscription to this plan",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Subscription check error:', error);
+        // Continue with checkout even if subscription check fails
       }
 
-      // If not subscribed, proceed with checkout
       console.log('Creating checkout session...');
       const checkoutResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
         method: 'POST',
@@ -263,7 +272,7 @@ const FollowerPricingCard = ({
 
       const { url } = await response.json();
       if (url) {
-        window.open(url, '_blank');
+        window.open(url, '_blank'); // Hier öffnen wir den Link in einem neuen Tab
       } else {
         throw new Error('No checkout URL received');
       }
