@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
 }
 
 serve(async (req) => {
@@ -45,6 +44,8 @@ serve(async (req) => {
       throw new Error('No price ID provided');
     }
 
+    console.log('Price ID:', priceId);
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
@@ -54,21 +55,21 @@ serve(async (req) => {
     const customers = await stripe.customers.list({
       email: user.email,
       limit: 1
-    })
+    });
 
-    let customerId = undefined
+    let customerId = undefined;
     if (customers.data.length > 0) {
-      customerId = customers.data[0].id
+      customerId = customers.data[0].id;
       // Check if already subscribed
       const subscriptions = await stripe.subscriptions.list({
         customer: customers.data[0].id,
         status: 'active',
         price: priceId,
         limit: 1
-      })
+      });
 
       if (subscriptions.data.length > 0) {
-        throw new Error('Already subscribed to this plan')
+        throw new Error('Already subscribed to this plan');
       }
     }
 

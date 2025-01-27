@@ -42,6 +42,15 @@ const PricingCard = ({
       return;
     }
 
+    if (!priceId) {
+      toast({
+        title: "Configuration Error",
+        description: "No price ID configured for this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -49,6 +58,8 @@ const PricingCard = ({
       }
 
       console.log('Starting checkout process for price:', priceId);
+      console.log('Session token:', session.access_token);
+      
       const response = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session`, {
         method: 'POST',
         headers: {
@@ -60,12 +71,13 @@ const PricingCard = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Checkout error:', errorData);
+        console.error('Checkout error response:', errorData);
         throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
       const { url } = await response.json();
       if (url) {
+        console.log('Redirecting to checkout URL:', url);
         window.location.href = url;
       } else {
         throw new Error('No checkout URL received');
