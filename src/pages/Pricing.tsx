@@ -78,7 +78,7 @@ const PricingCard = ({
       const { url } = await response.json();
       if (url) {
         console.log('Redirecting to checkout URL:', url);
-        window.location.href = url;
+        window.open(url, '_blank'); // Hier öffnen wir den Link in einem neuen Tab
       } else {
         throw new Error('No checkout URL received');
       }
@@ -181,7 +181,7 @@ const FollowerPricingCard = ({
 
       const { url } = await response.json();
       if (url) {
-        window.location.href = url;
+        window.open(url, '_blank'); // Hier öffnen wir den Link in einem neuen Tab
       } else {
         throw new Error('No checkout URL received');
       }
