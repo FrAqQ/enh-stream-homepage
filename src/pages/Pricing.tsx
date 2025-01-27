@@ -340,7 +340,7 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5}
-          priceId="price_YOUR_ACTUAL_PRICE_ID"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
           currentPlan={currentPlan}
         />
         <PricingCard 
