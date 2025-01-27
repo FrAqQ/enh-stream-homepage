@@ -9,7 +9,8 @@ const PricingCard = ({
   viewers, 
   chatters,
   isPopular,
-  isFree
+  isFree,
+  priceId
 }: { 
   title: string;
   price: number;
@@ -17,6 +18,7 @@ const PricingCard = ({
   chatters: number;
   isPopular?: boolean;
   isFree?: boolean;
+  priceId?: string;
 }) => {
   const { user } = useUser();
   const { toast } = useToast();
@@ -39,8 +41,31 @@ const PricingCard = ({
       return;
     }
 
-    // Open Stripe payment link for all paid plans
-    window.open('https://buy.stripe.com/test_14k14L3YLd2n22Y289', '_blank');
+    try {
+      console.log('Starting checkout process for price:', priceId);
+      const response = await fetch('/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      const { url } = await response.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start checkout process. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -149,19 +174,22 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5}
+          priceId="price_XXXXX" // Hier musst du deine echte price_id von Stripe einsetzen
         />
         <PricingCard 
           title="Basic" 
           price={29.99} 
           viewers={35} 
           chatters={8}
+          priceId="price_YYYYY" // Hier musst du deine echte price_id von Stripe einsetzen
         />
         <PricingCard 
           title="Professional" 
           price={89.99} 
           viewers={100} 
           chatters={20}
-          isPopular 
+          isPopular
+          priceId="price_ZZZZZ" // Hier musst du deine echte price_id von Stripe einsetzen
         />
         <PricingCard 
           title="Expert" 
