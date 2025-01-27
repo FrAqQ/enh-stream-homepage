@@ -241,7 +241,6 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5}
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
@@ -249,8 +248,7 @@ const Pricing = () => {
           price={29.99} 
           viewers={35} 
           chatters={8}
-          // Replace with your actual Stripe Price ID
-          priceId="price_YOUR_ACTUAL_PRICE_ID"
+          priceId="price_1Qklku01379EnnGJtin4BVcc"
         />
         <PricingCard 
           title="Professional" 
@@ -258,7 +256,6 @@ const Pricing = () => {
           viewers={100} 
           chatters={20}
           isPopular
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
@@ -266,7 +263,6 @@ const Pricing = () => {
           price={159.99} 
           viewers={300} 
           chatters={90}
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
@@ -274,7 +270,6 @@ const Pricing = () => {
           price={249.99} 
           viewers={600} 
           chatters={200}
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
       </div>
@@ -288,7 +283,6 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
@@ -296,7 +290,6 @@ const Pricing = () => {
           price={29.99} 
           followers={100} 
           duration="1 Month"
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
@@ -305,7 +298,6 @@ const Pricing = () => {
           followers={250} 
           duration="2 Months"
           isPopular
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
@@ -313,7 +305,6 @@ const Pricing = () => {
           price={194.99} 
           followers={500} 
           duration="2 Months"
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
@@ -321,7 +312,6 @@ const Pricing = () => {
           price={414.99} 
           followers={1000} 
           duration="2 Months"
-          // Replace with your actual Stripe Price ID
           priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
       </div>
