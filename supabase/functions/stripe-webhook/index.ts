@@ -1,43 +1,63 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import Stripe from 'https://esm.sh/stripe@14.21.0'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2023-10-16',
 })
-
 const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || '';
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  const signature = req.headers.get('stripe-signature');
-  
-  if (!signature) {
-    return new Response('No signature', { status: 400 });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const body = await req.text();
-    const event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
-    console.log('Received Stripe webhook event:', event.type);
+    // Get the signature from the headers
+    const signature = req.headers.get('stripe-signature')
+    
+    if (!signature) {
+      console.error('No stripe signature found')
+      return new Response('No signature', { status: 400 })
+    }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
+    const body = await req.text()
+    
+    // Verify the webhook signature
+    let event
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, endpointSecret)
+      console.log('Webhook verified:', event.type)
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err.message)
+      return new Response(`Webhook Error: ${err.message}`, { status: 400 })
+    }
 
+    // Handle the checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      console.log('Processing successful checkout:', session.id);
+      const session = event.data.object
 
-      // Get customer email from session
-      const customerEmail = session.customer_details?.email;
+      // Retrieve the session to get line items
+      const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['line_items'],
+      })
+
+      const customerEmail = expandedSession.customer_details?.email
       if (!customerEmail) {
-        throw new Error('No customer email found in session');
+        throw new Error('No customer email found in session')
       }
 
-      // Get the price ID from the session
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-      const priceId = lineItems.data[0]?.price?.id;
+      // Get the price ID from the line items
+      const priceId = expandedSession.line_items?.data[0]?.price?.id
+      if (!priceId) {
+        throw new Error('No price ID found in session')
+      }
 
       // Map price IDs to plan names
       const planMapping: { [key: string]: string } = {
@@ -45,44 +65,47 @@ serve(async (req) => {
         'price_pro': 'Pro',
         'price_expert': 'Expert',
         'price_enterprise': 'Enterprise'
-      };
-
-      const newPlan = planMapping[priceId || ''] || 'Free';
-      console.log('Updating plan to:', newPlan, 'for customer:', customerEmail);
-
-      // Get user by email
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', customerEmail)
-        .single();
-
-      if (userError || !userData) {
-        throw new Error(`User not found for email: ${customerEmail}`);
       }
 
-      // Update user's plan
-      const { error: updateError } = await supabase
+      const newPlan = planMapping[priceId]
+      if (!newPlan) {
+        throw new Error(`Unknown price ID: ${priceId}`)
+      }
+
+      // Create Supabase client
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+      // Update the user's plan in the profiles table
+      const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({ plan: newPlan })
-        .eq('id', userData.id);
+        .eq('email', customerEmail)
 
       if (updateError) {
-        throw new Error(`Failed to update plan: ${updateError.message}`);
+        throw new Error(`Failed to update user plan: ${updateError.message}`)
       }
 
-      console.log('Successfully updated plan for user:', userData.id);
+      console.log(`Successfully updated plan to ${newPlan} for user ${customerEmail}`)
+      return new Response(JSON.stringify({ received: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
     }
 
+    // Return a response for other event types
     return new Response(JSON.stringify({ received: true }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    });
-  } catch (err) {
-    console.error('Error processing webhook:', err);
+    })
+
+  } catch (error) {
+    console.error('Error processing webhook:', error)
     return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 400 }
-    );
+      JSON.stringify({ error: error.message }), 
+      { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
   }
-});
+})
