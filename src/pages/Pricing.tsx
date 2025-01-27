@@ -48,43 +48,34 @@ const PricingCard = ({
 
     if (isFree) {
       try {
-        // First, try to cancel any active subscription
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error('No session found');
         }
 
-        try {
-          // Call the cancel-subscription endpoint
-          const cancelResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/cancel-subscription', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-            }
-          });
-
-          if (!cancelResponse.ok) {
-            console.log('No active subscription to cancel or error cancelling');
-          } else {
-            console.log('Successfully cancelled active subscription');
+        console.log('Attempting to cancel subscription...');
+        const cancelResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/cancel-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
           }
-        } catch (error) {
-          console.error('Error cancelling subscription:', error);
-          // Continue with switching to free plan even if cancellation fails
+        });
+
+        const cancelData = await cancelResponse.json();
+        
+        if (!cancelResponse.ok) {
+          throw new Error(cancelData.error || 'Failed to cancel subscription');
         }
 
-        // Update profile to free plan
-        const { error } = await supabase
-          .from('profiles')
-          .update({ 
-            plan: 'Free',
-            subscription_status: 'inactive',
-            current_period_end: null
-          })
-          .eq('id', user.id);
-
-        if (error) throw error;
+        console.log('Subscription cancellation response:', cancelData);
+        
+        if (cancelData.cancelled_count > 0) {
+          toast({
+            title: "Subscription Cancelled",
+            description: "Your previous subscription has been cancelled",
+          });
+        }
 
         toast({
           title: "Plan Updated",
@@ -97,7 +88,7 @@ const PricingCard = ({
         console.error('Error switching to free plan:', error);
         toast({
           title: "Error",
-          description: "Failed to switch to free plan. Please try again.",
+          description: error.message || "Failed to switch to free plan. Please try again.",
           variant: "destructive",
         });
         return;
