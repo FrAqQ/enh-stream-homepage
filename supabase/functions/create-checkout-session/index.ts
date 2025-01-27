@@ -25,12 +25,6 @@ serve(async (req) => {
 
   try {
     console.log("Starting checkout session creation...");
-    // Beispiel: Die price_id wird vom Frontend übergeben
-    // Frontend Beispiel: 
-    // fetch('/create-checkout-session', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ priceId: 'price_H5ggYwtDq4fbrJ' })
-    // });
     const { priceId } = await req.json();
     if (!priceId) {
       throw new Error('No price ID provided');
@@ -44,7 +38,7 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
-          price: priceId, // Hier wird die price_id verwendet
+          price: priceId,
           quantity: 1,
         },
       ],

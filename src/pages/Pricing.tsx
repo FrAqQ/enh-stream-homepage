@@ -49,7 +49,7 @@ const PricingCard = ({
       }
 
       console.log('Starting checkout process for price:', priceId);
-      const response = await fetch('/functions/v1/create-checkout-session', {
+      const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,6 +57,12 @@ const PricingCard = ({
         },
         body: JSON.stringify({ priceId }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Checkout error:', errorData);
+        throw new Error(errorData.message || 'Failed to create checkout session');
+      }
 
       const { url } = await response.json();
       if (url) {
