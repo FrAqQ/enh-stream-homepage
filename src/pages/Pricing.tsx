@@ -59,9 +59,9 @@ const PricingCard = ({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json();
         console.error('Checkout error:', errorData);
-        throw new Error(errorData.message || 'Failed to create checkout session');
+        throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
       const { url } = await response.json();
@@ -74,7 +74,7 @@ const PricingCard = ({
       console.error('Checkout error:', error);
       toast({
         title: "Error",
-        description: "Failed to start checkout process. Please try again.",
+        description: error.message || "Failed to start checkout process. Please try again.",
         variant: "destructive",
       });
     }
