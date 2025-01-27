@@ -110,12 +110,28 @@ const PricingCard = ({
     }
 
     try {
+      // First check if user is already subscribed to this plan
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('No session found');
       }
 
-      // Create checkout session directly
+      // Check current subscription status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan, subscription_status')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.plan === title && profile?.subscription_status === 'active') {
+        toast({
+          title: "Already Subscribed",
+          description: "You are already subscribed to this plan",
+        });
+        return;
+      }
+
+      // Create checkout session
       console.log('Creating checkout session...');
       const checkoutResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
         method: 'POST',
@@ -130,7 +146,6 @@ const PricingCard = ({
         const errorData = await checkoutResponse.json();
         console.error('Checkout error response:', errorData);
         
-        // Handle specific error cases
         if (errorData.error === "Already subscribed to this plan") {
           toast({
             title: "Already Subscribed",
