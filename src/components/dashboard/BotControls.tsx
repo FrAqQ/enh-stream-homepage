@@ -167,12 +167,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   };
 
   const handleButtonClick = async (count: number) => {
-    // Special case for -1 viewer: bypass cooldown check
-    if (count === -1) {
-      await modifyViewers(count);
-      return;
-    }
-
     if (isOnCooldown) {
       toast({
         title: "Cooldown Active",
@@ -194,13 +188,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   };
 
   const isButtonDisabled = (count: number) => {
-    if (count === -1) {
-      // For -1 viewer button, only check if we have viewers to remove and if streamUrl exists
-      return !streamUrl || currentViewers < 1;
-    }
-    
     if (count < 0) {
-      // For other negative counts (removal), check if we have enough viewers to remove
+      // For negative counts (removal), check if we have enough viewers to remove
       return isOnCooldown || !streamUrl || Math.abs(count) > currentViewers;
     }
     // For positive counts (addition), check if we would exceed the limit
