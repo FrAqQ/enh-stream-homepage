@@ -1,8 +1,308 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useUser } from "@/lib/useUser";
-import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
-import { ViewerPricingCard } from "@/components/pricing/ViewerPricingCard";
-import { FollowerPricingCard } from "@/components/pricing/FollowerPricingCard";
+import { useEffect, useState } from "react";
+
+const PricingCard = ({ 
+  title, 
+  price, 
+  viewers, 
+  chatters,
+  isPopular,
+  isFree,
+  priceId,
+  currentPlan
+}: { 
+  title: string;
+  price: number;
+  viewers: number;
+  chatters: number;
+  isPopular?: boolean;
+  isFree?: boolean;
+  priceId?: string;
+  currentPlan: string;
+}) => {
+  const { user } = useUser();
+  const { toast } = useToast();
+  const isCurrentPlan = currentPlan === title;
+
+  const handleSelectPlan = async () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to subscribe to this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isCurrentPlan) {
+      toast({
+        title: "Current Plan",
+        description: "You are already subscribed to this plan",
+      });
+      return;
+    }
+
+    if (isFree) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No session found');
+        }
+
+        console.log('Attempting to cancel subscription...');
+        const cancelResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/cancel-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          }
+        });
+
+        const cancelData = await cancelResponse.json();
+        
+        if (!cancelResponse.ok) {
+          throw new Error(cancelData.error || 'Failed to cancel subscription');
+        }
+
+        console.log('Subscription cancellation response:', cancelData);
+        
+        if (cancelData.cancelled_count > 0) {
+          toast({
+            title: "Subscription Cancelled",
+            description: "Your previous subscription has been cancelled",
+          });
+        }
+
+        toast({
+          title: "Plan Updated",
+          description: "You have been switched to the Free plan",
+        });
+        
+        window.location.reload();
+        return;
+      } catch (error) {
+        console.error('Error switching to free plan:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to switch to free plan. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (!priceId) {
+      toast({
+        title: "Configuration Error",
+        description: "No price ID configured for this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
+      // First check subscription status
+      console.log('Checking subscription status...');
+      const subscriptionResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!subscriptionResponse.ok) {
+        const errorData = await subscriptionResponse.json();
+        console.error('Subscription check error response:', errorData);
+        // If we can't check subscription status, don't proceed with checkout
+        throw new Error(errorData.error || 'Failed to check subscription status');
+      }
+
+      const subscriptionData = await subscriptionResponse.json();
+      console.log('Subscription check response:', subscriptionData);
+      
+      if (subscriptionData.subscribed) {
+        toast({
+          title: "Already Subscribed",
+          description: "You already have an active subscription to this plan",
+        });
+        return;
+      }
+
+      // If not subscribed, proceed with checkout
+      console.log('Creating checkout session...');
+      const checkoutResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!checkoutResponse.ok) {
+        const errorData = await checkoutResponse.json();
+        console.error('Checkout error response:', errorData);
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
+      const { url } = await checkoutResponse.json();
+      if (url) {
+        console.log('Redirecting to checkout URL:', url);
+        window.open(url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start checkout process. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Card className={`p-6 relative ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+      {isPopular && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
+          Most Popular
+        </span>
+      )}
+      <h3 className="text-xl font-bold mb-2">{title}</h3>
+      <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
+      <ul className="space-y-2 mb-6">
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> {viewers} Viewers
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> {chatters} Chatters
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : '1 Month'}
+        </li>
+      </ul>
+      <Button 
+        className="w-full"
+        onClick={handleSelectPlan}
+        variant={isCurrentPlan ? "secondary" : "default"}
+      >
+        {isCurrentPlan ? 'Current Plan' : 'Select Plan'}
+      </Button>
+    </Card>
+  );
+};
+
+const FollowerPricingCard = ({ 
+  title, 
+  price, 
+  followers,
+  duration,
+  isPopular,
+  priceId 
+}: { 
+  title: string;
+  price: number;
+  followers: number;
+  duration: string;
+  isPopular?: boolean;
+  priceId?: string;
+}) => {
+  const { user } = useUser();
+  const { toast } = useToast();
+
+  const handleSelectPlan = async () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to subscribe to this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!priceId) {
+      toast({
+        title: "Configuration Error",
+        description: "No price ID configured for this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
+      const response = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start checkout process. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Card className={`p-6 relative ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+      {isPopular && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
+          Most Popular
+        </span>
+      )}
+      <h3 className="text-xl font-bold mb-2">{title}</h3>
+      <p className="text-3xl font-bold mb-6">€{price.toFixed(2)}</p>
+      <ul className="space-y-2 mb-6">
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> {followers} Followers/day
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="text-primary">✓</span> Duration: {duration}
+        </li>
+      </ul>
+      <Button 
+        className="w-full"
+        onClick={handleSelectPlan}
+      >
+        Select Plan
+      </Button>
+    </Card>
+  );
+};
 
 const Pricing = () => {
   const { user } = useUser();
@@ -41,7 +341,7 @@ const Pricing = () => {
       <p className="text-muted-foreground text-center mb-12">Choose the perfect plan for your streaming needs</p>
       
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-20">
-        <ViewerPricingCard 
+        <PricingCard 
           title="Free" 
           price={0} 
           viewers={10} 
@@ -49,7 +349,7 @@ const Pricing = () => {
           isFree
           currentPlan={currentPlan}
         />
-        <ViewerPricingCard 
+        <PricingCard 
           title="Starter" 
           price={9.99} 
           viewers={15} 
@@ -57,7 +357,7 @@ const Pricing = () => {
           priceId="price_YOUR_ACTUAL_PRICE_ID"
           currentPlan={currentPlan}
         />
-        <ViewerPricingCard 
+        <PricingCard 
           title="Basic" 
           price={29.99} 
           viewers={35} 
@@ -65,7 +365,7 @@ const Pricing = () => {
           priceId="price_1Qklku01379EnnGJtin4BVcc"
           currentPlan={currentPlan}
         />
-        <ViewerPricingCard 
+        <PricingCard 
           title="Professional" 
           price={89.99} 
           viewers={100} 
@@ -74,7 +374,7 @@ const Pricing = () => {
           priceId="price_YOUR_ACTUAL_PRICE_ID"
           currentPlan={currentPlan}
         />
-        <ViewerPricingCard 
+        <PricingCard 
           title="Expert" 
           price={159.99} 
           viewers={300} 
@@ -82,7 +382,7 @@ const Pricing = () => {
           priceId="price_YOUR_ACTUAL_PRICE_ID"
           currentPlan={currentPlan}
         />
-        <ViewerPricingCard 
+        <PricingCard 
           title="Ultimate" 
           price={249.99} 
           viewers={600} 
