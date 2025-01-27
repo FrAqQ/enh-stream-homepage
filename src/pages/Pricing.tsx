@@ -47,11 +47,31 @@ const PricingCard = ({
     }
 
     if (isFree) {
-      toast({
-        title: "Free Plan",
-        description: "You are already on the free plan",
-      });
-      return;
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ plan: 'Free' })
+          .eq('id', user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Plan Updated",
+          description: "You have been switched to the Free plan",
+        });
+        
+        // Update the current plan state
+        window.location.reload();
+        return;
+      } catch (error) {
+        console.error('Error switching to free plan:', error);
+        toast({
+          title: "Error",
+          description: "Failed to switch to free plan. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (!priceId) {
