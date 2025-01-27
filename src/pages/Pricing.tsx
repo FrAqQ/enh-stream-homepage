@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useUser } from "@/lib/useUser";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabaseClient";
 
 const PricingCard = ({ 
   title, 
@@ -42,12 +43,17 @@ const PricingCard = ({
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
       console.log('Starting checkout process for price:', priceId);
       const response = await fetch('/functions/v1/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ priceId }),
       });
@@ -174,14 +180,14 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5}
-          priceId="price_XXXXX" // Hier musst du deine echte price_id von Stripe einsetzen
+          priceId="price_1OvKQyLkdIwHu7ixZxHUQBWz"  // Test Price ID
         />
         <PricingCard 
           title="Basic" 
           price={29.99} 
           viewers={35} 
           chatters={8}
-          priceId="price_YYYYY" // Hier musst du deine echte price_id von Stripe einsetzen
+          priceId="price_1OvKQyLkdIwHu7ixZxHUQBWz"  // Test Price ID
         />
         <PricingCard 
           title="Professional" 
@@ -189,7 +195,7 @@ const Pricing = () => {
           viewers={100} 
           chatters={20}
           isPopular
-          priceId="price_ZZZZZ" // Hier musst du deine echte price_id von Stripe einsetzen
+          priceId="price_1OvKQyLkdIwHu7ixZxHUQBWz"  // Test Price ID
         />
         <PricingCard 
           title="Expert" 
