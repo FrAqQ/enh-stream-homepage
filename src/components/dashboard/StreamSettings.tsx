@@ -1,77 +1,58 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Link } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { Input } from "@/components/ui/input"
+import { Settings2 } from "lucide-react"
+
+interface UserData {
+  username: string;
+  plan: string;
+  followerPlan: string;
+  subscriptionStatus: string; // Added this line
+}
 
 interface StreamSettingsProps {
-  streamUrl: string
-  setStreamUrl: (url: string) => void
-  handleSaveUrl: () => void
-  userData: {
-    username: string
-    plan: string
-    followerPlan: string
-  }
+  streamUrl: string;
+  setStreamUrl: (url: string) => void;
+  handleSaveUrl: () => void;
+  userData: UserData;
 }
 
 export function StreamSettings({ streamUrl, setStreamUrl, handleSaveUrl, userData }: StreamSettingsProps) {
-  const { toast } = useToast();
-
-  const handleSave = () => {
-    if (!streamUrl.includes('twitch.tv/')) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid Twitch URL (e.g., https://twitch.tv/username)",
-        variant: "destructive",
-      });
-      return;
-    }
-    handleSaveUrl();
-    toast({
-      title: "Success",
-      description: "Stream URL saved successfully!",
-    });
-  };
-
   return (
     <Card className="glass-morphism">
       <CardHeader>
         <CardTitle className="text-xl font-semibold flex items-center gap-2">
-          <Link className="h-5 w-5" />
+          <Settings2 className="h-5 w-5" />
           Stream Settings
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Stream URL</label>
-            <div className="flex gap-2">
-              <Input 
-                placeholder="Enter Twitch URL (e.g., https://twitch.tv/username)" 
-                value={streamUrl}
-                onChange={(e) => setStreamUrl(e.target.value)}
-                className="bg-background/50"
-              />
-              <Button onClick={handleSave}>Save</Button>
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="stream-url" className="text-sm font-medium">
+              Stream URL
+            </label>
+            <Input
+              id="stream-url"
+              placeholder="Enter your Twitch stream URL"
+              value={streamUrl}
+              onChange={(e) => setStreamUrl(e.target.value)}
+            />
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Username</label>
-              <p className="text-sm text-muted-foreground">{userData.username}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Plan</label>
-              <p className="text-sm text-muted-foreground">{userData.plan}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Follower Plan</label>
-              <p className="text-sm text-muted-foreground">{userData.followerPlan}</p>
+          <Button onClick={handleSaveUrl} className="w-full">
+            Save Settings
+          </Button>
+          <div className="pt-4 border-t">
+            <h3 className="font-semibold mb-2">Account Information</h3>
+            <div className="space-y-1 text-sm">
+              <p>Username: {userData.username}</p>
+              <p>Current Plan: {userData.plan}</p>
+              <p>Subscription Status: {userData.subscriptionStatus}</p>
+              <p>Follower Plan: {userData.followerPlan}</p>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
