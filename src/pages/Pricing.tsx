@@ -110,36 +110,36 @@ const PricingCard = ({
         throw new Error('No session found');
       }
 
+      // First check subscription status
       console.log('Checking subscription status...');
-      try {
-        const response = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ priceId }),
-        });
+      const subscriptionResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
 
-        if (!response.ok) {
-          throw new Error(`Subscription check failed: ${response.status}`);
-        }
-
-        const subscriptionData = await response.json();
-        console.log('Subscription check response:', subscriptionData);
-        
-        if (subscriptionData.subscribed) {
-          toast({
-            title: "Already Subscribed",
-            description: "You already have an active subscription to this plan",
-          });
-          return;
-        }
-      } catch (error) {
-        console.error('Subscription check error:', error);
-        // Continue with checkout even if subscription check fails
+      if (!subscriptionResponse.ok) {
+        const errorData = await subscriptionResponse.json();
+        console.error('Subscription check error response:', errorData);
+        // If we can't check subscription status, don't proceed with checkout
+        throw new Error(errorData.error || 'Failed to check subscription status');
       }
 
+      const subscriptionData = await subscriptionResponse.json();
+      console.log('Subscription check response:', subscriptionData);
+      
+      if (subscriptionData.subscribed) {
+        toast({
+          title: "Already Subscribed",
+          description: "You already have an active subscription to this plan",
+        });
+        return;
+      }
+
+      // If not subscribed, proceed with checkout
       console.log('Creating checkout session...');
       const checkoutResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
         method: 'POST',
@@ -263,7 +263,7 @@ const FollowerPricingCard = ({
 
       const { url } = await response.json();
       if (url) {
-        window.open(url, '_blank'); // Hier öffnen wir den Link in einem neuen Tab
+        window.open(url, '_blank');
       } else {
         throw new Error('No checkout URL received');
       }
