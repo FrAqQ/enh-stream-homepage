@@ -26,9 +26,10 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
+        console.log("Fetching current user plan...");
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('plan')
+          .select('plan, subscription_status')
           .eq('id', user.id)
           .single();
 
@@ -38,12 +39,23 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           return;
         }
 
-        console.log("Fetched user plan:", profile?.plan);
-        setUserPlan(profile?.plan || "Free");
+        // Nur aktive Abonnements berücksichtigen
+        if (profile?.subscription_status === 'active') {
+          console.log("Active subscription found with plan:", profile?.plan);
+          setUserPlan(profile?.plan || "Free");
+        } else {
+          console.log("No active subscription found, setting to Free plan");
+          setUserPlan("Free");
+        }
       }
     };
 
     fetchUserPlan();
+    
+    // Alle 30 Sekunden aktualisieren
+    const interval = setInterval(fetchUserPlan, 30000);
+    
+    return () => clearInterval(interval);
   }, [user]);
 
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
@@ -169,8 +181,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const handleButtonClick = async (count: number) => {
     if (isOnCooldown) {
       toast({
-        title: "Cooldown Active",
-        description: "Please wait 5 seconds before modifying bots.",
+        title: "Cooldown Aktiv",
+        description: "Bitte warten Sie 5 Sekunden, bevor Sie Bots modifizieren.",
         variant: "destructive",
       });
       return;
@@ -189,10 +201,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const isButtonDisabled = (count: number) => {
     if (count < 0) {
-      // For negative counts (removal), check if we have enough viewers to remove
       return isOnCooldown || !streamUrl || Math.abs(count) > currentViewers;
     }
-    // For positive counts (addition), check if we would exceed the limit
     return isOnCooldown || !streamUrl || currentViewers + count > viewerLimit;
   };
 
@@ -210,7 +220,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Current {type === "viewer" ? "Viewers" : "Chatters"}</span>
+              <span>{type === "viewer" ? "Aktuelle Viewer" : "Aktuelle Chatter"}</span>
               <span>{currentViewers}/{viewerLimit}</span>
             </div>
             <Progress value={(currentViewers / viewerLimit) * 100} />
