@@ -48,9 +48,40 @@ const PricingCard = ({
 
     if (isFree) {
       try {
+        // First, try to cancel any active subscription
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No session found');
+        }
+
+        try {
+          // Call the cancel-subscription endpoint
+          const cancelResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/cancel-subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            }
+          });
+
+          if (!cancelResponse.ok) {
+            console.log('No active subscription to cancel or error cancelling');
+          } else {
+            console.log('Successfully cancelled active subscription');
+          }
+        } catch (error) {
+          console.error('Error cancelling subscription:', error);
+          // Continue with switching to free plan even if cancellation fails
+        }
+
+        // Update profile to free plan
         const { error } = await supabase
           .from('profiles')
-          .update({ plan: 'Free' })
+          .update({ 
+            plan: 'Free',
+            subscription_status: 'inactive',
+            current_period_end: null
+          })
           .eq('id', user.id);
 
         if (error) throw error;
