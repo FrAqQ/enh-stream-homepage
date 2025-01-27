@@ -1,9 +1,9 @@
 import { supabase } from "./supabaseClient";
-import { Toast } from "@/hooks/use-toast";
+import { type ToastAPI } from "@/hooks/use-toast";
 
 interface PlanSelectionProps {
   user: any;
-  toast: Toast;
+  toast: ToastAPI;
   isCurrentPlan: boolean;
   isFree: boolean;
   priceId?: string;
@@ -12,7 +12,7 @@ interface PlanSelectionProps {
 
 interface FollowerPlanSelectionProps {
   user: any;
-  toast: Toast;
+  toast: ToastAPI;
   priceId?: string;
 }
 
