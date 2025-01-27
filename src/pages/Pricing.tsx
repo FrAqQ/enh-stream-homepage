@@ -293,32 +293,48 @@ const FollowerPricingCard = ({
 const Pricing = () => {
   const { user } = useUser();
   const [currentPlan, setCurrentPlan] = useState("Free");
+  const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
         try {
+          console.log("Fetching current subscription status...");
           const { data: profile, error } = await supabase
             .from('profiles')
-            .select('plan')
+            .select('plan, subscription_status')
             .eq('id', user.id)
             .single();
 
           if (error) {
             console.error('Error fetching user plan:', error);
+            setCurrentPlan("Free");
+            setSubscriptionStatus("inactive");
             return;
           }
 
-          if (profile?.plan) {
-            setCurrentPlan(profile.plan);
+          if (profile?.subscription_status === 'active') {
+            console.log("Active subscription found:", profile.plan);
+            setCurrentPlan(profile.plan || "Free");
+            setSubscriptionStatus('active');
+          } else {
+            console.log("No active subscription, setting to Free plan");
+            setCurrentPlan("Free");
+            setSubscriptionStatus('inactive');
           }
         } catch (error) {
           console.error('Error:', error);
+          setCurrentPlan("Free");
+          setSubscriptionStatus("inactive");
         }
       }
     };
 
     fetchUserPlan();
+    
+    // Update every 30 seconds
+    const interval = setInterval(fetchUserPlan, 30000);
+    return () => clearInterval(interval);
   }, [user]);
 
   return (

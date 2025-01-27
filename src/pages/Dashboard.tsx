@@ -19,56 +19,49 @@ const Dashboard = () => {
   const [embed, setEmbed] = useState<any>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [userPlan, setUserPlan] = useState("Free");
+  const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
         try {
-          console.log("Fetching user plan for ID:", user.id);
+          console.log("Fetching user plan and subscription status...");
           
-          // First try to get the profile
           const { data: profile, error } = await supabase
             .from('profiles')
-            .select('plan')
+            .select('plan, subscription_status')
             .eq('id', user.id)
             .single();
 
           if (error) {
             console.error('Error fetching user plan:', error);
-            
-            // If profile doesn't exist, create it
-            if (error.code === '42P01' || error.message.includes('does not exist')) {
-              console.log("Profiles table not found or profile doesn't exist, creating profile...");
-              const { error: insertError } = await supabase
-                .from('profiles')
-                .insert([
-                  { id: user.id, email: user.email, plan: 'Free' }
-                ]);
-              
-              if (insertError) {
-                console.error('Error creating profile:', insertError);
-                setUserPlan("Free");
-                return;
-              }
-              
-              setUserPlan("Free");
-              return;
-            }
-            
-            setUserPlan("Free"); // Fallback to Free plan if there's an error
+            setUserPlan("Free");
+            setSubscriptionStatus("inactive");
             return;
           }
 
           console.log("Fetched profile:", profile);
-          setUserPlan(profile?.plan || "Free");
+          
+          if (profile?.subscription_status === 'active') {
+            setUserPlan(profile.plan || "Free");
+            setSubscriptionStatus('active');
+          } else {
+            setUserPlan("Free");
+            setSubscriptionStatus('inactive');
+          }
         } catch (err) {
           console.error("Unexpected error fetching user plan:", err);
           setUserPlan("Free");
+          setSubscriptionStatus("inactive");
         }
       }
     };
 
     fetchUserPlan();
+    
+    // Update every 30 seconds
+    const interval = setInterval(fetchUserPlan, 30000);
+    return () => clearInterval(interval);
   }, [user]);
 
   // Define userData at the component level
@@ -246,7 +239,13 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
-      <h1 className="text-4xl font-bold mb-8 text-gradient">Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-gradient">Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Current Plan:</span>
+          <span className="font-semibold text-primary">{userPlan}</span>
+        </div>
+      </div>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -286,7 +285,11 @@ const Dashboard = () => {
           streamUrl={streamUrl}
           setStreamUrl={setStreamUrl}
           handleSaveUrl={handleSaveUrl}
-          userData={userData}
+          userData={{
+            ...userData,
+            plan: userPlan,
+            subscriptionStatus
+          }}
         />
       </div>
 
@@ -323,7 +326,7 @@ const Dashboard = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;
