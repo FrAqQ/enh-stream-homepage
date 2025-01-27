@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { useUser } from "@/lib/useUser";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useState } from "react";
 
 const PricingCard = ({ 
   title, 
@@ -11,7 +12,8 @@ const PricingCard = ({
   chatters,
   isPopular,
   isFree,
-  priceId
+  priceId,
+  currentPlan
 }: { 
   title: string;
   price: number;
@@ -20,9 +22,11 @@ const PricingCard = ({
   isPopular?: boolean;
   isFree?: boolean;
   priceId?: string;
+  currentPlan: string;
 }) => {
   const { user } = useUser();
   const { toast } = useToast();
+  const isCurrentPlan = currentPlan === title;
 
   const handleSelectPlan = async () => {
     if (!user) {
@@ -30,6 +34,14 @@ const PricingCard = ({
         title: "Login Required",
         description: "Please login to subscribe to this plan",
         variant: "destructive",
+      });
+      return;
+    }
+
+    if (isCurrentPlan) {
+      toast({
+        title: "Current Plan",
+        description: "You are already subscribed to this plan",
       });
       return;
     }
@@ -78,7 +90,7 @@ const PricingCard = ({
       const { url } = await response.json();
       if (url) {
         console.log('Redirecting to checkout URL:', url);
-        window.open(url, '_blank'); // Hier öffnen wir den Link in einem neuen Tab
+        window.open(url, '_blank');
       } else {
         throw new Error('No checkout URL received');
       }
@@ -115,8 +127,9 @@ const PricingCard = ({
       <Button 
         className="w-full"
         onClick={handleSelectPlan}
+        variant={isCurrentPlan ? "secondary" : "default"}
       >
-        {isFree ? 'Current Plan' : 'Select Plan'}
+        {isCurrentPlan ? 'Current Plan' : 'Select Plan'}
       </Button>
     </Card>
   );
@@ -223,6 +236,36 @@ const FollowerPricingCard = ({
 };
 
 const Pricing = () => {
+  const { user } = useUser();
+  const [currentPlan, setCurrentPlan] = useState("Free");
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (user?.id) {
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('plan')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching user plan:', error);
+            return;
+          }
+
+          if (profile?.plan) {
+            setCurrentPlan(profile.plan);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    };
+
+    fetchUserPlan();
+  }, [user]);
+
   return (
     <div className="container mx-auto px-4 py-20">
       <h1 className="text-4xl font-bold text-center mb-4">Viewer & Chatter Plans</h1>
@@ -235,6 +278,7 @@ const Pricing = () => {
           viewers={10} 
           chatters={2}
           isFree
+          currentPlan={currentPlan}
         />
         <PricingCard 
           title="Starter" 
@@ -242,6 +286,7 @@ const Pricing = () => {
           viewers={15} 
           chatters={5}
           priceId="price_YOUR_ACTUAL_PRICE_ID"
+          currentPlan={currentPlan}
         />
         <PricingCard 
           title="Basic" 
@@ -249,6 +294,7 @@ const Pricing = () => {
           viewers={35} 
           chatters={8}
           priceId="price_1Qklku01379EnnGJtin4BVcc"
+          currentPlan={currentPlan}
         />
         <PricingCard 
           title="Professional" 
@@ -257,6 +303,7 @@ const Pricing = () => {
           chatters={20}
           isPopular
           priceId="price_YOUR_ACTUAL_PRICE_ID"
+          currentPlan={currentPlan}
         />
         <PricingCard 
           title="Expert" 
@@ -264,6 +311,7 @@ const Pricing = () => {
           viewers={300} 
           chatters={90}
           priceId="price_YOUR_ACTUAL_PRICE_ID"
+          currentPlan={currentPlan}
         />
         <PricingCard 
           title="Ultimate" 
@@ -271,6 +319,7 @@ const Pricing = () => {
           viewers={600} 
           chatters={200}
           priceId="price_YOUR_ACTUAL_PRICE_ID"
+          currentPlan={currentPlan}
         />
       </div>
 
