@@ -90,7 +90,7 @@ const PricingCard = ({
 
       console.log('Checking subscription status...');
       try {
-        const response = await fetch(`${supabase.supabaseUrl}/functions/v1/check-subscription`, {
+        const response = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ const PricingCard = ({
       }
 
       console.log('Creating checkout session...');
-      const checkoutResponse = await fetch(`${supabase.supabaseUrl}/functions/v1/create-checkout-session`, {
+      const checkoutResponse = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +225,7 @@ const FollowerPricingCard = ({
         throw new Error('No session found');
       }
 
-      const response = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session`, {
+      const response = await fetch('https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
