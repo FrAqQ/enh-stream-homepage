@@ -88,30 +88,38 @@ const PricingCard = ({
         throw new Error('No session found');
       }
 
-      // First check if user is already subscribed to this plan
-      const response = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/check-subscription`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      const subscriptionData = await response.json();
-      
-      if (subscriptionData.subscribed) {
-        toast({
-          title: "Already Subscribed",
-          description: "You already have an active subscription to this plan",
+      console.log('Checking subscription status...');
+      try {
+        const response = await fetch(`${supabase.supabaseUrl}/functions/v1/check-subscription`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ priceId }),
         });
-        return;
+
+        if (!response.ok) {
+          throw new Error(`Subscription check failed: ${response.status}`);
+        }
+
+        const subscriptionData = await response.json();
+        console.log('Subscription check response:', subscriptionData);
+        
+        if (subscriptionData.subscribed) {
+          toast({
+            title: "Already Subscribed",
+            description: "You already have an active subscription to this plan",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Subscription check error:', error);
+        // Continue with checkout even if subscription check fails
       }
 
-      console.log('Starting checkout process for price:', priceId);
-      console.log('Session token:', session.access_token);
-      
-      const checkoutResponse = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session`, {
+      console.log('Creating checkout session...');
+      const checkoutResponse = await fetch(`${supabase.supabaseUrl}/functions/v1/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

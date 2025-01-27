@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { priceId } = await req.json()
+    console.log('Checking subscription for priceId:', priceId);
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -28,6 +29,8 @@ serve(async (req) => {
       throw new Error('No email found')
     }
 
+    console.log('Checking subscription for user:', user.email);
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     })
@@ -36,6 +39,8 @@ serve(async (req) => {
       email: user.email,
       limit: 1
     })
+
+    console.log('Found customers:', customers.data.length);
 
     if (customers.data.length === 0) {
       return new Response(
@@ -54,6 +59,8 @@ serve(async (req) => {
       limit: 1
     })
 
+    console.log('Active subscriptions found:', subscriptions.data.length);
+
     return new Response(
       JSON.stringify({ subscribed: subscriptions.data.length > 0 }),
       { 
@@ -62,7 +69,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error checking subscription:', error)
+    console.error('Error checking subscription:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
