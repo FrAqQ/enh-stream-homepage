@@ -127,18 +127,20 @@ const FollowerPricingCard = ({
   price, 
   followers,
   duration,
-  isPopular 
+  isPopular,
+  priceId 
 }: { 
   title: string;
   price: number;
   followers: number;
   duration: string;
   isPopular?: boolean;
+  priceId?: string;
 }) => {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const handleSelectPlan = () => {
+  const handleSelectPlan = async () => {
     if (!user) {
       toast({
         title: "Login Required",
@@ -148,8 +150,49 @@ const FollowerPricingCard = ({
       return;
     }
 
-    // Open Stripe payment link in new tab
-    window.open('https://buy.stripe.com/test_14k14L3YLd2n22Y289', '_blank');
+    if (!priceId) {
+      toast({
+        title: "Configuration Error",
+        description: "No price ID configured for this plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
+      const response = await fetch(`https://qdxpxqdewqrbvlsajeeo.supabase.co/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start checkout process. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -198,14 +241,16 @@ const Pricing = () => {
           price={9.99} 
           viewers={15} 
           chatters={5}
-          priceId="price_1OvKQyLkdIwHu7ixZxHUQBWz"  // Test Price ID
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
           title="Basic" 
           price={29.99} 
           viewers={35} 
           chatters={8}
-          priceId="price_1OvKQyLkdIwHu7ixZxHUQBWz"  // Test Price ID
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
           title="Professional" 
@@ -213,19 +258,24 @@ const Pricing = () => {
           viewers={100} 
           chatters={20}
           isPopular
-          priceId="price_1OvKQyLkdIwHu7ixZxHUQBWz"  // Test Price ID
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
           title="Expert" 
           price={159.99} 
           viewers={300} 
           chatters={90}
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <PricingCard 
           title="Ultimate" 
           price={249.99} 
           viewers={600} 
           chatters={200}
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
       </div>
 
@@ -238,31 +288,41 @@ const Pricing = () => {
           price={9.99} 
           followers={100} 
           duration="1 Week"
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
           title="Basic" 
           price={29.99} 
           followers={100} 
           duration="1 Month"
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
           title="Professional" 
           price={114.99} 
           followers={250} 
           duration="2 Months"
-          isPopular 
+          isPopular
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
           title="Expert" 
           price={194.99} 
           followers={500} 
           duration="2 Months"
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
         <FollowerPricingCard 
           title="Ultimate" 
           price={414.99} 
           followers={1000} 
           duration="2 Months"
+          // Replace with your actual Stripe Price ID
+          priceId="price_YOUR_ACTUAL_PRICE_ID"
         />
       </div>
     </div>
