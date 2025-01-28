@@ -4,7 +4,7 @@ import Stripe from 'https://esm.sh/stripe@14.21.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 }
 
 const PRICE_TO_PLAN_MAP = {
@@ -27,15 +27,13 @@ serve(async (req) => {
     const signature = req.headers.get('stripe-signature');
     console.log('Stripe signature received:', signature ? 'Yes' : 'No');
     
-    if (!signature) {
-      console.error('No stripe signature found in request headers');
-      return new Response('No signature', { status: 400 });
-    }
-
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
       console.error('STRIPE_WEBHOOK_SECRET not found in environment variables');
-      return new Response('Webhook secret not configured', { status: 500 });
+      return new Response('Webhook secret not configured', { 
+        status: 500,
+        headers: corsHeaders
+      });
     }
 
     const body = await req.text();
@@ -48,11 +46,22 @@ serve(async (req) => {
 
     let event;
     try {
+      if (!signature) {
+        console.error('No stripe signature found');
+        return new Response('No signature', { 
+          status: 400,
+          headers: corsHeaders
+        });
+      }
+      
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       console.log('Successfully constructed webhook event:', event.type);
     } catch (err) {
       console.error('Error constructing webhook event:', err.message);
-      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+      return new Response(`Webhook Error: ${err.message}`, { 
+        status: 400,
+        headers: corsHeaders
+      });
     }
 
     const supabase = createClient(
@@ -108,11 +117,14 @@ serve(async (req) => {
           }
 
           console.log(`Successfully updated subscription for ${customerEmail}`);
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
         } catch (error) {
           console.error('Error processing checkout.session.completed:', error);
           throw error;
         }
-        break;
       }
 
       case 'customer.subscription.updated': {
@@ -151,58 +163,32 @@ serve(async (req) => {
           }
 
           console.log(`Successfully updated subscription for ${customerEmail}`);
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
         } catch (error) {
           console.error('Error processing customer.subscription.updated:', error);
           throw error;
         }
-        break;
       }
 
-      case 'customer.subscription.deleted': {
-        console.log('Processing customer.subscription.deleted');
-        const subscription = event.data.object;
-        
-        try {
-          const customerEmail = subscription.customer_email;
-
-          if (!customerEmail) {
-            console.error('No customer email found in subscription');
-            throw new Error('No customer email found in subscription');
-          }
-
-          console.log(`Cancelling subscription for ${customerEmail}`);
-
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              plan: 'Free',
-              subscription_status: 'canceled',
-              current_period_end: null
-            })
-            .eq('email', customerEmail);
-
-          if (updateError) {
-            console.error('Failed to cancel subscription:', updateError);
-            throw updateError;
-          }
-
-          console.log(`Successfully cancelled subscription for ${customerEmail}`);
-        } catch (error) {
-          console.error('Error processing customer.subscription.deleted:', error);
-          throw error;
-        }
-        break;
+      case 'payment_intent.succeeded': {
+        console.log('Processing payment_intent.succeeded');
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
       }
 
       default: {
         console.log(`Unhandled event type: ${event.type}`);
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
       }
     }
-
-    return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
 
   } catch (error) {
     console.error('Unexpected error in webhook handler:', error);
