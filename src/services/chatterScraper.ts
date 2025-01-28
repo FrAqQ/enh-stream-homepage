@@ -7,6 +7,11 @@ let chattersHistory: Chatter[] = [];
 
 export async function getChatterCount(channelUrl: string): Promise<number> {
   try {
+    if (!channelUrl) {
+      console.log("No channel URL provided");
+      return 0;
+    }
+
     const channelName = channelUrl.split('/').pop() || '';
     console.log("Fetching chatter count for channel:", channelName);
     
@@ -25,7 +30,11 @@ export async function getChatterCount(channelUrl: string): Promise<number> {
       }
     };
 
-    console.log("Sending GQL request for chatters:", channelName);
+    console.log("Sending GQL request with payload:", {
+      endpoint: gqlEndpoint,
+      channelName,
+      operationName: query.operationName
+    });
     
     const response = await fetch(gqlEndpoint, {
       method: 'POST',
@@ -36,25 +45,33 @@ export async function getChatterCount(channelUrl: string): Promise<number> {
       body: JSON.stringify(query)
     });
 
+    if (!response.ok) {
+      console.error("GQL request failed:", {
+        status: response.status,
+        statusText: response.statusText
+      });
+      return 0;
+    }
+
     const data = await response.json();
     console.log("GQL Chatter Response:", data);
 
     const currentCount = data?.data?.channel?.chatters?.count || 0;
     
-    // Aktuelle Zeit in Millisekunden
+    // Current time in milliseconds
     const now = Date.now();
     
-    // Neue Messung zur Historie hinzufügen
+    // Add new measurement to history
     chattersHistory.push({
       timestamp: now,
       count: currentCount
     });
     
-    // Historie auf die letzten 10 Minuten beschränken
+    // Limit history to last 10 minutes
     const tenMinutesAgo = now - (10 * 60 * 1000);
     chattersHistory = chattersHistory.filter(entry => entry.timestamp > tenMinutesAgo);
     
-    // Durchschnitt der letzten 10 Minuten berechnen
+    // Calculate average of last 10 minutes
     const recentChatters = chattersHistory.length > 0
       ? Math.round(chattersHistory.reduce((sum, entry) => sum + entry.count, 0) / chattersHistory.length)
       : currentCount;
@@ -64,7 +81,12 @@ export async function getChatterCount(channelUrl: string): Promise<number> {
     
     return recentChatters;
   } catch (error) {
-    console.error("Error fetching chatter count:", error);
+    console.error("Detailed error fetching chatter count:", {
+      error,
+      type: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return 0;
   }
 }
