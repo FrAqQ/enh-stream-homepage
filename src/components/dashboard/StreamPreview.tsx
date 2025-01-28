@@ -23,6 +23,14 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       const channelName = twitchChannel.split('/').pop() || '';
       console.log("Creating Twitch embed for channel:", channelName);
 
+      // Get the current hostname without www prefix
+      const hostname = window.location.hostname.replace('www.', '');
+      
+      // Define parent domains array
+      const parentDomains = ['localhost', '127.0.0.1', hostname];
+      
+      console.log("Using parent domains:", parentDomains);
+
       try {
         embedInstance.current = new window.Twitch.Embed("twitch-embed", {
           width: "100%",
@@ -32,8 +40,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
           autoplay: false,
           muted: true,
           theme: "dark",
-          // Wichtig: parent muss die aktuelle Domain enthalten
-          parent: [window.location.hostname]
+          parent: parentDomains
         });
 
         embedInstance.current.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
