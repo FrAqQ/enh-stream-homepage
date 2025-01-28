@@ -8,19 +8,19 @@ export async function getViewerCount(channelUrl: string): Promise<number> {
     const response = await fetch(proxyUrl);
     const html = await response.text();
     
-    console.log("Searching for exact viewer count...");
+    console.log("Searching for viewer count after ScAnimatedNumber class...");
     
-    // Suche nach der exakten Klasse und extrahiere die Zahl zwischen > und </span>
-    const pattern = /class="ScAnimatedNumber-sc-[^"]*"[^>]*>(\d+)<\/span>/;
+    // Suche nach der ScAnimatedNumber-Klasse und nimm die Zahl direkt nach dem schließenden >
+    const pattern = /class="ScAnimatedNumber-sc-[^"]*"[^>]*>([0-9]+)/;
     const match = html.match(pattern);
     
     if (match && match[1]) {
       const count = parseInt(match[1], 10);
-      console.log("Found exact viewer count:", count);
+      console.log("Found viewer count:", count);
       return count;
     }
     
-    console.log("Could not find viewer count with exact pattern");
+    console.log("Could not find viewer count in HTML");
     return 0;
     
   } catch (error) {
