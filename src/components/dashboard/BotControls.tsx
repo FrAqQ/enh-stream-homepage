@@ -79,7 +79,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (!hasShownCertWarning) {
         toast({
           title: "Security Notice",
-          description: "Please visit https://152.53.122.45:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
+          description: "Please visit https://v220250171253310506.hotsrv.de:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
           duration: 10000,
           variant: "default",
         });
@@ -87,7 +87,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       }
 
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
-      const apiUrl = `https://152.53.122.45:5000/${endpoint}`;
+      const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
       console.log(`Starting viewer ${endpoint} request with details:`, {
         user_id: user?.id,
@@ -155,7 +155,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
           errorMessage = "Server connection failed. Please:\n" +
-                        "1. Visit https://152.53.122.45:5000 directly\n" +
+                        "1. Visit https://v220250171253310506.hotsrv.de:5000 directly\n" +
                         "2. Click 'Advanced' and 'Accept the Risk'\n" +
                         "3. Return here and try again\n" +
                         "If issues persist, contact support.";
