@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
+  const [viewerGrowth, setViewerGrowth] = useState("0");
   const [followerProgress, setFollowerProgress] = useState(0);
   const [followerPlan, setFollowerPlan] = useState<any>(null);
   const [twitchChannel, setTwitchChannel] = useState("");
@@ -25,10 +26,73 @@ const Dashboard = () => {
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
-  // Add the missing handleSaveUrl function
+  const saveStreamStats = async (viewers: number, chatters: number) => {
+    try {
+      if (!user?.id || !streamUrl) return;
+
+      const { error } = await supabase
+        .from('stream_stats')
+        .insert([
+          {
+            user_id: user.id,
+            stream_url: streamUrl,
+            viewer_count: viewers,
+            chatter_count: chatters
+          }
+        ]);
+
+      if (error) {
+        console.error('Error saving stream stats:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save stream statistics",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error in saveStreamStats:', error);
+    }
+  };
+
+  const calculateViewerGrowth = async () => {
+    try {
+      if (!user?.id || !streamUrl) return;
+
+      // Get the first recorded viewer count for this URL
+      const { data: firstRecord } = await supabase
+        .from('stream_stats')
+        .select('viewer_count')
+        .eq('user_id', user.id)
+        .eq('stream_url', streamUrl)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!firstRecord) return;
+
+      // Get average of recent viewer counts (last month)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: recentStats } = await supabase
+        .from('stream_stats')
+        .select('viewer_count')
+        .eq('user_id', user.id)
+        .eq('stream_url', streamUrl)
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      if (!recentStats?.length) return;
+
+      const avgRecentViewers = recentStats.reduce((sum, stat) => sum + stat.viewer_count, 0) / recentStats.length;
+      const growthRate = ((avgRecentViewers - firstRecord.viewer_count) / firstRecord.viewer_count) * 100;
+      
+      setViewerGrowth(growthRate.toFixed(1));
+    } catch (error) {
+      console.error('Error calculating viewer growth:', error);
+    }
+  };
+
   const handleSaveUrl = () => {
-    console.log("Saving stream URL:", streamUrl);
-    // Extract channel name from URL if it's a valid Twitch URL
     try {
       const url = new URL(streamUrl);
       const pathParts = url.pathname.split('/').filter(Boolean);
@@ -52,42 +116,42 @@ const Dashboard = () => {
   const updateViewerCount = useCallback(async () => {
     if (streamUrl) {
       try {
-        console.log("Fetching viewer count for URL:", streamUrl);
         const count = await getViewerCount(streamUrl);
-        console.log("Received viewer count:", count);
         setViewerCount(count);
+        return count;
       } catch (error) {
         console.error("Error updating viewer count:", error);
       }
     }
+    return 0;
   }, [streamUrl]);
 
   const updateChatterCount = useCallback(async () => {
     if (streamUrl) {
       try {
-        console.log("Fetching chatter count for URL:", streamUrl);
         const count = await getChatterCount(streamUrl);
-        console.log("Received chatter count:", count);
         setChatterCount(count);
+        return count;
       } catch (error) {
         console.error("Error updating chatter count:", error);
       }
     }
+    return 0;
   }, [streamUrl]);
 
   useEffect(() => {
     if (streamUrl) {
-      console.log("Setting up viewer and chatter count update interval");
-      updateViewerCount();
-      updateChatterCount();
-      const interval = setInterval(() => {
-        updateViewerCount();
-        updateChatterCount();
-      }, 10000);
-      return () => {
-        console.log("Cleaning up viewer and chatter count interval");
-        clearInterval(interval);
+      const fetchAndSaveStats = async () => {
+        const viewers = await updateViewerCount();
+        const chatters = await updateChatterCount();
+        await saveStreamStats(viewers, chatters);
+        await calculateViewerGrowth();
       };
+
+      fetchAndSaveStats();
+      const interval = setInterval(fetchAndSaveStats, 10000);
+      
+      return () => clearInterval(interval);
     }
   }, [streamUrl, updateViewerCount, updateChatterCount]);
 
@@ -217,14 +281,14 @@ const Dashboard = () => {
         <StatsCard
           title="Total Viewers"
           value={viewerCount}
-          change="+20.1% from last month"
+          change={`${viewerGrowth}% from first stream`}
           icon={Users}
         />
         <StatsCard
           title="Active Chatters"
           value={chatterCount}
           subtitle="Last 10 minutes"
-          change="+15% from last hour"
+          change="Calculating..."
           icon={MessageSquare}
         />
         <StatsCard
