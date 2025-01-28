@@ -23,6 +23,31 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
   const [userPlan, setUserPlan] = useState<string>("Free");
 
+  // Lade die gespeicherte Viewer-Anzahl beim Start
+  useEffect(() => {
+    const loadSavedViewers = async () => {
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from('viewer_counts')
+          .select('viewer_count')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error loading saved viewers:', error);
+          return;
+        }
+
+        if (data) {
+          console.log("Loaded saved viewer count:", data.viewer_count);
+          setCurrentViewers(data.viewer_count);
+        }
+      }
+    };
+
+    loadSavedViewers();
+  }, [user]);
+
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
@@ -39,7 +64,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           return;
         }
 
-        // Nur aktive Abonnements berücksichtigen
         if (profile?.subscription_status === 'active') {
           console.log("Active subscription found with plan:", profile?.plan);
           setUserPlan(profile?.plan || "Free");
@@ -51,17 +75,13 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     };
 
     fetchUserPlan();
-    
-    // Alle 30 Sekunden aktualisieren
     const interval = setInterval(fetchUserPlan, 30000);
-    
     return () => clearInterval(interval);
   }, [user]);
 
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
   const modifyViewers = async (viewerCount: number) => {
-    // For removing viewers, check if we have enough viewers to remove
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
         title: "Not Enough Viewers",
@@ -71,7 +91,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       return;
     }
 
-    // For adding viewers, check against the limit
     if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
       toast({
         title: "Viewer Limit Reached",
@@ -92,14 +111,13 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      // Determine which endpoint to use based on whether we're adding or removing viewers
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const apiUrl = `https://152.53.122.45:5000/${endpoint}`;
       
       console.log(`Starting viewer ${endpoint} request with details:`, {
         user_id: user?.id,
         twitch_url: streamUrl,
-        viewer_count: Math.abs(viewerCount) // Send positive number for both endpoints
+        viewer_count: Math.abs(viewerCount)
       });
       
       const response = await fetch(apiUrl, {
@@ -112,7 +130,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         body: JSON.stringify({
           user_id: user?.id || "123",
           twitch_url: streamUrl,
-          viewer_count: Math.abs(viewerCount) // Always send positive number
+          viewer_count: Math.abs(viewerCount)
         })
       });
 
@@ -140,7 +158,27 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       }
 
       // Update current viewers count
-      setCurrentViewers(prev => prev + viewerCount);
+      const newViewerCount = currentViewers + viewerCount;
+      setCurrentViewers(newViewerCount);
+
+      // Speichere die neue Viewer-Anzahl in der Datenbank
+      if (user?.id) {
+        const { error: upsertError } = await supabase
+          .from('viewer_counts')
+          .upsert({ 
+            user_id: user.id,
+            viewer_count: newViewerCount
+          });
+
+        if (upsertError) {
+          console.error('Error saving viewer count:', upsertError);
+          toast({
+            title: "Error",
+            description: "Failed to save viewer count",
+            variant: "destructive",
+          });
+        }
+      }
 
       toast({
         title: "Success",
@@ -193,7 +231,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
     
     setIsOnCooldown(true);
-    
     setTimeout(() => {
       setIsOnCooldown(false);
     }, 5000);
