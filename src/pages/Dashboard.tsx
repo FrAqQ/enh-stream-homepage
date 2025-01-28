@@ -7,9 +7,11 @@ import { StreamPreview } from "@/components/dashboard/StreamPreview"
 import { StreamSettings } from "@/components/dashboard/StreamSettings"
 import { BotControls } from "@/components/dashboard/BotControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
+import { useToast } from "@/components/ui/use-toast"
 
 const Dashboard = () => {
   const { user } = useUser();
+  const { toast } = useToast();
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
@@ -25,24 +27,41 @@ const Dashboard = () => {
     const fetchUserPlan = async () => {
       if (user?.id) {
         try {
-          console.log("Fetching user plan and subscription status for user ID:", user.id);
+          console.log("Starting plan fetch for user:", user.id);
           
-          const { data: profile, error } = await supabase
+          // First, check current profile data
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('plan, subscription_status, current_period_end')
             .eq('id', user.id)
             .single();
 
-          if (error) {
-            console.error('Error fetching user plan:', error);
-            setUserPlan("Free");
-            setSubscriptionStatus("inactive");
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            toast({
+              title: "Error",
+              description: "Failed to fetch subscription status",
+              variant: "destructive",
+            });
             return;
           }
 
-          console.log("Full profile data:", profile);
-          
-          if (profile?.subscription_status === 'active') {
+          console.log("Raw profile data:", profile);
+
+          // Check if subscription is active and not expired
+          const isActive = profile?.subscription_status === 'active';
+          const periodEnd = profile?.current_period_end;
+          const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
+
+          console.log("Subscription check:", {
+            isActive,
+            periodEnd,
+            isExpired,
+            currentStatus: profile?.subscription_status,
+            currentPlan: profile?.plan
+          });
+
+          if (isActive && !isExpired) {
             console.log("Active subscription found:", {
               plan: profile.plan,
               status: profile.subscription_status,
@@ -50,28 +69,37 @@ const Dashboard = () => {
             });
             setUserPlan(profile.plan || "Free");
             setSubscriptionStatus('active');
+            
+            toast({
+              title: "Subscription Active",
+              description: `Your ${profile.plan} plan is active`,
+            });
           } else {
-            console.log("No active subscription found:", {
+            console.log("No active subscription or expired:", {
               currentStatus: profile?.subscription_status,
-              currentPlan: profile?.plan
+              currentPlan: profile?.plan,
+              periodEnd: profile?.current_period_end
             });
             setUserPlan("Free");
             setSubscriptionStatus('inactive');
           }
         } catch (err) {
-          console.error("Unexpected error fetching user plan:", err);
-          setUserPlan("Free");
-          setSubscriptionStatus("inactive");
+          console.error("Unexpected error in subscription check:", err);
+          toast({
+            title: "Error",
+            description: "Failed to verify subscription status",
+            variant: "destructive",
+          });
         }
       }
     };
 
     fetchUserPlan();
     
-    // Update every 30 seconds
-    const interval = setInterval(fetchUserPlan, 30000);
+    // Update every 10 seconds instead of 30
+    const interval = setInterval(fetchUserPlan, 10000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, toast]);
 
   // Define userData at the component level
   const userData = {
@@ -80,162 +108,6 @@ const Dashboard = () => {
     email: user?.email || "demo@example.com",
     plan: userPlan, // Use the userPlan state instead of hardcoded value
     followerPlan: "None"
-  };
-
-  useEffect(() => {
-    // Check if script is already loaded
-    if (document.querySelector('script[src="https://embed.twitch.tv/embed/v1.js"]')) {
-      console.log("Twitch script already exists");
-      setIsScriptLoaded(true);
-      return;
-    }
-
-    // Load Twitch embed script
-    const script = document.createElement('script');
-    script.src = "https://embed.twitch.tv/embed/v1.js";
-    script.async = true;
-    
-    script.onload = () => {
-      console.log("Twitch embed script loaded successfully");
-      setIsScriptLoaded(true);
-      if (twitchChannel) {
-        console.log("Initializing existing channel:", twitchChannel);
-        createEmbed(twitchChannel);
-      }
-    };
-
-    script.onerror = (error) => {
-      console.error("Error loading Twitch script:", error);
-    };
-    
-    document.body.appendChild(script);
-
-    return () => {
-      const existingScript = document.querySelector('script[src="https://embed.twitch.tv/embed/v1.js"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []); // Run only once on mount
-
-  const initTwitchEmbed = (channelName: string) => {
-    try {
-      if (!channelName) {
-        console.log("No channel name provided");
-        return;
-      }
-      
-      console.log("Initializing Twitch embed for channel:", channelName);
-      
-      // Cleanup any existing embed
-      const container = document.getElementById('twitch-embed');
-      if (container) {
-        container.innerHTML = '';
-      }
-
-      if (!isScriptLoaded) {
-        console.log("Waiting for Twitch script to load...");
-        return;
-      }
-
-      createEmbed(channelName);
-      
-    } catch (error) {
-      console.error('Error initializing Twitch embed:', error);
-    }
-  };
-
-  const createEmbed = (channelName: string) => {
-    try {
-      console.log("Creating Twitch embed with channel:", channelName);
-      const currentDomain = window.location.hostname.split(':')[0];
-      console.log("Current domain for Twitch embed:", currentDomain);
-      
-      const protocol = window.location.protocol;
-      console.log("Current protocol:", protocol);
-      
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      console.log("Development mode:", isDevelopment);
-      
-      if (window.Twitch) {
-        // Cleanup any existing embed
-        const container = document.getElementById('twitch-embed');
-        if (container) {
-          container.innerHTML = '';
-          // Add security attributes to the container
-          container.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms');
-          container.setAttribute('loading', 'lazy');
-        }
-
-        // Include all possible parent domains
-        const parentDomains = [
-          currentDomain,
-          'localhost',
-          '127.0.0.1',
-          'lovable.app',
-          'lovableproject.com',
-          currentDomain.endsWith('lovableproject.com') ? currentDomain : '',
-          currentDomain.endsWith('lovable.app') ? currentDomain : '',
-          window.location.host // Include the full host with port if present
-        ].filter(Boolean);
-
-        console.log("Using parent domains:", parentDomains);
-
-        const embedOptions = {
-          width: "100%",
-          height: "100%",
-          channel: channelName,
-          layout: "video",
-          autoplay: true,
-          muted: true,
-          parent: parentDomains,
-          theme: "dark"
-        };
-
-        console.log("Creating embed with options:", embedOptions);
-
-        const newEmbed = new window.Twitch.Embed("twitch-embed", embedOptions);
-
-        console.log("Twitch embed created with parent domains:", parentDomains);
-
-        newEmbed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
-          console.log('Twitch embed is ready');
-          setEmbed(newEmbed);
-          setTwitchChannel(channelName);
-        });
-      } else {
-        console.error('Twitch embed script not loaded');
-      }
-    } catch (error) {
-      console.error('Error creating Twitch embed:', error);
-    }
-  };
-
-  const extractChannelName = (url: string): string => {
-    try {
-      if (!url) return "";
-      
-      let channelName = "";
-      if (url.includes('twitch.tv/')) {
-        channelName = url.split('twitch.tv/')[1].split('/')[0].split('?')[0];
-      } else {
-        channelName = url.trim();
-      }
-      
-      console.log("Extracted channel name:", channelName);
-      return channelName;
-    } catch (error) {
-      console.error('Error extracting channel name:', error);
-      return "";
-    }
-  };
-
-  const handleSaveUrl = () => {
-    console.log("Saving stream URL:", streamUrl);
-    const channelName = extractChannelName(streamUrl);
-    if (channelName) {
-      initTwitchEmbed(channelName);
-    }
   };
 
   const addViewers = (count: number) => {
@@ -253,6 +125,11 @@ const Dashboard = () => {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Current Plan:</span>
           <span className="font-semibold text-primary">{userPlan}</span>
+          {subscriptionStatus === 'active' && (
+            <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+              Active
+            </span>
+          )}
         </div>
       </div>
       
