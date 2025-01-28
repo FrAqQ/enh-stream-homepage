@@ -29,8 +29,10 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
           height: "400",
           channel: channelName,
           layout: "video",
-          autoplay: true,
+          autoplay: false,
           muted: true,
+          theme: "dark",
+          // Wichtig: parent muss die aktuelle Domain enthalten
           parent: [window.location.hostname]
         });
 
