@@ -8,7 +8,6 @@ import { StreamSettings } from "@/components/dashboard/StreamSettings"
 import { BotControls } from "@/components/dashboard/BotControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
 import { useToast } from "@/hooks/use-toast"
-import { getStreamViewerCount } from "@/services/twitchService"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -45,18 +44,6 @@ const Dashboard = () => {
       console.error("Error creating Twitch embed:", error);
     }
   }, []);
-
-  const updateViewerCount = useCallback(async () => {
-    if (twitchChannel) {
-      try {
-        const count = await getStreamViewerCount(twitchChannel);
-        console.log('Updated viewer count:', count);
-        setViewerCount(count);
-      } catch (error) {
-        console.error('Error updating viewer count:', error);
-      }
-    }
-  }, [twitchChannel]);
 
   const handleSaveUrl = async () => {
     if (!user?.id) {
@@ -163,13 +150,22 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [user, toast]);
 
-  useEffect(() => {
-    if (twitchChannel) {
-      updateViewerCount();
-      const interval = setInterval(updateViewerCount, 20000); // Update every 20 seconds
-      return () => clearInterval(interval);
-    }
-  }, [twitchChannel, updateViewerCount]);
+  const userData = {
+    username: user?.email?.split('@')[0] || "DemoUser",
+    userId: user?.id || "12345",
+    email: user?.email || "demo@example.com",
+    plan: userPlan,
+    followerPlan: "None",
+    subscriptionStatus
+  };
+
+  const addViewers = (count: number) => {
+    setViewerCount(prev => prev + count);
+  };
+
+  const addChatters = (count: number) => {
+    setChatterCount(prev => prev + count);
+  };
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -184,15 +180,6 @@ const Dashboard = () => {
       document.body.removeChild(script);
     };
   }, []);
-
-  const userData = {
-    username: user?.email?.split('@')[0] || "DemoUser",
-    userId: user?.id || "12345",
-    email: user?.email || "demo@example.com",
-    plan: userPlan,
-    followerPlan: "None",
-    subscriptionStatus
-  };
 
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
@@ -213,7 +200,7 @@ const Dashboard = () => {
         <StatsCard
           title="Total Viewers"
           value={viewerCount}
-          change="Updates every 20s"
+          change="+20.1% from last month"
           icon={Users}
         />
         <StatsCard
