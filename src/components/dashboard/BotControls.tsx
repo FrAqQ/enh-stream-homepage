@@ -23,31 +23,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
   const [userPlan, setUserPlan] = useState<string>("Free");
 
-  // Lade die gespeicherte Viewer-Anzahl beim Start
-  useEffect(() => {
-    const loadSavedViewers = async () => {
-      if (user?.id) {
-        const { data, error } = await supabase
-          .from('viewer_counts')
-          .select('viewer_count')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error loading saved viewers:', error);
-          return;
-        }
-
-        if (data) {
-          console.log("Loaded saved viewer count:", data.viewer_count);
-          setCurrentViewers(data.viewer_count);
-        }
-      }
-    };
-
-    loadSavedViewers();
-  }, [user]);
-
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
@@ -160,25 +135,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       // Update current viewers count
       const newViewerCount = currentViewers + viewerCount;
       setCurrentViewers(newViewerCount);
-
-      // Speichere die neue Viewer-Anzahl in der Datenbank
-      if (user?.id) {
-        const { error: upsertError } = await supabase
-          .from('viewer_counts')
-          .upsert({ 
-            user_id: user.id,
-            viewer_count: newViewerCount
-          });
-
-        if (upsertError) {
-          console.error('Error saving viewer count:', upsertError);
-          toast({
-            title: "Error",
-            description: "Failed to save viewer count",
-            variant: "destructive",
-          });
-        }
-      }
 
       toast({
         title: "Success",
