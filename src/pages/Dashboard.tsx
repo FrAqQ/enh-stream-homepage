@@ -28,7 +28,17 @@ const Dashboard = () => {
 
   const saveStreamStats = async (viewers: number, chatters: number) => {
     try {
-      if (!user?.id || !streamUrl) return;
+      if (!user?.id || !streamUrl) {
+        console.log("Missing user ID or stream URL, skipping stats save");
+        return;
+      }
+
+      console.log("Saving stream stats:", {
+        user_id: user.id,
+        stream_url: streamUrl,
+        viewers,
+        chatters
+      });
 
       const { error } = await supabase
         .from('stream_stats')
@@ -48,9 +58,15 @@ const Dashboard = () => {
           description: "Failed to save stream statistics",
           variant: "destructive",
         });
+      } else {
+        console.log("Successfully saved stream stats");
       }
     } catch (error) {
-      console.error('Error in saveStreamStats:', error);
+      console.error('Detailed error in saveStreamStats:', {
+        error,
+        type: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error)
+      });
     }
   };
 
@@ -58,8 +74,13 @@ const Dashboard = () => {
     try {
       if (!user?.id || !streamUrl) return;
 
+      console.log("Calculating viewer growth for:", {
+        user_id: user.id,
+        stream_url: streamUrl
+      });
+
       // Get the first recorded viewer count for this URL
-      const { data: firstRecord } = await supabase
+      const { data: firstRecord, error: firstRecordError } = await supabase
         .from('stream_stats')
         .select('viewer_count')
         .eq('user_id', user.id)
@@ -68,24 +89,46 @@ const Dashboard = () => {
         .limit(1)
         .single();
 
-      if (!firstRecord) return;
+      if (firstRecordError) {
+        console.error('Error fetching first record:', firstRecordError);
+        return;
+      }
+
+      if (!firstRecord) {
+        console.log("No previous records found");
+        return;
+      }
 
       // Get average of recent viewer counts (last month)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { data: recentStats } = await supabase
+      const { data: recentStats, error: recentStatsError } = await supabase
         .from('stream_stats')
         .select('viewer_count')
         .eq('user_id', user.id)
         .eq('stream_url', streamUrl)
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-      if (!recentStats?.length) return;
+      if (recentStatsError) {
+        console.error('Error fetching recent stats:', recentStatsError);
+        return;
+      }
+
+      if (!recentStats?.length) {
+        console.log("No recent stats found");
+        return;
+      }
 
       const avgRecentViewers = recentStats.reduce((sum, stat) => sum + stat.viewer_count, 0) / recentStats.length;
       const growthRate = ((avgRecentViewers - firstRecord.viewer_count) / firstRecord.viewer_count) * 100;
       
+      console.log("Growth calculation:", {
+        firstCount: firstRecord.viewer_count,
+        avgRecent: avgRecentViewers,
+        growthRate
+      });
+
       setViewerGrowth(growthRate.toFixed(1));
     } catch (error) {
       console.error('Error calculating viewer growth:', error);
@@ -148,6 +191,7 @@ const Dashboard = () => {
         await calculateViewerGrowth();
       };
 
+      console.log("Setting up stats tracking for URL:", streamUrl);
       fetchAndSaveStats();
       const interval = setInterval(fetchAndSaveStats, 10000);
       
@@ -313,7 +357,14 @@ const Dashboard = () => {
           streamUrl={streamUrl}
           setStreamUrl={setStreamUrl}
           handleSaveUrl={handleSaveUrl}
-          userData={userData}
+          userData={{
+            username: user?.email?.split('@')[0] || "DemoUser",
+            userId: user?.id || "12345",
+            email: user?.email || "demo@example.com",
+            plan: userPlan,
+            followerPlan: "None",
+            subscriptionStatus
+          }}
         />
       </div>
 
