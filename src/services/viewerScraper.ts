@@ -3,12 +3,9 @@ export async function getViewerCount(channelUrl: string): Promise<number> {
     const channelName = channelUrl.split('/').pop() || '';
     console.log("Fetching viewer count for channel:", channelName);
     
-    // Direkte URL zur Twitch-Seite
-    const twitchUrl = `https://www.twitch.tv/${channelName}`;
-    console.log("Fetching from URL:", twitchUrl);
-    
-    // Verwende einen CORS-Proxy
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(twitchUrl)}`;
+    // Verwende einen anderen CORS-Proxy
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`;
+    console.log("Fetching from URL:", proxyUrl);
     
     const response = await fetch(proxyUrl);
     const html = await response.text();
@@ -18,14 +15,12 @@ export async function getViewerCount(channelUrl: string): Promise<number> {
     // Verschiedene Möglichkeiten, die Viewer-Zahl zu finden
     const patterns = [
       /"viewersCount":(\d+)/, // JSON-Daten im Script-Tag
-      /aria-label="(\d+)\s+viewers"/, // Aria-Label
-      /class="tw-animated-number[^"]*">(\d+)/, // Twitch Klasse
-      /<p[^>]*>(\d+)\s+viewers<\/p>/, // Viewer Text
-      /data-a-target="channel-viewer-count[^"]*">(\d+)/, // Data Attribute
       /"channelViewerCount":(\d+)/, // Alternative JSON-Daten
       /"viewers":(\d+)/, // Einfache JSON-Daten
       /viewers:\s*(\d+)/, // JavaScript Variable
       /"viewerCount":(\d+)/, // Alternative JSON Format
+      /<span[^>]*data-a-target="animated-channel-viewers-count"[^>]*>(\d+)<\/span>/, // Neues Twitch Format
+      /<p[^>]*data-a-target="animated-channel-viewers-count"[^>]*>(\d+)<\/p>/, // Alternatives Format
     ];
     
     for (const pattern of patterns) {
