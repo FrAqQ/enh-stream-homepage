@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const PRICE_TO_PLAN_MAP = {
   'price_1Qklku01379EnnGJtin4BVcc': 'Starter',
-  'price_1Qm2me01379EnnGJoRwD4g0S': 'Basic',
+  'price_1Qm2r901379EnnGJUPjUHV4L': 'Basic',
   'price_1Qm2E301379EnnGJjSesajsz': 'Professional',
   'price_1Qm2Ke01379EnnGJNfHjqbBo': 'Expert',
   'price_1Qm2VA01379EnnGJTiStzUOq': 'Ultimate'
