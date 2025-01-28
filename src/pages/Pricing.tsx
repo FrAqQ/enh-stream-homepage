@@ -347,7 +347,6 @@ const Pricing = () => {
 
     fetchUserPlan();
     
-    // Update every 30 seconds
     const interval = setInterval(fetchUserPlan, 30000);
     return () => clearInterval(interval);
   }, [user]);
@@ -388,7 +387,7 @@ const Pricing = () => {
           viewers={100} 
           chatters={20}
           isPopular
-          priceId="price_YOUR_ACTUAL_PRICE_ID"
+          priceId="price_1Qm2E301379EnnGJjSesajsz"
           currentPlan={currentPlan}
         />
         <PricingCard 
