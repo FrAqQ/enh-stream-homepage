@@ -16,10 +16,10 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
         <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
           {twitchChannel && (
             <iframe
-              src={twitchChannel}
+              src={`https://player.twitch.tv/?channel=${twitchChannel.split('/').pop()}&parent=${window.location.hostname}`}
               className="w-full h-full min-h-[400px]"
               allowFullScreen
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              allow="autoplay; fullscreen"
             />
           )}
           <div className="mt-2 text-sm text-muted-foreground">
