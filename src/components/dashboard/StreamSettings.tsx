@@ -7,7 +7,8 @@ interface UserData {
   username: string;
   plan: string;
   followerPlan: string;
-  subscriptionStatus: string; // Added this line
+  subscriptionStatus: string;
+  email: string; // Added email as it's being used
 }
 
 interface StreamSettingsProps {

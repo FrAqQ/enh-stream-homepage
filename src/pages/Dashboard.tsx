@@ -277,7 +277,6 @@ const Dashboard = () => {
 
   const userData = {
     username: user?.email?.split('@')[0] || "DemoUser",
-    userId: user?.id || "12345",
     email: user?.email || "demo@example.com",
     plan: userPlan,
     followerPlan: "None",
@@ -357,14 +356,7 @@ const Dashboard = () => {
           streamUrl={streamUrl}
           setStreamUrl={setStreamUrl}
           handleSaveUrl={handleSaveUrl}
-          userData={{
-            username: user?.email?.split('@')[0] || "DemoUser",
-            userId: user?.id || "12345",
-            email: user?.email || "demo@example.com",
-            plan: userPlan,
-            followerPlan: "None",
-            subscriptionStatus
-          }}
+          userData={userData}
         />
       </div>
 
