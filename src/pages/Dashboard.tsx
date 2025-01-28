@@ -1,3 +1,4 @@
+<lov-code>
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -58,6 +59,7 @@ const Dashboard = () => {
     if (!user?.id || !streamUrl) return;
 
     try {
+      // Get the first recorded viewer count for this stream
       const { data: firstRecord } = await supabase
         .from('stream_stats')
         .select('viewer_count')
@@ -67,6 +69,7 @@ const Dashboard = () => {
         .limit(1)
         .single();
 
+      // Get average of recent viewer counts (last month)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -97,7 +100,9 @@ const Dashboard = () => {
         console.log("Received viewer count:", count);
         setViewerCount(count);
         
+        // Save stats after updating counts
         await saveStats(count, chatterCount);
+        // Calculate growth rate
         await calculateViewerGrowth();
       } catch (error) {
         console.error("Error updating viewer count:", error);
@@ -161,6 +166,14 @@ const Dashboard = () => {
         const periodEnd = profile?.current_period_end;
         const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
 
+        console.log("Subscription check:", {
+          isActive,
+          periodEnd,
+          isExpired,
+          currentStatus: profile?.subscription_status,
+          currentPlan: profile?.plan
+        });
+
         if (isActive && !isExpired) {
           console.log("Active subscription found:", {
             plan: profile.plan,
@@ -198,7 +211,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchUserPlan();
-    const interval = setInterval(fetchUserPlan, 5000);
+    const interval = setInterval(fetchUserPlan, 5000); // Check every 5 seconds
     return () => clearInterval(interval);
   }, [user, toast]);
 
@@ -253,8 +266,4 @@ const Dashboard = () => {
           icon={Activity}
         />
       </div>
-    </div>
-  );
-};
 
-export default Dashboard;
