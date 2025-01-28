@@ -403,7 +403,7 @@ const Pricing = () => {
           price={249.99} 
           viewers={600} 
           chatters={200}
-          priceId="price_YOUR_ACTUAL_PRICE_ID"
+          priceId="price_1Qm2VA01379EnnGJTiStzUOq"
           currentPlan={currentPlan}
         />
       </div>

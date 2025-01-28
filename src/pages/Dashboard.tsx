@@ -7,7 +7,7 @@ import { StreamPreview } from "@/components/dashboard/StreamPreview"
 import { StreamSettings } from "@/components/dashboard/StreamSettings"
 import { BotControls } from "@/components/dashboard/BotControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -32,7 +32,7 @@ const Dashboard = () => {
           height: "100%",
           channel: channelName,
           layout: "video",
-          parent: [window.location.hostname], // Add the parent domain
+          parent: [window.location.hostname],
           autoplay: false,
           muted: true
         });
@@ -74,78 +74,79 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchUserPlan = async () => {
-      if (user?.id) {
-        try {
-          console.log("Starting plan fetch for user:", user.id);
-          
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('plan, subscription_status, current_period_end')
-            .eq('id', user.id)
-            .single();
+  const fetchUserPlan = async () => {
+    if (user?.id) {
+      try {
+        console.log("Starting plan fetch for user:", user.id);
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('plan, subscription_status, current_period_end')
+          .eq('id', user.id)
+          .single();
 
-          if (profileError) {
-            console.error('Error fetching profile:', profileError);
-            toast({
-              title: "Error",
-              description: "Failed to fetch subscription status",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          console.log("Raw profile data:", profile);
-
-          const isActive = profile?.subscription_status === 'active';
-          const periodEnd = profile?.current_period_end;
-          const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
-
-          console.log("Subscription check:", {
-            isActive,
-            periodEnd,
-            isExpired,
-            currentStatus: profile?.subscription_status,
-            currentPlan: profile?.plan
-          });
-
-          if (isActive && !isExpired) {
-            console.log("Active subscription found:", {
-              plan: profile.plan,
-              status: profile.subscription_status,
-              periodEnd: profile.current_period_end
-            });
-            setUserPlan(profile.plan || "Free");
-            setSubscriptionStatus('active');
-            
-            toast({
-              title: "Subscription Active",
-              description: `Your ${profile.plan} plan is active`,
-            });
-          } else {
-            console.log("No active subscription or expired:", {
-              currentStatus: profile?.subscription_status,
-              currentPlan: profile?.plan,
-              periodEnd: profile?.current_period_end
-            });
-            setUserPlan("Free");
-            setSubscriptionStatus('inactive');
-          }
-        } catch (err) {
-          console.error("Unexpected error in subscription check:", err);
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
           toast({
             title: "Error",
-            description: "Failed to verify subscription status",
+            description: "Failed to fetch subscription status",
             variant: "destructive",
           });
+          return;
         }
-      }
-    };
 
+        console.log("Raw profile data:", profile);
+
+        const isActive = profile?.subscription_status === 'active';
+        const periodEnd = profile?.current_period_end;
+        const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
+
+        console.log("Subscription check:", {
+          isActive,
+          periodEnd,
+          isExpired,
+          currentStatus: profile?.subscription_status,
+          currentPlan: profile?.plan
+        });
+
+        if (isActive && !isExpired) {
+          console.log("Active subscription found:", {
+            plan: profile.plan,
+            status: profile.subscription_status,
+            periodEnd: profile.current_period_end
+          });
+          
+          if (profile.plan !== userPlan) {
+            setUserPlan(profile.plan || "Free");
+            setSubscriptionStatus('active');
+            toast({
+              title: "Plan Updated",
+              description: `Your plan has been updated to ${profile.plan}`,
+            });
+          }
+        } else {
+          console.log("No active subscription or expired:", {
+            currentStatus: profile?.subscription_status,
+            currentPlan: profile?.plan,
+            periodEnd: profile?.current_period_end
+          });
+          setUserPlan("Free");
+          setSubscriptionStatus('inactive');
+        }
+      } catch (err) {
+        console.error("Unexpected error in subscription check:", err);
+        toast({
+          title: "Error",
+          description: "Failed to verify subscription status",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
     fetchUserPlan();
-    
-    const interval = setInterval(fetchUserPlan, 10000);
+    const interval = setInterval(fetchUserPlan, 5000); // Check every 5 seconds
     return () => clearInterval(interval);
   }, [user, toast]);
 
@@ -166,7 +167,6 @@ const Dashboard = () => {
     setChatterCount(prev => prev + count);
   };
 
-  // Load Twitch embed script
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://embed.twitch.tv/embed/v1.js";
