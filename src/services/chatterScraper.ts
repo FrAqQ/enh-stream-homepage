@@ -6,16 +6,15 @@ export async function getChatterCount(channelUrl: string): Promise<number> {
     const gqlEndpoint = 'https://gql.twitch.tv/gql';
     const query = {
       operationName: 'ChattersQuery',
-      query: `query ChattersQuery($channelLogin: String!, $minutes: Int!) {
+      query: `query ChattersQuery($channelLogin: String!) {
         channel(name: $channelLogin) {
-          chatters(timeRange: { minutes: $minutes }) {
+          chatters {
             count
           }
         }
       }`,
       variables: {
-        channelLogin: channelName,
-        minutes: 10 // Nur Chatter der letzten 10 Minuten
+        channelLogin: channelName
       }
     };
 
@@ -34,7 +33,7 @@ export async function getChatterCount(channelUrl: string): Promise<number> {
     console.log("GQL Chatter Response:", data);
 
     const chatterCount = data?.data?.channel?.chatters?.count || 0;
-    console.log("Extracted chatter count (last 10 minutes):", chatterCount);
+    console.log("Extracted chatter count:", chatterCount);
     
     return chatterCount;
   } catch (error) {
