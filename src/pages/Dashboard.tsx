@@ -8,6 +8,7 @@ import { StreamSettings } from "@/components/dashboard/StreamSettings"
 import { BotControls } from "@/components/dashboard/BotControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
 import { useToast } from "@/hooks/use-toast"
+import { getViewerCount } from "@/services/viewerScraper"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -45,6 +46,21 @@ const Dashboard = () => {
     }
   }, []);
 
+  const updateViewerCount = useCallback(async () => {
+    if (streamUrl) {
+      const count = await getViewerCount(streamUrl);
+      setViewerCount(count);
+    }
+  }, [streamUrl]);
+
+  useEffect(() => {
+    if (streamUrl) {
+      updateViewerCount();
+      const interval = setInterval(updateViewerCount, 20000); // Alle 20 Sekunden
+      return () => clearInterval(interval);
+    }
+  }, [streamUrl, updateViewerCount]);
+
   const handleSaveUrl = async () => {
     if (!user?.id) {
       toast({
@@ -59,6 +75,7 @@ const Dashboard = () => {
       const channelName = streamUrl.split('/').pop() || '';
       console.log("Saving channel name:", channelName);
       setTwitchChannel(channelName);
+      updateViewerCount(); // Sofortige Aktualisierung der Viewer-Zahl
 
       toast({
         title: "Success",
