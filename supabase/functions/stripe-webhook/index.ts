@@ -16,172 +16,168 @@ const PRICE_TO_PLAN_MAP = {
 };
 
 serve(async (req) => {
-  const signature = req.headers.get('stripe-signature');
-  
-  if (!signature) {
-    console.error('No stripe signature found');
-    return new Response('No signature', { status: 400 });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const body = await req.text();
-    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    const signature = req.headers.get('stripe-signature')
     
-    if (!webhookSecret) {
-      throw new Error('Webhook secret not configured');
+    if (!signature) {
+      console.error('No stripe signature found')
+      return new Response('No signature', { status: 400 })
     }
+
+    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+    if (!webhookSecret) {
+      console.error('Webhook secret not configured')
+      return new Response('Webhook secret not configured', { status: 500 })
+    }
+
+    const body = await req.text()
+    console.log('Received webhook body:', body)
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
-    });
+    })
 
-    // Verifiziere den Webhook
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret
-    );
+    let event
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+      console.log('Webhook event constructed:', event.type)
+    } catch (err) {
+      console.error(`Webhook signature verification failed:`, err.message)
+      return new Response(`Webhook Error: ${err.message}`, { status: 400 })
+    }
 
-    console.log('Webhook Event Type:', event.type);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // Handle verschiedene Event-Typen
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object;
-        
+        console.log('Processing checkout.session.completed')
+        const session = event.data.object
+
         // Hole die erweiterte Session mit Line Items
         const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-          expand: ['line_items'],
-        });
+          expand: ['line_items.data.price']
+        })
+        console.log('Expanded session:', expandedSession)
 
-        const customerEmail = expandedSession.customer_details?.email;
-        if (!customerEmail) {
-          throw new Error('No customer email found in session');
-        }
-
-        // Get the price ID from the line items
-        const priceId = expandedSession.line_items?.data[0]?.price?.id;
+        const priceId = expandedSession.line_items?.data[0]?.price?.id
         if (!priceId) {
-          throw new Error('No price ID found in session');
+          throw new Error('No price ID found in session')
         }
 
-        // Map price ID to plan name
-        const planName = PRICE_TO_PLAN_MAP[priceId as keyof typeof PRICE_TO_PLAN_MAP];
+        const planName = PRICE_TO_PLAN_MAP[priceId]
         if (!planName) {
-          throw new Error(`No plan mapping found for price ID: ${priceId}`);
+          console.error(`No plan mapping found for price ID: ${priceId}`)
+          throw new Error(`Unknown price ID: ${priceId}`)
         }
 
-        console.log(`Updating user ${customerEmail} to plan ${planName}`);
+        const customerEmail = expandedSession.customer_details?.email
+        if (!customerEmail) {
+          throw new Error('No customer email found in session')
+        }
 
-        // Erstelle Supabase Client
-        const supabase = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-        );
+        console.log(`Updating user ${customerEmail} to plan ${planName}`)
 
-        // Update den User Plan in der profiles Tabelle
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ 
+          .update({
             plan: planName,
             subscription_status: 'active',
             stripe_customer_id: session.customer,
             current_period_end: new Date(session.expires_at * 1000).toISOString()
           })
-          .eq('email', customerEmail);
+          .eq('email', customerEmail)
 
         if (updateError) {
-          console.error('Failed to update profile:', updateError);
-          throw new Error(`Failed to update subscription status: ${updateError.message}`);
+          console.error('Failed to update profile:', updateError)
+          throw updateError
         }
 
-        console.log(`Successfully updated subscription for user ${customerEmail} to plan ${planName}`);
-        break;
+        console.log(`Successfully updated subscription for ${customerEmail}`)
+        break
       }
 
       case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const customerEmail = subscription.customer_email;
-        const priceId = subscription.items.data[0]?.price?.id;
+        console.log('Processing customer.subscription.updated')
+        const subscription = event.data.object
+        const priceId = subscription.items.data[0]?.price?.id
+        const customerEmail = subscription.customer_email
 
-        if (!customerEmail || !priceId) {
-          throw new Error('Missing customer email or price ID');
+        if (!priceId || !customerEmail) {
+          throw new Error('Missing price ID or customer email')
         }
 
-        const planName = PRICE_TO_PLAN_MAP[priceId as keyof typeof PRICE_TO_PLAN_MAP];
+        const planName = PRICE_TO_PLAN_MAP[priceId]
         if (!planName) {
-          throw new Error(`No plan mapping found for price ID: ${priceId}`);
+          throw new Error(`No plan mapping found for price ID: ${priceId}`)
         }
 
-        const supabase = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-        );
-        
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ 
+          .update({
             plan: planName,
             subscription_status: subscription.status,
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
           })
-          .eq('email', customerEmail);
+          .eq('email', customerEmail)
 
         if (updateError) {
-          console.error('Failed to update subscription:', updateError);
-          throw new Error(`Failed to update subscription: ${updateError.message}`);
+          console.error('Failed to update subscription:', updateError)
+          throw updateError
         }
 
-        console.log(`Successfully updated subscription for ${customerEmail} to ${planName}`);
-        break;
+        console.log(`Successfully updated subscription for ${customerEmail}`)
+        break
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        const customerEmail = subscription.customer_email;
+        console.log('Processing customer.subscription.deleted')
+        const subscription = event.data.object
+        const customerEmail = subscription.customer_email
 
         if (!customerEmail) {
-          throw new Error('No customer email found in subscription');
+          throw new Error('No customer email found in subscription')
         }
 
-        const supabase = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-        );
-        
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ 
+          .update({
             plan: 'Free',
             subscription_status: 'canceled',
             current_period_end: null
           })
-          .eq('email', customerEmail);
+          .eq('email', customerEmail)
 
         if (updateError) {
-          console.error('Failed to cancel subscription:', updateError);
-          throw new Error(`Failed to cancel subscription: ${updateError.message}`);
+          console.error('Failed to cancel subscription:', updateError)
+          throw updateError
         }
 
-        console.log(`Successfully cancelled subscription for ${customerEmail}`);
-        break;
+        console.log(`Successfully cancelled subscription for ${customerEmail}`)
+        break
       }
     }
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    });
+    })
 
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    console.error('Error processing webhook:', error)
     return new Response(
-      JSON.stringify({ error: error.message }), 
-      { 
+      JSON.stringify({ error: error.message }),
+      {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
-    );
+    )
   }
-});
+})
