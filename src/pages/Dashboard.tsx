@@ -229,7 +229,11 @@ const Dashboard = () => {
         <StatsCard
           title="Total Viewers"
           value={viewerCount}
-          change="+20.1% from last month"
+</lov-replace>
+<lov-search>
+          change="+15% from last hour"
+</lov-search>
+<lov-replace>
           icon={Users}
         />
         <StatsCard
