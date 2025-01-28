@@ -5,15 +5,8 @@ import Stripe from 'https://esm.sh/stripe@14.21.0'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
-
-const PRICE_TO_PLAN_MAP = {
-  'price_1Qklku01379EnnGJtin4BVcc': 'Starter',
-  'price_1Qm2r901379EnnGJUPjUHV4L': 'Basic',
-  'price_1Qm2E301379EnnGJjSesajsz': 'Professional',
-  'price_1Qm2Ke01379EnnGJNfHjqbBo': 'Expert',
-  'price_1Qm2VA01379EnnGJTiStzUOq': 'Ultimate'
-};
 
 serve(async (req) => {
   console.log('Webhook function started');
@@ -34,7 +27,7 @@ serve(async (req) => {
 
     let event;
     try {
-      // Konstruiere das Event ohne Signaturverifizierung für Entwicklungszwecke
+      // For development, parse the event directly without signature verification
       event = JSON.parse(body);
       console.log('Successfully parsed webhook event:', event.type);
     } catch (err) {
@@ -67,6 +60,14 @@ serve(async (req) => {
             console.error('No price ID found in session');
             throw new Error('No price ID found in session');
           }
+
+          const PRICE_TO_PLAN_MAP = {
+            'price_1Qklku01379EnnGJtin4BVcc': 'Starter',
+            'price_1Qm2w001379EnnGJPVwgRD9F': 'Basic',
+            'price_1Qm2E301379EnnGJjSesajsz': 'Professional',
+            'price_1Qm2Ke01379EnnGJNfHjqbBo': 'Expert',
+            'price_1Qm2VA01379EnnGJTiStzUOq': 'Ultimate'
+          };
 
           const planName = PRICE_TO_PLAN_MAP[priceId];
           if (!planName) {
@@ -111,7 +112,6 @@ serve(async (req) => {
         
         try {
           const priceId = subscription.items.data[0]?.price?.id;
-          const customerEmail = subscription.customer_email;
           const customerId = subscription.customer;
 
           if (!priceId) {
@@ -119,7 +119,7 @@ serve(async (req) => {
             throw new Error('Missing price ID');
           }
 
-          // Hole die Customer-Information von Stripe
+          // Get customer email from Stripe
           const customer = await stripe.customers.retrieve(customerId);
           const email = typeof customer !== 'string' ? customer.email : null;
 
@@ -127,6 +127,14 @@ serve(async (req) => {
             console.error('No customer email found');
             throw new Error('No customer email found');
           }
+
+          const PRICE_TO_PLAN_MAP = {
+            'price_1Qklku01379EnnGJtin4BVcc': 'Starter',
+            'price_1Qm2w001379EnnGJPVwgRD9F': 'Basic',
+            'price_1Qm2E301379EnnGJjSesajsz': 'Professional',
+            'price_1Qm2Ke01379EnnGJNfHjqbBo': 'Expert',
+            'price_1Qm2VA01379EnnGJTiStzUOq': 'Ultimate'
+          };
 
           const planName = PRICE_TO_PLAN_MAP[priceId];
           if (!planName) {
@@ -158,11 +166,6 @@ serve(async (req) => {
         break;
       }
 
-      case 'payment_intent.succeeded': {
-        console.log('Processing payment_intent.succeeded');
-        break;
-      }
-
       default: {
         console.log(`Unhandled event type: ${event.type}`);
       }
@@ -183,4 +186,4 @@ serve(async (req) => {
       }
     );
   }
-})
+});
