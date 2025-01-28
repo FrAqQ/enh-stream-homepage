@@ -185,6 +185,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (streamUrl) {
       const fetchAndSaveStats = async () => {
+        console.log("Fetching and saving stats for URL:", streamUrl);
         const viewers = await updateViewerCount();
         const chatters = await updateChatterCount();
         await saveStreamStats(viewers, chatters);
@@ -193,7 +194,9 @@ const Dashboard = () => {
 
       console.log("Setting up stats tracking for URL:", streamUrl);
       fetchAndSaveStats();
-      const interval = setInterval(fetchAndSaveStats, 10000);
+      
+      // Update every 10 minutes instead of 10 seconds
+      const interval = setInterval(fetchAndSaveStats, 600000);
       
       return () => clearInterval(interval);
     }
