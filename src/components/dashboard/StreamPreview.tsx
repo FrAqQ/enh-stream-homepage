@@ -24,7 +24,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       console.log("Creating Twitch embed for channel:", channelName);
 
       try {
-        embedInstance.current = new window.Twitch.Embed(embedRef.current!, {
+        embedInstance.current = new window.Twitch.Embed("twitch-embed", {
           width: "100%",
           height: "400",
           channel: channelName,
