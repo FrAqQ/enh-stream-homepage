@@ -25,6 +25,30 @@ const Dashboard = () => {
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
+  // Add the missing handleSaveUrl function
+  const handleSaveUrl = () => {
+    console.log("Saving stream URL:", streamUrl);
+    // Extract channel name from URL if it's a valid Twitch URL
+    try {
+      const url = new URL(streamUrl);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      if (pathParts.length > 0) {
+        setTwitchChannel(pathParts[0]);
+        toast({
+          title: "Success",
+          description: "Stream URL saved successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Invalid URL:", error);
+      toast({
+        title: "Error",
+        description: "Please enter a valid Twitch stream URL",
+        variant: "destructive",
+      });
+    }
+  };
+
   const updateViewerCount = useCallback(async () => {
     if (streamUrl) {
       try {
