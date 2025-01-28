@@ -32,6 +32,9 @@ const Dashboard = () => {
           height: "100%",
           channel: channelName,
           layout: "video",
+          parent: [window.location.hostname], // Add the parent domain
+          autoplay: false,
+          muted: true
         });
         setEmbed(embed);
       } else {
@@ -151,7 +154,8 @@ const Dashboard = () => {
     userId: user?.id || "12345",
     email: user?.email || "demo@example.com",
     plan: userPlan,
-    followerPlan: "None"
+    followerPlan: "None",
+    subscriptionStatus
   };
 
   const addViewers = (count: number) => {
@@ -161,6 +165,21 @@ const Dashboard = () => {
   const addChatters = (count: number) => {
     setChatterCount(prev => prev + count);
   };
+
+  // Load Twitch embed script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://embed.twitch.tv/embed/v1.js";
+    script.async = true;
+    script.onload = () => {
+      console.log("Twitch embed script loaded");
+      setIsScriptLoaded(true);
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
@@ -214,11 +233,7 @@ const Dashboard = () => {
           streamUrl={streamUrl}
           setStreamUrl={setStreamUrl}
           handleSaveUrl={handleSaveUrl}
-          userData={{
-            ...userData,
-            plan: userPlan,
-            subscriptionStatus
-          }}
+          userData={userData}
         />
       </div>
 
