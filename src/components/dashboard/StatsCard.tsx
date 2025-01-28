@@ -6,13 +6,17 @@ interface StatsCardProps {
   value: string | number
   change?: string
   icon: LucideIcon
+  subtitle?: string
 }
 
-export function StatsCard({ title, value, change, icon: Icon }: StatsCardProps) {
+export function StatsCard({ title, value, change, icon: Icon, subtitle }: StatsCardProps) {
   return (
     <Card className="glass-morphism">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div>
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
