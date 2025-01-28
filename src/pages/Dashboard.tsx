@@ -1,4 +1,3 @@
-<lov-code>
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -18,7 +17,6 @@ const Dashboard = () => {
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
-  const [viewerGrowth, setViewerGrowth] = useState("0");
   const [followerProgress, setFollowerProgress] = useState(0);
   const [followerPlan, setFollowerPlan] = useState<any>(null);
   const [twitchChannel, setTwitchChannel] = useState("");
@@ -27,68 +25,27 @@ const Dashboard = () => {
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
-  const saveStats = async (viewers: number, chatters: number) => {
-    if (!user?.id || !streamUrl) return;
-
+  // Add the missing handleSaveUrl function
+  const handleSaveUrl = () => {
+    console.log("Saving stream URL:", streamUrl);
+    // Extract channel name from URL if it's a valid Twitch URL
     try {
-      const { error } = await supabase
-        .from('stream_stats')
-        .insert([
-          {
-            user_id: user.id,
-            stream_url: streamUrl,
-            viewer_count: viewers,
-            chatter_count: chatters
-          }
-        ]);
-
-      if (error) {
-        console.error("Error saving stats:", error);
+      const url = new URL(streamUrl);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      if (pathParts.length > 0) {
+        setTwitchChannel(pathParts[0]);
         toast({
-          title: "Error",
-          description: "Failed to save stream statistics",
-          variant: "destructive",
+          title: "Success",
+          description: "Stream URL saved successfully",
         });
       }
     } catch (error) {
-      console.error("Error in saveStats:", error);
-    }
-  };
-
-  const calculateViewerGrowth = async () => {
-    if (!user?.id || !streamUrl) return;
-
-    try {
-      // Get the first recorded viewer count for this stream
-      const { data: firstRecord } = await supabase
-        .from('stream_stats')
-        .select('viewer_count')
-        .eq('user_id', user.id)
-        .eq('stream_url', streamUrl)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .single();
-
-      // Get average of recent viewer counts (last month)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data: recentStats } = await supabase
-        .from('stream_stats')
-        .select('viewer_count')
-        .eq('user_id', user.id)
-        .eq('stream_url', streamUrl)
-        .gte('created_at', thirtyDaysAgo.toISOString());
-
-      if (firstRecord && recentStats && recentStats.length > 0) {
-        const firstCount = firstRecord.viewer_count;
-        const recentAverage = recentStats.reduce((sum, stat) => sum + stat.viewer_count, 0) / recentStats.length;
-        
-        const growthRate = ((recentAverage - firstCount) / firstCount) * 100;
-        setViewerGrowth(`${growthRate.toFixed(1)}%`);
-      }
-    } catch (error) {
-      console.error("Error calculating viewer growth:", error);
+      console.error("Invalid URL:", error);
+      toast({
+        title: "Error",
+        description: "Please enter a valid Twitch stream URL",
+        variant: "destructive",
+      });
     }
   };
 
@@ -99,16 +56,11 @@ const Dashboard = () => {
         const count = await getViewerCount(streamUrl);
         console.log("Received viewer count:", count);
         setViewerCount(count);
-        
-        // Save stats after updating counts
-        await saveStats(count, chatterCount);
-        // Calculate growth rate
-        await calculateViewerGrowth();
       } catch (error) {
         console.error("Error updating viewer count:", error);
       }
     }
-  }, [streamUrl, chatterCount]);
+  }, [streamUrl]);
 
   const updateChatterCount = useCallback(async () => {
     if (streamUrl) {
@@ -224,6 +176,28 @@ const Dashboard = () => {
     subscriptionStatus
   };
 
+  const addViewers = (count: number) => {
+    setViewerCount(prev => prev + count);
+  };
+
+  const addChatters = (count: number) => {
+    setChatterCount(prev => prev + count);
+  };
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://embed.twitch.tv/embed/v1.js";
+    script.async = true;
+    script.onload = () => {
+      console.log("Twitch embed script loaded");
+      setIsScriptLoaded(true);
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
       <div className="flex justify-between items-center mb-8">
@@ -243,7 +217,7 @@ const Dashboard = () => {
         <StatsCard
           title="Total Viewers"
           value={viewerCount}
-          change={`${viewerGrowth} from first record`}
+          change="+20.1% from last month"
           icon={Users}
         />
         <StatsCard
@@ -267,3 +241,52 @@ const Dashboard = () => {
         />
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <StreamPreview
+          twitchChannel={twitchChannel}
+        />
+        <StreamSettings
+          streamUrl={streamUrl}
+          setStreamUrl={setStreamUrl}
+          handleSaveUrl={handleSaveUrl}
+          userData={userData}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <BotControls
+          title="Viewer Bot Controls"
+          onAdd={addViewers}
+          type="viewer"
+          streamUrl={streamUrl}
+        />
+        <BotControls
+          title="Chatter Bot Controls"
+          onAdd={addChatters}
+          type="chatter"
+          streamUrl={streamUrl}
+        />
+      </div>
+
+      <ProgressCard
+        title="Daily Follower Progress"
+        icon={Clock}
+        current={12}
+        total={50}
+        timeLabels={["0h", "12h", "24h"]}
+      />
+
+      <div className="mt-8">
+        <ProgressCard
+          title="Monthly Follower Progress"
+          icon={Calendar}
+          current={145}
+          total={500}
+          timeLabels={["Day 1", "Day 15", "Day 30"]}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
