@@ -30,19 +30,19 @@ const Dashboard = () => {
         console.log("Fetching viewer count for URL:", streamUrl);
         const count = await getViewerCount(streamUrl);
         console.log("Received viewer count:", count);
-        if (count > 0) {
+        if (count !== viewerCount) {  // Nur aktualisieren wenn sich die Zahl geändert hat
           setViewerCount(count);
         }
       } catch (error) {
         console.error("Error updating viewer count:", error);
       }
     }
-  }, [streamUrl]);
+  }, [streamUrl, viewerCount]);
 
   useEffect(() => {
     if (streamUrl) {
-      updateViewerCount();
-      const interval = setInterval(updateViewerCount, 20000);
+      updateViewerCount(); // Initial update
+      const interval = setInterval(updateViewerCount, 10000); // Alle 10 Sekunden aktualisieren
       return () => clearInterval(interval);
     }
   }, [streamUrl, updateViewerCount]);
