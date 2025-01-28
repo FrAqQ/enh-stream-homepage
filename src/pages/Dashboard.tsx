@@ -25,11 +25,11 @@ const Dashboard = () => {
     const fetchUserPlan = async () => {
       if (user?.id) {
         try {
-          console.log("Fetching user plan and subscription status...");
+          console.log("Fetching user plan and subscription status for user ID:", user.id);
           
           const { data: profile, error } = await supabase
             .from('profiles')
-            .select('plan, subscription_status')
+            .select('plan, subscription_status, current_period_end')
             .eq('id', user.id)
             .single();
 
@@ -40,12 +40,21 @@ const Dashboard = () => {
             return;
           }
 
-          console.log("Fetched profile:", profile);
+          console.log("Full profile data:", profile);
           
           if (profile?.subscription_status === 'active') {
+            console.log("Active subscription found:", {
+              plan: profile.plan,
+              status: profile.subscription_status,
+              periodEnd: profile.current_period_end
+            });
             setUserPlan(profile.plan || "Free");
             setSubscriptionStatus('active');
           } else {
+            console.log("No active subscription found:", {
+              currentStatus: profile?.subscription_status,
+              currentPlan: profile?.plan
+            });
             setUserPlan("Free");
             setSubscriptionStatus('inactive');
           }
