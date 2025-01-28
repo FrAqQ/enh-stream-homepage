@@ -333,7 +333,7 @@ const Pricing = () => {
             setCurrentPlan(profile.plan || "Free");
             setSubscriptionStatus('active');
           } else {
-            console.log("No active subscription, setting to Free plan");
+            console.log("No active subscription found, setting to Free plan");
             setCurrentPlan("Free");
             setSubscriptionStatus('inactive');
           }
@@ -395,7 +395,7 @@ const Pricing = () => {
           price={159.99} 
           viewers={300} 
           chatters={90}
-          priceId="price_YOUR_ACTUAL_PRICE_ID"
+          priceId="price_1Qm2Ke01379EnnGJNfHjqbBo"
           currentPlan={currentPlan}
         />
         <PricingCard 
