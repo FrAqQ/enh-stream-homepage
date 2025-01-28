@@ -21,7 +21,11 @@ export async function getViewerCount(channelUrl: string): Promise<number> {
       /aria-label="(\d+)\s+viewers"/, // Aria-Label
       /class="tw-animated-number[^"]*">(\d+)/, // Twitch Klasse
       /<p[^>]*>(\d+)\s+viewers<\/p>/, // Viewer Text
-      /data-a-target="channel-viewer-count[^"]*">(\d+)/ // Data Attribute
+      /data-a-target="channel-viewer-count[^"]*">(\d+)/, // Data Attribute
+      /"channelViewerCount":(\d+)/, // Alternative JSON-Daten
+      /"viewers":(\d+)/, // Einfache JSON-Daten
+      /viewers:\s*(\d+)/, // JavaScript Variable
+      /"viewerCount":(\d+)/, // Alternative JSON Format
     ];
     
     for (const pattern of patterns) {
