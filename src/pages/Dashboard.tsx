@@ -9,6 +9,7 @@ import { BotControls } from "@/components/dashboard/BotControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
 import { useToast } from "@/hooks/use-toast"
 import { getViewerCount } from "@/services/viewerScraper"
+import { getChatterCount } from "@/services/chatterScraper"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -30,78 +31,41 @@ const Dashboard = () => {
         console.log("Fetching viewer count for URL:", streamUrl);
         const count = await getViewerCount(streamUrl);
         console.log("Received viewer count:", count);
-        setViewerCount(count); // Immer aktualisieren, da wir der API-Antwort vertrauen
+        setViewerCount(count);
       } catch (error) {
         console.error("Error updating viewer count:", error);
       }
     }
   }, [streamUrl]);
 
+  const updateChatterCount = useCallback(async () => {
+    if (streamUrl) {
+      try {
+        console.log("Fetching chatter count for URL:", streamUrl);
+        const count = await getChatterCount(streamUrl);
+        console.log("Received chatter count:", count);
+        setChatterCount(count);
+      } catch (error) {
+        console.error("Error updating chatter count:", error);
+      }
+    }
+  }, [streamUrl]);
+
   useEffect(() => {
     if (streamUrl) {
-      console.log("Setting up viewer count update interval");
-      updateViewerCount(); // Initial update
-      const interval = setInterval(updateViewerCount, 10000); // Alle 10 Sekunden aktualisieren
+      console.log("Setting up viewer and chatter count update interval");
+      updateViewerCount();
+      updateChatterCount();
+      const interval = setInterval(() => {
+        updateViewerCount();
+        updateChatterCount();
+      }, 10000);
       return () => {
-        console.log("Cleaning up viewer count interval");
+        console.log("Cleaning up viewer and chatter count interval");
         clearInterval(interval);
       };
     }
-  }, [streamUrl, updateViewerCount]);
-
-  const createEmbed = useCallback((channelName: string) => {
-    console.log("Creating embed for channel:", channelName);
-    try {
-      if (window.Twitch && window.Twitch.Embed) {
-        const embed = new window.Twitch.Embed("twitch-embed", {
-          width: "100%",
-          height: "100%",
-          channel: channelName,
-          layout: "video",
-          parent: [window.location.hostname],
-          autoplay: false,
-          muted: true
-        });
-        setEmbed(embed);
-      } else {
-        console.error("Twitch embed script not loaded properly");
-      }
-    } catch (error) {
-      console.error("Error creating Twitch embed:", error);
-    }
-  }, []);
-
-  const handleSaveUrl = async () => {
-    if (!user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to save settings",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const channelName = streamUrl.split('/').pop() || '';
-      console.log("Saving channel name:", channelName);
-      setTwitchChannel(channelName);
-      
-      // Immediately update viewer count after saving URL
-      await updateViewerCount();
-
-      toast({
-        title: "Success",
-        description: "Stream settings saved successfully",
-      });
-    } catch (error) {
-      console.error("Error saving stream URL:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save stream settings",
-        variant: "destructive",
-      });
-    }
-  };
+  }, [streamUrl, updateViewerCount, updateChatterCount]);
 
   const fetchUserPlan = async () => {
     if (user?.id) {
