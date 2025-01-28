@@ -24,6 +24,29 @@ const Dashboard = () => {
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
+  const updateViewerCount = useCallback(async () => {
+    if (streamUrl) {
+      try {
+        console.log("Fetching viewer count for URL:", streamUrl);
+        const count = await getViewerCount(streamUrl);
+        console.log("Received viewer count:", count);
+        if (count > 0) {
+          setViewerCount(count);
+        }
+      } catch (error) {
+        console.error("Error updating viewer count:", error);
+      }
+    }
+  }, [streamUrl]);
+
+  useEffect(() => {
+    if (streamUrl) {
+      updateViewerCount();
+      const interval = setInterval(updateViewerCount, 20000);
+      return () => clearInterval(interval);
+    }
+  }, [streamUrl, updateViewerCount]);
+
   const createEmbed = useCallback((channelName: string) => {
     console.log("Creating embed for channel:", channelName);
     try {
@@ -46,21 +69,6 @@ const Dashboard = () => {
     }
   }, []);
 
-  const updateViewerCount = useCallback(async () => {
-    if (streamUrl) {
-      const count = await getViewerCount(streamUrl);
-      setViewerCount(count);
-    }
-  }, [streamUrl]);
-
-  useEffect(() => {
-    if (streamUrl) {
-      updateViewerCount();
-      const interval = setInterval(updateViewerCount, 20000); // Alle 20 Sekunden
-      return () => clearInterval(interval);
-    }
-  }, [streamUrl, updateViewerCount]);
-
   const handleSaveUrl = async () => {
     if (!user?.id) {
       toast({
@@ -75,7 +83,9 @@ const Dashboard = () => {
       const channelName = streamUrl.split('/').pop() || '';
       console.log("Saving channel name:", channelName);
       setTwitchChannel(channelName);
-      updateViewerCount(); // Sofortige Aktualisierung der Viewer-Zahl
+      
+      // Immediately update viewer count after saving URL
+      await updateViewerCount();
 
       toast({
         title: "Success",
