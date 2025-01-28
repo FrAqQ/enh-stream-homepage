@@ -1,5 +1,5 @@
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
 import { supabase } from "@/lib/supabaseClient"
 import { StatsCard } from "@/components/dashboard/StatsCard"
@@ -23,13 +23,60 @@ const Dashboard = () => {
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
+  const createEmbed = useCallback((channelName: string) => {
+    console.log("Creating embed for channel:", channelName);
+    try {
+      if (window.Twitch && window.Twitch.Embed) {
+        const embed = new window.Twitch.Embed("twitch-embed", {
+          width: "100%",
+          height: "100%",
+          channel: channelName,
+          layout: "video",
+        });
+        setEmbed(embed);
+      } else {
+        console.error("Twitch embed script not loaded properly");
+      }
+    } catch (error) {
+      console.error("Error creating Twitch embed:", error);
+    }
+  }, []);
+
+  const handleSaveUrl = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save settings",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const channelName = streamUrl.split('/').pop() || '';
+      console.log("Saving channel name:", channelName);
+      setTwitchChannel(channelName);
+
+      toast({
+        title: "Success",
+        description: "Stream settings saved successfully",
+      });
+    } catch (error) {
+      console.error("Error saving stream URL:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save stream settings",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
         try {
           console.log("Starting plan fetch for user:", user.id);
           
-          // First, check current profile data
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('plan, subscription_status, current_period_end')
@@ -48,7 +95,6 @@ const Dashboard = () => {
 
           console.log("Raw profile data:", profile);
 
-          // Check if subscription is active and not expired
           const isActive = profile?.subscription_status === 'active';
           const periodEnd = profile?.current_period_end;
           const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
@@ -96,17 +142,15 @@ const Dashboard = () => {
 
     fetchUserPlan();
     
-    // Update every 10 seconds instead of 30
     const interval = setInterval(fetchUserPlan, 10000);
     return () => clearInterval(interval);
   }, [user, toast]);
 
-  // Define userData at the component level
   const userData = {
     username: user?.email?.split('@')[0] || "DemoUser",
     userId: user?.id || "12345",
     email: user?.email || "demo@example.com",
-    plan: userPlan, // Use the userPlan state instead of hardcoded value
+    plan: userPlan,
     followerPlan: "None"
   };
 
@@ -133,7 +177,6 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard
           title="Total Viewers"
