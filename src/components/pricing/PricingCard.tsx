@@ -56,7 +56,6 @@ export function PricingCard({
     }
   }
 
-  // Berechnung der Ersparnis
   const calculateSavings = () => {
     // Keine Ersparnis anzeigen für Starter und Basic Follower Pakete
     if (title === "Starter" || (isFollowerPlan && title === "Follower Basic")) {
@@ -64,31 +63,45 @@ export function PricingCard({
     }
 
     if (isFollowerPlan) {
-      // Preise für die verschiedenen Follower-Pläne (Originalpreise)
-      const planPrices = {
+      // Originalpreise (vor Rabatt) für die verschiedenen Follower-Pläne
+      const originalPlanPrices = {
         "Follower Basic": 24.99,
         "Follower Plus": 49.99,
         "Follower Pro": 99.99,
         "Follower Elite": 199.99
       };
 
+      // Tatsächliche Preise nach Rabatt
+      const discountedPrices = {
+        "Follower Basic": originalPlanPrices["Follower Basic"],
+        "Follower Plus": originalPlanPrices["Follower Plus"] * 0.95,
+        "Follower Pro": originalPlanPrices["Follower Pro"] * 0.90,
+        "Follower Elite": originalPlanPrices["Follower Elite"] * 0.80
+      };
+
       let previousPlanPrice;
+      let currentOriginalPrice;
+      
       switch (title) {
         case "Follower Plus":
-          previousPlanPrice = planPrices["Follower Basic"];
+          previousPlanPrice = originalPlanPrices["Follower Basic"];
+          currentOriginalPrice = originalPlanPrices["Follower Plus"];
           break;
         case "Follower Pro":
-          previousPlanPrice = planPrices["Follower Plus"];
+          previousPlanPrice = discountedPrices["Follower Plus"];
+          currentOriginalPrice = originalPlanPrices["Follower Pro"];
           break;
         case "Follower Elite":
-          previousPlanPrice = planPrices["Follower Pro"];
+          previousPlanPrice = discountedPrices["Follower Pro"];
+          currentOriginalPrice = originalPlanPrices["Follower Elite"];
           break;
         default:
           return null;
       }
 
-      const savings = previousPlanPrice - price;
-      const savingsPercentage = ((previousPlanPrice - price) / previousPlanPrice) * 100;
+      const currentPrice = discountedPrices[title as keyof typeof discountedPrices];
+      const savings = previousPlanPrice - currentPrice;
+      const savingsPercentage = ((previousPlanPrice - currentPrice) / previousPlanPrice) * 100;
       
       return {
         amount: savings > 0 ? savings.toFixed(2) : "0",
