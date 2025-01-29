@@ -9,11 +9,13 @@ interface PricingCardProps {
   price: number;
   viewers: number;
   chatters: number;
+  followers?: number;
   isPopular?: boolean;
   isFree?: boolean;
   priceId?: string;
   currentPlan: string;
   platform: string;
+  isFollowerPlan?: boolean;
 }
 
 export function PricingCard({ 
@@ -21,11 +23,13 @@ export function PricingCard({
   price, 
   viewers, 
   chatters,
+  followers,
   isPopular,
   isFree,
   priceId,
   currentPlan,
-  platform
+  platform,
+  isFollowerPlan
 }: PricingCardProps) {
   const { user } = useUser();
   const { toast } = useToast();
@@ -73,13 +77,13 @@ export function PricingCard({
           console.error('Error cancelling subscription:', error);
         }
 
+        const updateData = isFollowerPlan 
+          ? { follower_plan: planFullName, subscription_status: 'inactive', current_period_end: null }
+          : { plan: planFullName, subscription_status: 'inactive', current_period_end: null };
+
         const { error } = await supabase
           .from('profiles')
-          .update({ 
-            plan: planFullName,
-            subscription_status: 'inactive',
-            current_period_end: null
-          })
+          .update(updateData)
           .eq('id', user.id);
 
         if (error) throw error;
@@ -119,7 +123,7 @@ export function PricingCard({
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('plan, subscription_status')
+        .select(isFollowerPlan ? 'follower_plan, subscription_status' : 'plan, subscription_status')
         .eq('id', user.id)
         .single();
 
@@ -141,7 +145,8 @@ export function PricingCard({
         body: JSON.stringify({ 
           priceId,
           platform,
-          planName: title
+          planName: title,
+          isFollowerPlan
         }),
       });
 
@@ -187,12 +192,20 @@ export function PricingCard({
       <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
       <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
       <ul className="space-y-2 mb-6">
-        <li className="flex items-center gap-2">
-          <span className="text-primary">✓</span> {viewers} Viewers
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="text-primary">✓</span> {chatters} Chatters
-        </li>
+        {isFollowerPlan ? (
+          <li className="flex items-center gap-2">
+            <span className="text-primary">✓</span> {followers} Followers
+          </li>
+        ) : (
+          <>
+            <li className="flex items-center gap-2">
+              <span className="text-primary">✓</span> {viewers} Viewers
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-primary">✓</span> {chatters} Chatters
+            </li>
+          </>
+        )}
         <li className="flex items-center gap-2">
           <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : '1 Month'}
         </li>
