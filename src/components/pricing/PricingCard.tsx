@@ -293,7 +293,7 @@ export function PricingCard({
             You save €{savings.amount} ({savings.percentage}%) / {isYearly ? 'year' : 'month'}
           </p>
         )}
-        <ul className="space-y-2 mb-6">
+        <ul className="space-y-2">
           {isFollowerPlan ? (
             <>
               <li className="flex items-center gap-2">
