@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, MessageCircle, TrendingUp, Trophy, Zap, Heart } from "lucide-react";
+import { ArrowRight, Users, MessageCircle, TrendingUp, Trophy, Zap, Heart, Target, Users2, MessagesSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Landing = () => {
   return (
     <div className="min-h-screen pt-16">
-      {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
           Enhance Your Streaming Experience
@@ -27,7 +26,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className="container mx-auto px-4 py-20">
         <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Service?</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -64,7 +62,38 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Revenue Section */}
+      {/* Best Practices Section */}
+      <section className="container mx-auto px-4 py-20">
+        <h2 className="text-3xl font-bold text-center mb-12">How to Get the Best Results</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <BestPracticeCard
+            icon={<Users2 className="h-8 w-8 text-primary" />}
+            title="Invite Real Friends"
+            description="Start by inviting friends to your stream, even if they're not familiar with the games you play. Real interactions create an authentic atmosphere."
+          />
+          <BestPracticeCard
+            icon={<MessagesSquare className="h-8 w-8 text-primary" />}
+            title="Encourage Chat Activity"
+            description="Guide your friends to participate in chat discussions. Even basic comments help create an engaging environment that attracts organic viewers."
+          />
+          <BestPracticeCard
+            icon={<Target className="h-8 w-8 text-primary" />}
+            title="Combine with Our Services"
+            description="Use our packages alongside real viewers to maximize your growth potential. This combination significantly improves your conversion rate with organic viewers."
+          />
+        </div>
+        <div className="mt-12 text-center">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
+            While our services work great on their own, combining them with real viewers who actively participate in chat creates the most natural growth environment. This strategy helps attract and retain organic viewers more effectively, accelerating your path to success.
+          </p>
+          <Link to="/register">
+            <Button size="lg" className="gap-2">
+              Start Growing Your Channel <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
       <section className="container mx-auto px-4 py-20 text-center">
         <h2 className="text-3xl font-bold mb-12">Maximize Your Streaming Revenue</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -88,6 +117,14 @@ const Landing = () => {
     </div>
   );
 };
+
+const BestPracticeCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
+  <div className="p-6 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
+    <div className="mb-4">{icon}</div>
+    <h3 className="text-xl font-semibold mb-2">{title}</h3>
+    <p className="text-muted-foreground">{description}</p>
+  </div>
+);
 
 const BenefitCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
   <div className="p-6 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
