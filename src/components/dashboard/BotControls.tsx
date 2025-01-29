@@ -213,7 +213,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>{type === "viewer" ? "Aktuelle Viewer" : "Aktuelle Chatter"}</span>
+              <span>{type === "viewer" ? "Current Viewers" : "Current Chatters"}</span>
               <span>{currentViewers}/{viewerLimit}</span>
             </div>
             <Progress value={(currentViewers / viewerLimit) * 100} />
