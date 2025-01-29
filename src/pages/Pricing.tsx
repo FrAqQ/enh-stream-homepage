@@ -87,7 +87,7 @@ const Pricing = () => {
             title="Free" 
             price={0} 
             viewers={10} 
-            chatters={8}
+            chatters={4}
             isFree
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
