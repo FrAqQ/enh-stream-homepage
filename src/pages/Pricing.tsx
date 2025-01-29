@@ -361,7 +361,7 @@ const Pricing = () => {
           title="Free" 
           price={0} 
           viewers={10} 
-          chatters={2}
+          chatters={4}
           isFree
           currentPlan={currentPlan}
         />
@@ -369,7 +369,7 @@ const Pricing = () => {
           title="Starter" 
           price={12.99} 
           viewers={25} 
-          chatters={5}
+          chatters={10}
           priceId="price_1Qklku01379EnnGJtin4BVcc"
           currentPlan={currentPlan}
         />
@@ -377,7 +377,7 @@ const Pricing = () => {
           title="Basic" 
           price={29.99} 
           viewers={50} 
-          chatters={8}
+          chatters={16}
           priceId="price_1Qm2w001379EnnGJPVwgRD9F"
           currentPlan={currentPlan}
         />
@@ -385,7 +385,7 @@ const Pricing = () => {
           title="Professional" 
           price={129.99} 
           viewers={200} 
-          chatters={20}
+          chatters={40}
           isPopular
           priceId="price_1Qm2E301379EnnGJjSesajsz"
           currentPlan={currentPlan}
@@ -394,7 +394,7 @@ const Pricing = () => {
           title="Expert" 
           price={199.99} 
           viewers={300} 
-          chatters={45}
+          chatters={90}
           priceId="price_1Qm2Ke01379EnnGJNfHjqbBo"
           currentPlan={currentPlan}
         />
@@ -402,7 +402,7 @@ const Pricing = () => {
           title="Ultimate" 
           price={599.99} 
           viewers={1000} 
-          chatters={100}
+          chatters={200}
           priceId="price_1Qm2VA01379EnnGJTiStzUOq"
           currentPlan={currentPlan}
         />
