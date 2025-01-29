@@ -283,17 +283,27 @@ export function PricingCard({
           Most Popular
         </span>
       )}
-      <div className="flex-grow">
+      
+      {/* Header Section - Fixed Height */}
+      <div className="h-20">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
-        <p className="text-3xl font-bold mb-2">
+      </div>
+      
+      {/* Pricing Section - Fixed Height */}
+      <div className="h-24">
+        <p className="text-3xl font-bold">
           {isFree ? 'Free' : `€${price.toFixed(2)}`}
           {!isFree && <span className="text-sm font-normal text-muted-foreground">/{isYearly ? 'year' : 'month'}</span>}
         </p>
         {!isFree && savings && (
-          <p className={`text-sm ${savingsColor} mb-4 font-medium`}>
+          <p className={`text-sm ${savingsColor} mt-2 font-medium`}>
             You save €{savings.amount} ({savings.percentage}%) / {isYearly ? 'year' : 'month'}
           </p>
         )}
+      </div>
+
+      {/* Features Section - Fixed Height */}
+      <div className="flex-grow space-y-2">
         <ul className="space-y-2">
           {isFollowerPlan ? (
             <>
@@ -319,13 +329,17 @@ export function PricingCard({
           </li>
         </ul>
       </div>
-      <Button 
-        className="w-full mt-auto"
-        onClick={handleSelectPlan}
-        variant={isCurrentPlan || isDefaultFreePlan ? "secondary" : "default"}
-      >
-        {isCurrentPlan || isDefaultFreePlan ? 'Current Plan' : 'Select Plan'}
-      </Button>
+
+      {/* Button Section - Fixed Height */}
+      <div className="h-10 mt-4">
+        <Button 
+          className="w-full"
+          onClick={handleSelectPlan}
+          variant={isCurrentPlan || isDefaultFreePlan ? "secondary" : "default"}
+        >
+          {isCurrentPlan || isDefaultFreePlan ? 'Current Plan' : 'Select Plan'}
+        </Button>
+      </div>
     </Card>
   );
 }
