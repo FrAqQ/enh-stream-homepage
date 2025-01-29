@@ -117,7 +117,7 @@ const Pricing = () => {
             title="Professional" 
             price={129.99} 
             viewers={200} 
-            chatters={80}
+            chatters={40}
             isPopular
             priceId={isYearly ? "price_yearly_professional" : "price_1Qm2E301379EnnGJjSesajsz"}
             platform={capitalizedPlatform}
@@ -128,7 +128,7 @@ const Pricing = () => {
             title="Expert" 
             price={199.99} 
             viewers={300} 
-            chatters={180}
+            chatters={90}
             priceId={isYearly ? "price_yearly_expert" : "price_1Qm2Ke01379EnnGJNfHjqbBo"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
@@ -138,7 +138,7 @@ const Pricing = () => {
             title="Ultimate" 
             price={599.99} 
             viewers={1000} 
-            chatters={400}
+            chatters={200}
             priceId={isYearly ? "price_yearly_ultimate" : "price_1Qm2VA01379EnnGJTiStzUOq"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
