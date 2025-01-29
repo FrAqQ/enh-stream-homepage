@@ -331,7 +331,7 @@ const Dashboard = () => {
           icon={Users}
         />
         <StatsCard
-          title="Active Chatters"
+          title="Chat Messages"
           value={chatterCount}
           subtitle="Last 10 minutes"
           change="Calculating..."
