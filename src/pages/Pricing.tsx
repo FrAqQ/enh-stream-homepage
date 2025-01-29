@@ -131,10 +131,12 @@ const Pricing = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <PricingCard 
             title="Follower Basic" 
-            price={49.99} 
+            price={24.99} 
             viewers={0} 
             chatters={0}
             followers={100}
+            followersPerDay={100}
+            totalFollowers={3000}
             priceId="price_follower_basic"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
@@ -142,10 +144,12 @@ const Pricing = () => {
           />
           <PricingCard 
             title="Follower Plus" 
-            price={99.99} 
+            price={49.99} 
             viewers={0} 
             chatters={0}
             followers={250}
+            followersPerDay={250}
+            totalFollowers={7500}
             priceId="price_follower_plus"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
@@ -153,10 +157,12 @@ const Pricing = () => {
           />
           <PricingCard 
             title="Follower Pro" 
-            price={199.99} 
+            price={99.99} 
             viewers={0} 
             chatters={0}
             followers={500}
+            followersPerDay={500}
+            totalFollowers={15000}
             isPopular
             priceId="price_follower_pro"
             platform={capitalizedPlatform}
@@ -165,10 +171,12 @@ const Pricing = () => {
           />
           <PricingCard 
             title="Follower Elite" 
-            price={399.99} 
+            price={199.99} 
             viewers={0} 
             chatters={0}
             followers={1000}
+            followersPerDay={1000}
+            totalFollowers={30000}
             priceId="price_follower_elite"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}

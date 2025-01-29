@@ -10,6 +10,8 @@ interface PricingCardProps {
   viewers: number;
   chatters: number;
   followers?: number;
+  followersPerDay?: number;
+  totalFollowers?: number;
   isPopular?: boolean;
   isFree?: boolean;
   priceId?: string;
@@ -24,6 +26,8 @@ export function PricingCard({
   viewers, 
   chatters,
   followers,
+  followersPerDay,
+  totalFollowers,
   isPopular,
   isFree,
   priceId,
@@ -197,9 +201,14 @@ export function PricingCard({
         <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
         <ul className="space-y-2 mb-6">
           {isFollowerPlan ? (
-            <li className="flex items-center gap-2">
-              <span className="text-primary">✓</span> {followers} Followers
-            </li>
+            <>
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span> {followersPerDay} Followers / Day
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span> {totalFollowers} Total Followers / Month
+              </li>
+            </>
           ) : (
             <>
               <li className="flex items-center gap-2">
