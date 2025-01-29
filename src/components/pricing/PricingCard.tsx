@@ -277,7 +277,7 @@ export function PricingCard({
   const savingsColor = isPopular ? "text-primary" : "text-accent-foreground";
 
   return (
-    <Card className={`p-6 relative flex flex-col h-[400px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+    <Card className={`p-6 relative flex flex-col h-[440px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
           Most Popular
@@ -290,20 +290,26 @@ export function PricingCard({
       </div>
       
       {/* Pricing Section - Fixed Height */}
-      <div className="h-24">
-        <p className="text-3xl font-bold">
-          {isFree ? 'Free' : `€${price.toFixed(2)}`}
-          {!isFree && <span className="text-sm font-normal text-muted-foreground">/{isYearly ? 'year' : 'month'}</span>}
-        </p>
-        {!isFree && savings && (
-          <p className={`text-sm ${savingsColor} mt-2 font-medium`}>
-            You save €{savings.amount} ({savings.percentage}%) / {isYearly ? 'year' : 'month'}
+      <div className="h-32">
+        <div className="mb-2">
+          <p className="text-3xl font-bold">
+            {isFree ? 'Free' : `€${price.toFixed(2)}`}
+            <span className="text-sm font-normal text-muted-foreground block">
+              {!isFree && `/${isYearly ? 'year' : 'month'}`}
+            </span>
           </p>
+        </div>
+        
+        {!isFree && savings && (
+          <div className={`text-sm ${savingsColor} font-medium`}>
+            <p>You save €{savings.amount}</p>
+            <p>({savings.percentage}%) / {isYearly ? 'year' : 'month'}</p>
+          </div>
         )}
       </div>
 
       {/* Features Section - Fixed Height */}
-      <div className="flex-grow space-y-2">
+      <div className="flex-grow space-y-3">
         <ul className="space-y-2">
           {isFollowerPlan ? (
             <>
