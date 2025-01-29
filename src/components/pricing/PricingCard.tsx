@@ -63,11 +63,33 @@ export function PricingCard({
       return null;
     }
 
-    if (isFollowerPlan && totalFollowers) {
-      const baseFollowerPrice = 0.005;
-      const regularPrice = totalFollowers * baseFollowerPrice;
-      const savings = regularPrice - price;
-      const savingsPercentage = ((regularPrice - price) / regularPrice) * 100;
+    if (isFollowerPlan) {
+      // Preise für die verschiedenen Follower-Pläne (Originalpreise)
+      const planPrices = {
+        "Follower Basic": 24.99,
+        "Follower Plus": 49.99,
+        "Follower Pro": 99.99,
+        "Follower Elite": 199.99
+      };
+
+      let previousPlanPrice;
+      switch (title) {
+        case "Follower Plus":
+          previousPlanPrice = planPrices["Follower Basic"];
+          break;
+        case "Follower Pro":
+          previousPlanPrice = planPrices["Follower Plus"];
+          break;
+        case "Follower Elite":
+          previousPlanPrice = planPrices["Follower Pro"];
+          break;
+        default:
+          return null;
+      }
+
+      const savings = previousPlanPrice - price;
+      const savingsPercentage = ((previousPlanPrice - price) / previousPlanPrice) * 100;
+      
       return {
         amount: savings > 0 ? savings.toFixed(2) : "0",
         percentage: savingsPercentage > 0 ? savingsPercentage.toFixed(1) : "0"
