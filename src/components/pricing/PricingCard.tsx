@@ -183,35 +183,37 @@ export function PricingCard({
   };
 
   return (
-    <Card className={`p-6 relative ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+    <Card className={`p-6 relative flex flex-col h-[400px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
           Most Popular
         </span>
       )}
-      <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
-      <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
-      <ul className="space-y-2 mb-6">
-        {isFollowerPlan ? (
+      <div className="flex-grow">
+        <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
+        <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
+        <ul className="space-y-2 mb-6">
+          {isFollowerPlan ? (
+            <li className="flex items-center gap-2">
+              <span className="text-primary">✓</span> {followers} Followers
+            </li>
+          ) : (
+            <>
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span> {viewers} Viewers
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span> {chatters} Chatters
+              </li>
+            </>
+          )}
           <li className="flex items-center gap-2">
-            <span className="text-primary">✓</span> {followers} Followers
+            <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : '1 Month'}
           </li>
-        ) : (
-          <>
-            <li className="flex items-center gap-2">
-              <span className="text-primary">✓</span> {viewers} Viewers
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-primary">✓</span> {chatters} Chatters
-            </li>
-          </>
-        )}
-        <li className="flex items-center gap-2">
-          <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : '1 Month'}
-        </li>
-      </ul>
+        </ul>
+      </div>
       <Button 
-        className="w-full"
+        className="w-full mt-auto"
         onClick={handleSelectPlan}
         variant={isCurrentPlan ? "secondary" : "default"}
       >
