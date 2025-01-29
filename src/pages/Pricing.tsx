@@ -4,6 +4,8 @@ import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { capitalize } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Pricing = () => {
   const { platform = 'twitch' } = useParams();
@@ -11,6 +13,7 @@ const Pricing = () => {
   const [currentPlan, setCurrentPlan] = useState("Free");
   const [currentFollowerPlan, setCurrentFollowerPlan] = useState("None");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
+  const [isYearly, setIsYearly] = useState(false);
 
   useEffect(() => {
     const fetchUserPlan = async () => {
@@ -61,9 +64,21 @@ const Pricing = () => {
   return (
     <div className="container mx-auto px-4 py-20">
       <h1 className="text-4xl font-bold text-center mb-4">{capitalizedPlatform} Plans</h1>
-      <p className="text-muted-foreground text-center mb-12">
+      <p className="text-muted-foreground text-center mb-8">
         Choose the perfect plan for your {platform} streaming needs
       </p>
+
+      <div className="flex items-center justify-center gap-4 mb-12">
+        <Label htmlFor="billing-toggle" className={!isYearly ? "font-bold" : ""}>Monthly</Label>
+        <Switch
+          id="billing-toggle"
+          checked={isYearly}
+          onCheckedChange={setIsYearly}
+        />
+        <Label htmlFor="billing-toggle" className={isYearly ? "font-bold" : ""}>
+          Yearly <span className="text-primary">(Save 20%)</span>
+        </Label>
+      </div>
       
       <div className="mb-16">
         <h2 className="text-2xl font-bold text-center mb-8">Viewer & Chatter Plans</h2>
@@ -76,24 +91,27 @@ const Pricing = () => {
             isFree
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Starter" 
             price={12.99} 
             viewers={25} 
             chatters={20}
-            priceId="price_1Qklku01379EnnGJtin4BVcc"
+            priceId={isYearly ? "price_yearly_starter" : "price_1Qklku01379EnnGJtin4BVcc"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Basic" 
             price={29.99} 
             viewers={50} 
             chatters={32}
-            priceId="price_1Qm2w001379EnnGJPVwgRD9F"
+            priceId={isYearly ? "price_yearly_basic" : "price_1Qm2w001379EnnGJPVwgRD9F"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Professional" 
@@ -101,27 +119,30 @@ const Pricing = () => {
             viewers={200} 
             chatters={80}
             isPopular
-            priceId="price_1Qm2E301379EnnGJjSesajsz"
+            priceId={isYearly ? "price_yearly_professional" : "price_1Qm2E301379EnnGJjSesajsz"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Expert" 
             price={199.99} 
             viewers={300} 
             chatters={180}
-            priceId="price_1Qm2Ke01379EnnGJNfHjqbBo"
+            priceId={isYearly ? "price_yearly_expert" : "price_1Qm2Ke01379EnnGJNfHjqbBo"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Ultimate" 
             price={599.99} 
             viewers={1000} 
             chatters={400}
-            priceId="price_1Qm2VA01379EnnGJTiStzUOq"
+            priceId={isYearly ? "price_yearly_ultimate" : "price_1Qm2VA01379EnnGJTiStzUOq"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
+            isYearly={isYearly}
           />
         </div>
       </div>
@@ -137,10 +158,11 @@ const Pricing = () => {
             followers={100}
             followersPerDay={100}
             totalFollowers={3000}
-            priceId="price_follower_basic"
+            priceId={isYearly ? "price_yearly_follower_basic" : "price_follower_basic"}
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Follower Plus" 
@@ -150,10 +172,11 @@ const Pricing = () => {
             followers={250}
             followersPerDay={250}
             totalFollowers={7500}
-            priceId="price_follower_plus"
+            priceId={isYearly ? "price_yearly_follower_plus" : "price_follower_plus"}
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Follower Pro" 
@@ -164,10 +187,11 @@ const Pricing = () => {
             followersPerDay={500}
             totalFollowers={15000}
             isPopular
-            priceId="price_follower_pro"
+            priceId={isYearly ? "price_yearly_follower_pro" : "price_follower_pro"}
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
+            isYearly={isYearly}
           />
           <PricingCard 
             title="Follower Elite" 
@@ -177,10 +201,11 @@ const Pricing = () => {
             followers={1000}
             followersPerDay={1000}
             totalFollowers={30000}
-            priceId="price_follower_elite"
+            priceId={isYearly ? "price_yearly_follower_elite" : "price_follower_elite"}
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
+            isYearly={isYearly}
           />
         </div>
       </div>

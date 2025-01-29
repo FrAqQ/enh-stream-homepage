@@ -18,6 +18,7 @@ interface PricingCardProps {
   currentPlan: string;
   platform: string;
   isFollowerPlan?: boolean;
+  isYearly?: boolean;
 }
 
 export function PricingCard({ 
@@ -33,27 +34,39 @@ export function PricingCard({
   priceId,
   currentPlan,
   platform,
-  isFollowerPlan
+  isFollowerPlan,
+  isYearly = false
 }: PricingCardProps) {
   const { user } = useUser();
   const { toast } = useToast();
   const planFullName = `${platform} ${title}`;
   const isCurrentPlan = currentPlan === planFullName;
 
-  function calculateDiscountedPrice(originalPrice: number, planTitle: string): number {
-    switch (planTitle) {
-      case "Follower Plus":
-        return originalPrice * 0.95; // 5% discount
-      case "Follower Pro":
-        return originalPrice * 0.90; // 10% discount
-      case "Follower Elite":
-        return originalPrice * 0.80; // 20% discount
-      default:
-        return originalPrice;
+  function calculateDiscountedPrice(originalPrice: number, planTitle: string, isYearly: boolean): number {
+    let price = originalPrice;
+    
+    if (isFollowerPlan) {
+      switch (planTitle) {
+        case "Follower Plus":
+          price = originalPrice * 0.95; // 5% discount
+          break;
+        case "Follower Pro":
+          price = originalPrice * 0.90; // 10% discount
+          break;
+        case "Follower Elite":
+          price = originalPrice * 0.80; // 20% discount
+          break;
+      }
     }
+
+    if (isYearly) {
+      price = price * 12 * 0.80; // 20% yearly discount
+    }
+
+    return price;
   }
 
-  const price = isFollowerPlan ? calculateDiscountedPrice(originalPrice, title) : originalPrice;
+  const price = isFree ? 0 : calculateDiscountedPrice(originalPrice, title, isYearly);
 
   const calculateSavings = () => {
     if (title === "Starter" || (isFollowerPlan && title === "Follower Basic")) {
@@ -61,32 +74,47 @@ export function PricingCard({
     }
 
     if (isFollowerPlan) {
+      const basePrice = isYearly ? originalPrice * 12 : originalPrice;
+      let savings;
+      let percentage;
+
       switch (title) {
         case "Follower Plus":
-          return {
-            amount: (49.99 * 0.05).toFixed(2),
-            percentage: "5.0"
-          };
+          savings = basePrice * 0.05;
+          percentage = "5.0";
+          break;
         case "Follower Pro":
-          return {
-            amount: (99.99 * 0.10).toFixed(2),
-            percentage: "10.0"
-          };
+          savings = basePrice * 0.10;
+          percentage = "10.0";
+          break;
         case "Follower Elite":
-          return {
-            amount: (199.99 * 0.20).toFixed(2),
-            percentage: "20.0"
-          };
+          savings = basePrice * 0.20;
+          percentage = "20.0";
+          break;
         default:
           return null;
       }
+
+      if (isYearly) {
+        savings = savings * 0.80; // Apply 20% yearly discount to savings
+      }
+
+      return {
+        amount: savings.toFixed(2),
+        percentage
+      };
     } else if (!isFollowerPlan && !isFree) {
       const baseViewerPrice = 0.50;
       const baseChatterPrice = 0.75;
       
-      const regularPrice = (viewers * baseViewerPrice) + (chatters * baseChatterPrice);
+      let regularPrice = (viewers * baseViewerPrice) + (chatters * baseChatterPrice);
+      if (isYearly) {
+        regularPrice = regularPrice * 12;
+      }
+      
       const savings = regularPrice - price;
       const savingsPercentage = ((regularPrice - price) / regularPrice) * 100;
+      
       return {
         amount: savings > 0 ? savings.toFixed(2) : "0",
         percentage: savingsPercentage > 0 ? savingsPercentage.toFixed(1) : "0"
@@ -256,10 +284,13 @@ export function PricingCard({
       )}
       <div className="flex-grow">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
-        <p className="text-3xl font-bold mb-2">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
+        <p className="text-3xl font-bold mb-2">
+          {isFree ? 'Free' : `€${price.toFixed(2)}`}
+          {!isFree && <span className="text-sm font-normal text-muted-foreground">/{isYearly ? 'year' : 'month'}</span>}
+        </p>
         {!isFree && savings && (
           <p className={`text-sm ${savingsColor} mb-4 font-medium`}>
-            You save €{savings.amount} ({savings.percentage}%) / month
+            You save €{savings.amount} ({savings.percentage}%) / {isYearly ? 'year' : 'month'}
           </p>
         )}
         <ul className="space-y-2 mb-6">
@@ -283,7 +314,7 @@ export function PricingCard({
             </>
           )}
           <li className="flex items-center gap-2">
-            <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : '1 Month'}
+            <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : isYearly ? '12 Months' : '1 Month'}
           </li>
         </ul>
       </div>
