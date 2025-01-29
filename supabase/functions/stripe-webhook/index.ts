@@ -34,7 +34,6 @@ serve(async (req) => {
 
     let event;
     try {
-      // Konstruiere das Event ohne Signaturverifizierung für Entwicklungszwecke
       event = JSON.parse(body);
       console.log('Successfully parsed webhook event:', event.type);
     } catch (err) {
@@ -58,7 +57,7 @@ serve(async (req) => {
 
         try {
           const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-            expand: ['line_items.data.price']
+            expand: ['line_items.data.price', 'metadata']
           });
           console.log('Expanded session:', expandedSession);
 
@@ -74,18 +73,21 @@ serve(async (req) => {
             throw new Error(`Unknown price ID: ${priceId}`);
           }
 
+          const platform = expandedSession.metadata?.platform || 'Twitch';
+          const fullPlanName = `${platform} ${planName}`;
+
           const customerEmail = expandedSession.customer_details?.email;
           if (!customerEmail) {
             console.error('No customer email found in session');
             throw new Error('No customer email found in session');
           }
 
-          console.log(`Updating user ${customerEmail} to plan ${planName}`);
+          console.log(`Updating user ${customerEmail} to plan ${fullPlanName}`);
 
           const { error: updateError } = await supabase
             .from('profiles')
             .update({
-              plan: planName,
+              plan: fullPlanName,
               subscription_status: 'active',
               stripe_customer_id: session.customer,
               current_period_end: new Date(session.expires_at * 1000).toISOString()
@@ -119,7 +121,6 @@ serve(async (req) => {
             throw new Error('Missing price ID');
           }
 
-          // Hole die Customer-Information von Stripe
           const customer = await stripe.customers.retrieve(customerId);
           const email = typeof customer !== 'string' ? customer.email : null;
 
@@ -134,12 +135,27 @@ serve(async (req) => {
             throw new Error(`No plan mapping found for price ID: ${priceId}`);
           }
 
-          console.log(`Updating subscription for ${email} to plan ${planName}`);
+          // Get the current platform from the profile
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('plan')
+            .eq('email', email)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            throw profileError;
+          }
+
+          const currentPlatform = profile?.plan?.split(' ')[0] || 'Twitch';
+          const fullPlanName = `${currentPlatform} ${planName}`;
+
+          console.log(`Updating subscription for ${email} to plan ${fullPlanName}`);
 
           const { error: updateError } = await supabase
             .from('profiles')
             .update({
-              plan: planName,
+              plan: fullPlanName,
               subscription_status: subscription.status,
               current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
             })
@@ -183,4 +199,4 @@ serve(async (req) => {
       }
     );
   }
-})
+});

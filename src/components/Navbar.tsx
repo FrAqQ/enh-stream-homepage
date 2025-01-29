@@ -6,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -24,9 +25,28 @@ const Navbar = () => {
           <Link to="/dashboard" className="text-foreground/80 hover:text-foreground">
             Dashboard
           </Link>
-          <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
-            Pricing
-          </Link>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-foreground/80 hover:text-foreground">
+                Pricing
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link to="/pricing/twitch" className="w-full">Twitch Pricing</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/pricing/youtube" className="w-full">YouTube Pricing</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/pricing/tiktok" className="w-full">TikTok Pricing</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/pricing/instagram" className="w-full">Instagram Pricing</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {!user ? (
             <div className="flex items-center gap-2">
@@ -50,9 +70,10 @@ const Navbar = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/profile">Profile</Link>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
                   Logout
                 </DropdownMenuItem>

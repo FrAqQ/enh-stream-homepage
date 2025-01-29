@@ -42,7 +42,8 @@ const App = () => (
                 <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/pricing/:platform" element={<Pricing />} />
+            <Route path="/pricing" element={<Navigate to="/pricing/twitch" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={
