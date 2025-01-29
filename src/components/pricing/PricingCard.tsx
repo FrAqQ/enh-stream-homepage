@@ -40,9 +40,6 @@ export function PricingCard({
   const planFullName = `${platform} ${title}`;
   const isCurrentPlan = currentPlan === planFullName;
 
-  // Apply discounts to follower plans
-  const price = isFollowerPlan ? calculateDiscountedPrice(originalPrice, title) : originalPrice;
-
   function calculateDiscountedPrice(originalPrice: number, planTitle: string): number {
     switch (planTitle) {
       case "Follower Plus":
@@ -56,57 +53,33 @@ export function PricingCard({
     }
   }
 
+  const price = isFollowerPlan ? calculateDiscountedPrice(originalPrice, title) : originalPrice;
+
   const calculateSavings = () => {
-    // Keine Ersparnis anzeigen für Starter und Basic Follower Pakete
     if (title === "Starter" || (isFollowerPlan && title === "Follower Basic")) {
       return null;
     }
 
     if (isFollowerPlan) {
-      // Originalpreise (vor Rabatt) für die verschiedenen Follower-Pläne
-      const originalPlanPrices = {
-        "Follower Basic": 24.99,
-        "Follower Plus": 49.99,
-        "Follower Pro": 99.99,
-        "Follower Elite": 199.99
-      };
-
-      // Tatsächliche Preise nach Rabatt
-      const discountedPrices = {
-        "Follower Basic": originalPlanPrices["Follower Basic"],
-        "Follower Plus": originalPlanPrices["Follower Plus"] * 0.95,
-        "Follower Pro": originalPlanPrices["Follower Pro"] * 0.90,
-        "Follower Elite": originalPlanPrices["Follower Elite"] * 0.80
-      };
-
-      let previousPlanPrice;
-      let currentOriginalPrice;
-      
       switch (title) {
         case "Follower Plus":
-          previousPlanPrice = originalPlanPrices["Follower Basic"];
-          currentOriginalPrice = originalPlanPrices["Follower Plus"];
-          break;
+          return {
+            amount: (49.99 * 0.05).toFixed(2), // 5% von 49.99
+            percentage: "5.0"
+          };
         case "Follower Pro":
-          previousPlanPrice = discountedPrices["Follower Plus"];
-          currentOriginalPrice = originalPlanPrices["Follower Pro"];
-          break;
+          return {
+            amount: (99.99 * 0.10).toFixed(2), // 10% von 99.99
+            percentage: "10.0"
+          };
         case "Follower Elite":
-          previousPlanPrice = discountedPrices["Follower Pro"];
-          currentOriginalPrice = originalPlanPrices["Follower Elite"];
-          break;
+          return {
+            amount: (199.99 * 0.20).toFixed(2), // 20% von 199.99
+            percentage: "20.0"
+          };
         default:
           return null;
       }
-
-      const currentPrice = discountedPrices[title as keyof typeof discountedPrices];
-      const savings = previousPlanPrice - currentPrice;
-      const savingsPercentage = ((previousPlanPrice - currentPrice) / previousPlanPrice) * 100;
-      
-      return {
-        amount: savings > 0 ? savings.toFixed(2) : "0",
-        percentage: savingsPercentage > 0 ? savingsPercentage.toFixed(1) : "0"
-      };
     } else if (!isFollowerPlan && !isFree) {
       const baseViewerPrice = 0.50;
       const baseChatterPrice = 0.75;
