@@ -40,6 +40,18 @@ export function PricingCard({
   const planFullName = `${platform} ${title}`;
   const isCurrentPlan = currentPlan === planFullName;
 
+  // Berechnung der Ersparnis
+  const calculateSavings = () => {
+    if (isFollowerPlan && totalFollowers) {
+      // Basispreis pro Follower (€25 für 5000 Follower = €0.005 pro Follower)
+      const baseFollowerPrice = 0.005;
+      const regularPrice = totalFollowers * baseFollowerPrice;
+      const savings = regularPrice - price;
+      return savings > 0 ? savings.toFixed(2) : "0";
+    }
+    return null;
+  };
+
   const handleSelectPlan = async () => {
     if (!user) {
       toast({
@@ -198,7 +210,12 @@ export function PricingCard({
       )}
       <div className="flex-grow">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
-        <p className="text-3xl font-bold mb-6">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
+        <p className="text-3xl font-bold mb-2">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
+        {isFollowerPlan && !isFree && (
+          <p className="text-sm text-green-500 mb-4">
+            Sie sparen €{calculateSavings()} / Monat
+          </p>
+        )}
         <ul className="space-y-2 mb-6">
           {isFollowerPlan ? (
             <>
