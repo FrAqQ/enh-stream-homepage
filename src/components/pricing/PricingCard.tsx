@@ -22,7 +22,7 @@ interface PricingCardProps {
 
 export function PricingCard({ 
   title, 
-  price, 
+  price: originalPrice, 
   viewers, 
   chatters,
   followers,
@@ -40,6 +40,22 @@ export function PricingCard({
   const planFullName = `${platform} ${title}`;
   const isCurrentPlan = currentPlan === planFullName;
 
+  // Apply discounts to follower plans
+  const price = isFollowerPlan ? calculateDiscountedPrice(originalPrice, title) : originalPrice;
+
+  function calculateDiscountedPrice(originalPrice: number, planTitle: string): number {
+    switch (planTitle) {
+      case "Follower Plus":
+        return originalPrice * 0.95; // 5% discount
+      case "Follower Pro":
+        return originalPrice * 0.90; // 10% discount
+      case "Follower Elite":
+        return originalPrice * 0.80; // 20% discount
+      default:
+        return originalPrice;
+    }
+  }
+
   // Berechnung der Ersparnis
   const calculateSavings = () => {
     // Keine Ersparnis anzeigen für Starter und Basic Follower Pakete
@@ -51,14 +67,22 @@ export function PricingCard({
       const baseFollowerPrice = 0.005;
       const regularPrice = totalFollowers * baseFollowerPrice;
       const savings = regularPrice - price;
-      return savings > 0 ? savings.toFixed(2) : "0";
+      const savingsPercentage = ((regularPrice - price) / regularPrice) * 100;
+      return {
+        amount: savings > 0 ? savings.toFixed(2) : "0",
+        percentage: savingsPercentage > 0 ? savingsPercentage.toFixed(1) : "0"
+      };
     } else if (!isFollowerPlan && !isFree) {
       const baseViewerPrice = 0.50;
       const baseChatterPrice = 0.75;
       
       const regularPrice = (viewers * baseViewerPrice) + (chatters * baseChatterPrice);
       const savings = regularPrice - price;
-      return savings > 0 ? savings.toFixed(2) : "0";
+      const savingsPercentage = ((regularPrice - price) / regularPrice) * 100;
+      return {
+        amount: savings > 0 ? savings.toFixed(2) : "0",
+        percentage: savingsPercentage > 0 ? savingsPercentage.toFixed(1) : "0"
+      };
     }
     return null;
   };
@@ -212,6 +236,9 @@ export function PricingCard({
     }
   };
 
+  const savings = calculateSavings();
+  const savingsColor = isPopular ? "text-primary" : "text-accent-foreground";
+
   return (
     <Card className={`p-6 relative flex flex-col h-[400px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
@@ -222,9 +249,9 @@ export function PricingCard({
       <div className="flex-grow">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
         <p className="text-3xl font-bold mb-2">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
-        {!isFree && calculateSavings() && (
-          <p className="text-sm text-green-500 mb-4">
-            Sie sparen €{calculateSavings()} / Monat
+        {!isFree && savings && (
+          <p className={`text-sm ${savingsColor} mb-4 font-medium`}>
+            Sie sparen €{savings.amount} ({savings.percentage}%) / Monat
           </p>
         )}
         <ul className="space-y-2 mb-6">
