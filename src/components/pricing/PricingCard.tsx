@@ -48,6 +48,14 @@ export function PricingCard({
       const regularPrice = totalFollowers * baseFollowerPrice;
       const savings = regularPrice - price;
       return savings > 0 ? savings.toFixed(2) : "0";
+    } else if (!isFollowerPlan && !isFree) {
+      // Basispreise für normale Pläne
+      const baseViewerPrice = 0.50; // €0.50 pro Viewer pro Monat
+      const baseChatterPrice = 0.75; // €0.75 pro Chatter pro Monat
+      
+      const regularPrice = (viewers * baseViewerPrice) + (chatters * baseChatterPrice);
+      const savings = regularPrice - price;
+      return savings > 0 ? savings.toFixed(2) : "0";
     }
     return null;
   };
@@ -211,7 +219,7 @@ export function PricingCard({
       <div className="flex-grow">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
         <p className="text-3xl font-bold mb-2">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
-        {isFollowerPlan && !isFree && (
+        {!isFree && (
           <p className="text-sm text-green-500 mb-4">
             Sie sparen €{calculateSavings()} / Monat
           </p>
