@@ -10,7 +10,7 @@ const Landing = () => {
           Enhance Your Streaming Experience
         </h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Boost your Twitch presence with our comprehensive viewer and chat bot solution. Perfect for growing streamers looking to make their mark.
+          Boost your presence across Twitch, YouTube, TikTok, and Instagram with our comprehensive viewer and chat bot solution. Perfect for growing streamers looking to make their mark.
         </p>
         <div className="flex gap-4 justify-center">
           <Link to="/register">
@@ -32,37 +32,36 @@ const Landing = () => {
           <BenefitCard
             icon={<Users className="h-8 w-8 text-primary" />}
             title="Grow Your Community"
-            description="Start building your community with active viewers and engaging chat participants."
+            description="Start building your community with active viewers and engaging chat participants at the most competitive prices in the market."
           />
           <BenefitCard
             icon={<MessageCircle className="h-8 w-8 text-primary" />}
             title="Active Chat Environment"
-            description="Create a lively chat atmosphere that encourages real viewers to participate."
+            description="Create a lively chat atmosphere that encourages real viewers to participate, improving your stream's authenticity."
           />
           <BenefitCard
             icon={<TrendingUp className="h-8 w-8 text-primary" />}
             title="Increase Visibility"
-            description="Boost your channel's visibility in Twitch's directory and attract organic growth."
+            description="Higher viewer counts improve your ranking in Twitch's directory, especially within your language category, making you more discoverable."
           />
           <BenefitCard
             icon={<Trophy className="h-8 w-8 text-primary" />}
-            title="Reach Partner Status"
-            description="Achieve Twitch Partner status faster with consistent viewer numbers."
+            title="Multi-Platform Support"
+            description="Grow your presence across Twitch, YouTube, TikTok, and Instagram with our comprehensive solutions."
           />
           <BenefitCard
             icon={<Zap className="h-8 w-8 text-primary" />}
-            title="Boost Engagement"
-            description="Higher viewer counts lead to more real user interaction and community growth."
+            title="Best Value Solutions"
+            description="We offer the most cost-effective packages in the market, with unmatched features and flexibility at every price point."
           />
           <BenefitCard
             icon={<Heart className="h-8 w-8 text-primary" />}
-            title="Support Small Streamers"
-            description="Perfect solution for new streamers looking to establish their presence."
+            title="Trust Building"
+            description="Our gradual viewer and chatter increase approach helps build trust and authenticity in your channel."
           />
         </div>
       </section>
 
-      {/* Best Practices Section */}
       <section className="container mx-auto px-4 py-20">
         <h2 className="text-3xl font-bold text-center mb-12">How to Get the Best Results</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -84,7 +83,7 @@ const Landing = () => {
         </div>
         <div className="mt-12 text-center">
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-            While our services work great on their own, combining them with real viewers who actively participate in chat creates the most natural growth environment. This strategy helps attract and retain organic viewers more effectively, accelerating your path to success.
+            Higher viewer counts significantly improve your visibility in Twitch rankings, especially within your language category. Our gradual growth approach ensures authentic channel development, while maintaining the most competitive pricing in the market. No other provider offers such comprehensive solutions at these price points.
           </p>
           <Link to="/register">
             <Button size="lg" className="gap-2">
