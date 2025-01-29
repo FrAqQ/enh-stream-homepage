@@ -42,16 +42,19 @@ export function PricingCard({
 
   // Berechnung der Ersparnis
   const calculateSavings = () => {
+    // Keine Ersparnis anzeigen für Starter und Basic Follower Pakete
+    if (title === "Starter" || (isFollowerPlan && title === "Follower Basic")) {
+      return null;
+    }
+
     if (isFollowerPlan && totalFollowers) {
-      // Basispreis pro Follower (€25 für 5000 Follower = €0.005 pro Follower)
       const baseFollowerPrice = 0.005;
       const regularPrice = totalFollowers * baseFollowerPrice;
       const savings = regularPrice - price;
       return savings > 0 ? savings.toFixed(2) : "0";
     } else if (!isFollowerPlan && !isFree) {
-      // Basispreise für normale Pläne
-      const baseViewerPrice = 0.50; // €0.50 pro Viewer pro Monat
-      const baseChatterPrice = 0.75; // €0.75 pro Chatter pro Monat
+      const baseViewerPrice = 0.50;
+      const baseChatterPrice = 0.75;
       
       const regularPrice = (viewers * baseViewerPrice) + (chatters * baseChatterPrice);
       const savings = regularPrice - price;
@@ -219,7 +222,7 @@ export function PricingCard({
       <div className="flex-grow">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
         <p className="text-3xl font-bold mb-2">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
-        {!isFree && (
+        {!isFree && calculateSavings() && (
           <p className="text-sm text-green-500 mb-4">
             Sie sparen €{calculateSavings()} / Monat
           </p>
