@@ -64,17 +64,17 @@ export function PricingCard({
       switch (title) {
         case "Follower Plus":
           return {
-            amount: (49.99 * 0.05).toFixed(2), // 5% von 49.99
+            amount: (49.99 * 0.05).toFixed(2),
             percentage: "5.0"
           };
         case "Follower Pro":
           return {
-            amount: (99.99 * 0.10).toFixed(2), // 10% von 99.99
+            amount: (99.99 * 0.10).toFixed(2),
             percentage: "10.0"
           };
         case "Follower Elite":
           return {
-            amount: (199.99 * 0.20).toFixed(2), // 20% von 199.99
+            amount: (199.99 * 0.20).toFixed(2),
             percentage: "20.0"
           };
         default:
@@ -259,7 +259,7 @@ export function PricingCard({
         <p className="text-3xl font-bold mb-2">{isFree ? 'Free' : `€${price.toFixed(2)}`}</p>
         {!isFree && savings && (
           <p className={`text-sm ${savingsColor} mb-4 font-medium`}>
-            Sie sparen €{savings.amount} ({savings.percentage}%) / Monat
+            You save €{savings.amount} ({savings.percentage}%) / month
           </p>
         )}
         <ul className="space-y-2 mb-6">
