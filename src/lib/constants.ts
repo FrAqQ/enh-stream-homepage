@@ -1,8 +1,8 @@
 export const PLAN_VIEWER_LIMITS = {
   Free: 10,
-  Starter: 15,
-  Basic: 35,
-  Professional: 100,
+  Starter: 25,
+  Basic: 50,
+  Professional: 200,
   Expert: 300,
-  Ultimate: 600,
+  Ultimate: 1000,
 } as const;

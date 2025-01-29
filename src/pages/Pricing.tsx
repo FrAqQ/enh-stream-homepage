@@ -367,8 +367,8 @@ const Pricing = () => {
         />
         <PricingCard 
           title="Starter" 
-          price={9.99} 
-          viewers={15} 
+          price={12.99} 
+          viewers={25} 
           chatters={5}
           priceId="price_1Qklku01379EnnGJtin4BVcc"
           currentPlan={currentPlan}
@@ -376,15 +376,15 @@ const Pricing = () => {
         <PricingCard 
           title="Basic" 
           price={29.99} 
-          viewers={35} 
+          viewers={50} 
           chatters={8}
           priceId="price_1Qm2w001379EnnGJPVwgRD9F"
           currentPlan={currentPlan}
         />
         <PricingCard 
           title="Professional" 
-          price={89.99} 
-          viewers={100} 
+          price={129.99} 
+          viewers={200} 
           chatters={20}
           isPopular
           priceId="price_1Qm2E301379EnnGJjSesajsz"
@@ -392,17 +392,17 @@ const Pricing = () => {
         />
         <PricingCard 
           title="Expert" 
-          price={159.99} 
+          price={199.99} 
           viewers={300} 
-          chatters={90}
+          chatters={45}
           priceId="price_1Qm2Ke01379EnnGJNfHjqbBo"
           currentPlan={currentPlan}
         />
         <PricingCard 
           title="Ultimate" 
-          price={249.99} 
-          viewers={600} 
-          chatters={200}
+          price={599.99} 
+          viewers={1000} 
+          chatters={100}
           priceId="price_1Qm2VA01379EnnGJTiStzUOq"
           currentPlan={currentPlan}
         />
