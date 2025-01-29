@@ -41,6 +41,7 @@ export function PricingCard({
   const { toast } = useToast();
   const planFullName = `${platform} ${title}`;
   const isCurrentPlan = currentPlan === planFullName;
+  const isDefaultFreePlan = isFree && user && (!currentPlan || currentPlan === "Free");
 
   function calculateDiscountedPrice(originalPrice: number, planTitle: string, isYearly: boolean): number {
     let price = originalPrice;
@@ -321,9 +322,9 @@ export function PricingCard({
       <Button 
         className="w-full mt-auto"
         onClick={handleSelectPlan}
-        variant={isCurrentPlan ? "secondary" : "default"}
+        variant={isCurrentPlan || isDefaultFreePlan ? "secondary" : "default"}
       >
-        {isCurrentPlan ? 'Current Plan' : 'Select Plan'}
+        {isCurrentPlan || isDefaultFreePlan ? 'Current Plan' : 'Select Plan'}
       </Button>
     </Card>
   );
