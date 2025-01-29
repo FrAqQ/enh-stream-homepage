@@ -123,11 +123,14 @@ export function PricingCard({
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select(isFollowerPlan ? 'follower_plan, subscription_status' : 'plan, subscription_status')
+        .select('*')
         .eq('id', user.id)
         .single();
 
-      if (profile?.plan === planFullName && profile?.subscription_status === 'active') {
+      const currentProfilePlan = isFollowerPlan ? profile?.follower_plan : profile?.plan;
+      const isActiveSubscription = profile?.subscription_status === 'active';
+
+      if (currentProfilePlan === planFullName && isActiveSubscription) {
         toast({
           title: "Already Subscribed",
           description: "You are already subscribed to this plan",
