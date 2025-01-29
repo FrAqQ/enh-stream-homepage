@@ -97,7 +97,7 @@ const Pricing = () => {
             title="Starter" 
             price={12.99} 
             viewers={25} 
-            chatters={20}
+            chatters={10}
             priceId={isYearly ? "price_yearly_starter" : "price_1Qklku01379EnnGJtin4BVcc"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
@@ -107,7 +107,7 @@ const Pricing = () => {
             title="Basic" 
             price={29.99} 
             viewers={50} 
-            chatters={32}
+            chatters={16}
             priceId={isYearly ? "price_yearly_basic" : "price_1Qm2w001379EnnGJPVwgRD9F"}
             platform={capitalizedPlatform}
             currentPlan={currentPlan}
