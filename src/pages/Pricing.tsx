@@ -158,11 +158,11 @@ const Pricing = () => {
             followers={100}
             followersPerDay={100}
             totalFollowers={3000}
-            priceId={isYearly ? "price_yearly_follower_basic" : "price_follower_basic"}
+            priceId="price_follower_basic"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
-            isYearly={isYearly}
+            isYearly={false}
           />
           <PricingCard 
             title="Follower Plus" 
@@ -172,11 +172,11 @@ const Pricing = () => {
             followers={250}
             followersPerDay={250}
             totalFollowers={7500}
-            priceId={isYearly ? "price_yearly_follower_plus" : "price_follower_plus"}
+            priceId="price_follower_plus"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
-            isYearly={isYearly}
+            isYearly={false}
           />
           <PricingCard 
             title="Follower Pro" 
@@ -187,11 +187,11 @@ const Pricing = () => {
             followersPerDay={500}
             totalFollowers={15000}
             isPopular
-            priceId={isYearly ? "price_yearly_follower_pro" : "price_follower_pro"}
+            priceId="price_follower_pro"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
-            isYearly={isYearly}
+            isYearly={false}
           />
           <PricingCard 
             title="Follower Elite" 
@@ -201,11 +201,11 @@ const Pricing = () => {
             followers={1000}
             followersPerDay={1000}
             totalFollowers={30000}
-            priceId={isYearly ? "price_yearly_follower_elite" : "price_follower_elite"}
+            priceId="price_follower_elite"
             platform={capitalizedPlatform}
             currentPlan={currentFollowerPlan}
             isFollowerPlan
-            isYearly={isYearly}
+            isYearly={false}
           />
         </div>
       </div>
