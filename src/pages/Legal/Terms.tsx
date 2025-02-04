@@ -7,8 +7,51 @@ const Terms = () => {
   const translations = {
     en: {
       title: "Terms and Conditions",
-      lastUpdated: "These Terms and Conditions were last updated on March 19, 2024.",
-      content: "English version of the Terms and Conditions will be provided soon."
+      lastUpdated: "These Terms and Conditions were last updated on February 4, 2025.",
+      content: `The operators of the website https://enhanceyour.stream and all associated pages and subpages require the following General Terms and Conditions for the use of the services offered on the platform.
+
+Function of the Terms and Conditions
+The General Terms and Conditions (abbreviated as "T&Cs") represent an agreement between persons who use paid services on the above-mentioned platform (hereinafter referred to as "users") and the operators of the platform (hereinafter referred to as "operators" or "Enhance Stream"). They must be accepted by the user as soon as they use a paid service or register with their personal data on the platform.
+
+Information about the operator: https://enhanceyour.stream/impressum
+
+Validity
+The T&Cs are valid from January 10, 2022, and can be changed by the operators at any time. If a major content change is made that could affect user behavior, all active users (with activated user accounts) must be notified in writing.
+
+A user account can be created at https://enhanceyour.stream/my-account.
+
+Platform Functions
+
+a) Ordering
+The possibility is offered to use various digital services. For this purpose, the desired service must be placed in the digital shopping cart and the order must then be placed by clicking on the "Order with obligation to pay" button. An order is usually started within the start time specified on the respective detail page. The user is obligated to pay as soon as they click the above-mentioned button. By clicking the button, the user also expressly confirms the correctness and completeness of the provided data, including name, company name (optional), address, email address, and telephone number if applicable. During the ordering process, the user must provide a link to one or more of their accounts or to specific content in the respective social medium to which the service relates. The requirements in paragraph 4 must be observed. If this link is incorrectly provided by the user, the operators cannot guarantee scheduled execution of the respective order. In such a case, the user is requested to contact info@enhanceyour.stream immediately with their order number and the corrected link. The operator can then change this, if possible, in the systems used for order processing. If no immediate notification is made to the operator after providing an incorrect link, a refund cannot be guaranteed. Details are provided in the cancellation policy.
+
+If the user concludes orders for the same link with the operator or third-party platforms during the processing period, seamless execution cannot be guaranteed, as the effect of the individual services would be mixed and no longer clearly assignable. In such a case, any warranty, guarantee, and damage claims expire.
+
+b) Customer Accounts
+Any person aged 18 or over has the possibility to create a permanent customer account on the platform, which can be removed with a notification to info@enhanceyour.stream according to the privacy policy. The creator of such an account commits that the data provided by them is correct and complete. If an order is placed with this user account, the operators have permission to use the contact data stored in the user account for information or notification about order processes, etc. The operator has no access to the password used for registration by the user. However, if they want to change it and no longer have access to the email address to do this through the provided system, they can request the operator and authorize them to change the password.
+
+c) Prices
+The operator can change the prices shown in the online shop at any time, add new ones, or delete old ones. Typographical errors and mistakes are reserved.
+
+...
+
+Subscriptions
+Enhance Stream offers various subscription models. By concluding a subscription, the user agrees to recurring payments at the agreed intervals. The duration, pricing, and services of the subscription are determined at the time of contract conclusion and can be viewed in the respective tariffs on the platform.
+
+Cancellation of the subscription is possible at any time, observing the contractually defined notice period. Cancellation can be made via the customer account or by written notice to info@enhanceyour.stream. Amounts already paid for the current billing period will not be refunded unless there is a legal obligation to do so.
+
+If a due payment is not successfully collected, the operator reserves the right to temporarily suspend or terminate the subscription. In this case, the user's payment obligation for the outstanding amount remains. The operator may, at its discretion, charge reminder fees or legally enforce the outstanding amount.
+
+Early termination of a subscription by the operator is possible if the user violates the T&Cs or applicable law. In this case, no refund of payments already made will be given.
+
+Payment Terms
+Enhance Stream provides several payment methods, such as credit card, instant transfer (via Klarna/www.sofort.com), or manual bank transfer and others. Payment must be made directly during the ordering process. Enhance Stream must only begin executing the order once payment has been received in full. Some payment methods are processed through third-party providers such as "Stripe". During the payment process, the customer is redirected to an external window for processing. The operator reserves the right to wait with the mediation until the amount has been received in full in their account. In case of delays, the customer must contact the respective payment processor, as the operator has no access to the respective systems of these external providers. If a payment is received late (7 days after the order), the operator reserves the right to refund the amount and dissolve the contract. This happens, for example, if the respective service is no longer available or offered at the time of payment receipt. By completing the order, the user confirms that they are authorized to pay with the respective payment method and that the respective account does not contain any forged or stolen data.
+
+Right of Withdrawal
+You can find our cancellation policy at https://enhanceyour.stream/widerrufsbelehrung.
+
+Refunds
+If a service is delivered incorrectly, incompletely, or not at all, every user has the possibility to request an appropriate (partial) refund via info@enhanceyour.stream. If the service is actually incomplete or faulty, Enhance Stream must either immediately arrange for a re-mediation or refund the purchase amount (partially) to the customer's original payment method.`
     },
     de: {
       title: "Allgemeine Geschäftsbedingungen",
@@ -78,3 +121,4 @@ Wird eine Leistung fehlerhaft, unvollständig oder gar nicht geliefert, hat jede
 };
 
 export default Terms;
+
