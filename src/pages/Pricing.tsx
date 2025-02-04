@@ -130,7 +130,7 @@ const Pricing = () => {
       
       <div className="mb-16">
         <h2 className="text-2xl font-bold text-center mb-8">{t.viewerPlans}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <PricingCard 
             title={t.free}
             price={0} 
@@ -197,7 +197,7 @@ const Pricing = () => {
 
       <div>
         <h2 className="text-2xl font-bold text-center mb-8">{t.followerPlans}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
           <PricingCard 
             title={t.followerBasic}
             price={24.99} 
