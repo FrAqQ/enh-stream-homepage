@@ -125,7 +125,7 @@ const Landing = () => {
         },
         combine: {
           title: "Mit unseren Services kombinieren",
-          description: "Nutzen Sie unsere Pakete zusammen mit echten Zuschauern, um Ihr Wachstumspotenzial zu maximieren. Diese Kombination verbessert Ihre Konversionsrate mit organischen Zuschauern deutlich."
+          description: "Nutzen Sie unsere Pakete zusammen mit Zuschauern, um Ihr Wachstumspotenzial zu maximieren. Diese Kombination verbessert Ihre Konversionsrate mit organischen Zuschauern deutlich."
         }
       },
       revenue: {
