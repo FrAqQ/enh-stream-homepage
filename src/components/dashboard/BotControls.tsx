@@ -144,7 +144,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       }
 
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
-      const apiUrl = `http://v220250171253310506.hotsrv.de:5000/${endpoint}`;
+      const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
       console.log(`Starte Reichweitensteigerung mit Details:`, {
         user_id: user?.id,
