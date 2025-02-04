@@ -35,7 +35,7 @@ export function StreamSettings({ streamUrl, setStreamUrl, handleSaveUrl, userDat
             </label>
             <Input
               id="stream-url"
-              placeholder="Enter your Twitch stream URL"
+              placeholder="Enter your stream URL"
               value={streamUrl}
               onChange={(e) => setStreamUrl(e.target.value)}
             />
