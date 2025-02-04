@@ -340,7 +340,7 @@ export function PricingCard({
   const savingsColor = isPopular ? "text-primary" : "text-accent-foreground";
 
   return (
-    <Card className={`p-4 relative flex flex-col h-[350px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+    <Card className={`p-4 relative flex flex-col ${isFollowerPlan ? 'h-[400px]' : 'h-[350px]'} ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
           {t.mostPopular}
