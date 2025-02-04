@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { PricingCard } from "@/components/pricing/PricingCard";
-import { capitalize } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -20,13 +19,13 @@ const Pricing = () => {
   const translations = {
     en: {
       title: "Plans",
-      subtitle: "Choose the perfect plan for your {platform} streaming needs",
+      subtitle: "Choose the perfect plan for your streaming needs",
       monthly: "Monthly",
       yearly: "Yearly",
       save: "Save",
       viewerPlans: "Viewer & Chatter Plans",
       followerPlans: "Follower Plans",
-      free: "Free",
+      free: "Test Plan",
       starter: "Starter",
       basic: "Basic",
       professional: "Professional",
@@ -43,13 +42,13 @@ const Pricing = () => {
     },
     de: {
       title: "Pläne",
-      subtitle: "Wählen Sie den perfekten Plan für Ihre {platform} Streaming-Bedürfnisse",
+      subtitle: "Wählen Sie den perfekten Plan für Ihre Streaming-Bedürfnisse",
       monthly: "Monatlich",
       yearly: "Jährlich",
       save: "Sparen",
       viewerPlans: "Zuschauer & Chatter Pläne",
       followerPlans: "Follower Pläne",
-      free: "Kostenlos",
+      free: "Testplan",
       starter: "Starter",
       basic: "Basic",
       professional: "Professional",
@@ -112,13 +111,11 @@ const Pricing = () => {
     return () => clearInterval(interval);
   }, [user]);
 
-  const capitalizedPlatform = capitalize(platform);
-
   return (
     <div className="container mx-auto px-4 py-20">
-      <h1 className="text-4xl font-bold text-center mb-4">{capitalizedPlatform} {t.title}</h1>
+      <h1 className="text-4xl font-bold text-center mb-4">Enhance Stream {t.title}</h1>
       <p className="text-muted-foreground text-center mb-8">
-        {t.subtitle.replace("{platform}", capitalizedPlatform)}
+        {t.subtitle}
       </p>
 
       <div className="flex items-center justify-center gap-4 mb-12">
@@ -142,7 +139,7 @@ const Pricing = () => {
             viewers={10} 
             chatters={4}
             isFree
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentPlan}
             isYearly={isYearly}
           />
@@ -152,7 +149,7 @@ const Pricing = () => {
             viewers={25} 
             chatters={10}
             priceId={isYearly ? "price_yearly_starter" : "price_1Qklku01379EnnGJtin4BVcc"}
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentPlan}
             isYearly={isYearly}
           />
@@ -162,7 +159,7 @@ const Pricing = () => {
             viewers={50} 
             chatters={16}
             priceId={isYearly ? "price_yearly_basic" : "price_1Qm2w001379EnnGJPVwgRD9F"}
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentPlan}
             isYearly={isYearly}
           />
@@ -173,7 +170,7 @@ const Pricing = () => {
             chatters={40}
             isPopular
             priceId={isYearly ? "price_yearly_professional" : "price_1Qm2E301379EnnGJjSesajsz"}
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentPlan}
             isYearly={isYearly}
           />
@@ -183,7 +180,7 @@ const Pricing = () => {
             viewers={300} 
             chatters={90}
             priceId={isYearly ? "price_yearly_expert" : "price_1Qm2Ke01379EnnGJNfHjqbBo"}
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentPlan}
             isYearly={isYearly}
           />
@@ -193,7 +190,7 @@ const Pricing = () => {
             viewers={1000} 
             chatters={200}
             priceId={isYearly ? "price_yearly_ultimate" : "price_1Qm2VA01379EnnGJTiStzUOq"}
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentPlan}
             isYearly={isYearly}
           />
@@ -212,7 +209,7 @@ const Pricing = () => {
             followersPerDay={100}
             totalFollowers={3000}
             priceId="price_follower_basic"
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentFollowerPlan}
             isFollowerPlan
             isYearly={false}
@@ -226,7 +223,7 @@ const Pricing = () => {
             followersPerDay={250}
             totalFollowers={7500}
             priceId="price_follower_plus"
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentFollowerPlan}
             isFollowerPlan
             isYearly={false}
@@ -241,7 +238,7 @@ const Pricing = () => {
             totalFollowers={15000}
             isPopular
             priceId="price_follower_pro"
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentFollowerPlan}
             isFollowerPlan
             isYearly={false}
@@ -255,7 +252,7 @@ const Pricing = () => {
             followersPerDay={1000}
             totalFollowers={30000}
             priceId="price_follower_elite"
-            platform={capitalizedPlatform}
+            platform="Enhance Stream"
             currentPlan={currentFollowerPlan}
             isFollowerPlan
             isYearly={false}
