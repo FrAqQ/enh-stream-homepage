@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,6 +7,7 @@ import { AlertCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
+import { useLanguage } from "@/lib/LanguageContext"
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +29,56 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const { user } = useUser();
   const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
   const [userPlan, setUserPlan] = useState<string>("Free");
+  const { language } = useLanguage();
+
+  const translations = {
+    en: {
+      tooltipMessage: "Please enter a stream URL first",
+      currentViewers: "Current Viewers",
+      currentChatters: "Current Chatters",
+      viewer: "Viewer",
+      viewers: "Viewers",
+      chatter: "Chatter",
+      chatters: "Chatters",
+      notEnoughViewers: "Not enough viewers",
+      cantRemoveViewers: `You cannot remove ${0} viewers when you only have ${0}`,
+      viewerLimitReached: "Viewer limit reached",
+      maxViewersAllowed: `Your plan allows a maximum of ${0} viewers`,
+      securityNotice: "Security Notice",
+      certificateWarning: "Please visit https://v220250171253310506.hotsrv.de:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
+      warning: "Warning",
+      success: "Success",
+      reachIncreased: "Reach successfully increased!",
+      viewersRemoved: "Viewers successfully removed!",
+      error: "Error",
+      cooldownActive: "Cooldown Active",
+      cooldownMessage: "Please wait 5 seconds before increasing reach further."
+    },
+    de: {
+      tooltipMessage: "Bitte geben Sie zuerst eine Stream-URL ein",
+      currentViewers: "Aktuelle Zuschauer",
+      currentChatters: "Aktuelle Chatter",
+      viewer: "Zuschauer",
+      viewers: "Zuschauer",
+      chatter: "Chatter",
+      chatters: "Chatter",
+      notEnoughViewers: "Nicht genügend Zuschauer",
+      cantRemoveViewers: `Sie können nicht ${0} Zuschauer entfernen, wenn Sie nur ${0} haben`,
+      viewerLimitReached: "Zuschauerlimit erreicht",
+      maxViewersAllowed: `Ihr Plan erlaubt maximal ${0} Zuschauer`,
+      securityNotice: "Sicherheitshinweis",
+      certificateWarning: "Bitte besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt in Ihrem Browser, klicken Sie auf 'Erweitert' und akzeptieren Sie das Zertifikat, bevor Sie fortfahren.",
+      warning: "Warnung",
+      success: "Erfolgreich",
+      reachIncreased: "Reichweite erfolgreich erhöht!",
+      viewersRemoved: "Zuschauer erfolgreich entfernt!",
+      error: "Fehler",
+      cooldownActive: "Cooldown Aktiv",
+      cooldownMessage: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen."
+    }
+  };
+
+  const t = translations[language];
 
   useEffect(() => {
     const fetchUserPlan = async () => {
@@ -66,8 +116,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const modifyViewers = async (viewerCount: number) => {
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
-        title: "Nicht genügend Zuschauer",
-        description: `Sie können nicht ${Math.abs(viewerCount)} Zuschauer entfernen, wenn Sie nur ${currentViewers} haben.`,
+        title: t.notEnoughViewers,
+        description: t.cantRemoveViewers.replace("${0}", Math.abs(viewerCount).toString()).replace("${0}", currentViewers.toString()),
         variant: "destructive",
       });
       return;
@@ -75,8 +125,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
     if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
       toast({
-        title: "Zuschauerlimit erreicht",
-        description: `Sie können keine weiteren Zuschauer hinzufügen. Ihr Plan erlaubt maximal ${viewerLimit} Zuschauer.`,
+        title: t.viewerLimitReached,
+        description: t.maxViewersAllowed.replace("${0}", viewerLimit.toString()),
         variant: "destructive",
       });
       return;
@@ -85,8 +135,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     try {
       if (!hasShownCertWarning) {
         toast({
-          title: "Sicherheitshinweis",
-          description: "Bitte besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt in Ihrem Browser, klicken Sie auf 'Erweitert' und akzeptieren Sie das Zertifikat, bevor Sie fortfahren.",
+          title: t.securityNotice,
+          description: t.certificateWarning,
           duration: 10000,
           variant: "default",
         });
@@ -143,10 +193,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       setCurrentViewers(newViewerCount);
 
       toast({
-        title: "Erfolgreich",
-        description: viewerCount > 0 
-          ? "Reichweite erfolgreich erhöht!" 
-          : "Zuschauer erfolgreich entfernt!",
+        title: t.success,
+        description: viewerCount > 0 ? t.reachIncreased : t.viewersRemoved,
       });
       
       onAdd(viewerCount);
@@ -181,8 +229,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const handleButtonClick = async (count: number) => {
     if (isOnCooldown) {
       toast({
-        title: "Cooldown Aktiv",
-        description: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen.",
+        title: t.cooldownActive,
+        description: t.cooldownMessage,
         variant: "destructive",
       });
       return;
@@ -217,7 +265,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                   <AlertCircle className="h-5 w-5 text-yellow-500" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Bitte geben Sie zuerst eine Stream-URL ein</p>
+                  <p>{t.tooltipMessage}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -228,7 +276,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>{type === "viewer" ? "Aktuelle Zuschauer" : "Aktuelle Chatter"}</span>
+              <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
               <span>{currentViewers}/{viewerLimit}</span>
             </div>
             <Progress value={(currentViewers / viewerLimit) * 100} />
@@ -239,21 +287,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               variant="outline"
               disabled={isButtonDisabled(1)}
             >
-              +1 {type === "viewer" ? "Zuschauer" : "Chatter"}
+              +1 {type === "viewer" ? t.viewer : t.chatter}
             </Button>
             <Button 
               onClick={() => handleButtonClick(3)} 
               variant="outline"
               disabled={isButtonDisabled(3)}
             >
-              +3 {type === "viewer" ? "Zuschauer" : "Chatter"}
+              +3 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(5)} 
               variant="outline"
               disabled={isButtonDisabled(5)}
             >
-              +5 {type === "viewer" ? "Zuschauer" : "Chatter"}
+              +5 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -263,7 +311,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-1)}
             >
-              -1 {type === "viewer" ? "Zuschauer" : "Chatter"}
+              -1 {type === "viewer" ? t.viewer : t.chatter}
             </Button>
           </div>
         </div>
@@ -271,4 +319,3 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     </Card>
   );
 }
-
