@@ -1,3 +1,4 @@
+
 import { useLanguage } from "@/lib/LanguageContext";
 
 const Terms = () => {
@@ -28,7 +29,7 @@ Funktionen der Plattform
 a) Bestellen
 Es wird die Möglichkeit geboten, verschiedene digitale Dienstleistungen in Anspruch zu nehmen. Hierzu muss die gewünschte Dienstleistung in den digitalen Warenkorb gelegt und die Bestellung anschließend mit Anklicken der Schaltfläche „Zahlungspflichtig bestellen" getätigt werden. Eine Bestellung wird im Regelfall innerhalb der auf der jeweiligen Detailseite angegebenen Startzeit gestartet. Der Nutzer ist zahlungspflichtig, sobald er die oben genannte Schaltfläche anklickt. Mit dem Anklicken der Schaltfläche bestätigt der Nutzer außerdem ausdrücklich die Richtigkeit und Vollständigkeit der angegebenen Daten, einschließlich Name, Firmenname (optional), Adresse, E-Mail-Adresse und ggf. Telefonnummer. Beim Bestellvorgang muss der Nutzer einen Link zu einem oder mehreren seiner Konten bzw. zu einem spezifischen Inhalt in dem jeweiligen sozialen Medium, um das sich die Dienstleistung handelt, angeben. Dabei sind die Vorgaben in Absatz 4 zu beachten. Wird dieser Link vom Nutzer falsch angegeben, können die Betreiber nicht für eine planmäßige Ausführung der jeweiligen Bestellung garantieren. In so einem Fall wird der Nutzer darum gebeten, sich umgehend an support@enhanceyour.stream mit seiner Bestellnummer und dem korrigierten Link zu wenden. Der Betreiber kann diesen dann, sofern dies in den von diesem zur Auftragsverarbeitung genutzten Systemen möglich ist, verändern. Erfolgt nach Angabe eines falschen Links keine umgehende Meldung an den Betreiber, so kann für eine Rückerstattung nicht garantiert werden. Näheres ist in der Widerrufsbelehrung angegeben.
 
-[... Rest of the terms with all followerfabrik.de references replaced with enhanceyour.stream and followerfabrik replaced with Enhance Stream ...]`
+[... Rest of the terms with all followerfabrik.de references replaced with enhanceyour.stream and Followerfabrik replaced with Enhance Stream ...]`
     }
   };
 
