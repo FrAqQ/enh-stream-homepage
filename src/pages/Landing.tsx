@@ -7,109 +7,109 @@ const Landing = () => {
     <div className="min-h-screen pt-16">
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-          Enhance Your Streaming Experience
+          Steigern Sie Ihre Stream-Reichweite
         </h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Boost your presence across Twitch, YouTube, TikTok, and Instagram with our comprehensive viewer and chat bot solution. Perfect for growing streamers looking to make their mark.
+          Erhöhen Sie Ihre Präsenz auf Twitch, YouTube, TikTok und Instagram mit unserer umfassenden Marketing-Lösung. Perfekt für aufstrebende Streamer, die ihre Sichtbarkeit steigern möchten.
         </p>
         <div className="flex gap-4 justify-center">
           <Link to="/register">
             <Button size="lg" className="gap-2">
-              Get Started <ArrowRight className="h-4 w-4" />
+              Jetzt starten <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
           <Link to="/pricing">
             <Button size="lg" variant="outline">
-              View Pricing
+              Preise ansehen
             </Button>
           </Link>
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Service?</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">Warum unser Service?</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <BenefitCard
             icon={<Users className="h-8 w-8 text-primary" />}
-            title="Grow Your Community"
-            description="Start building your community with active viewers and engaging chat participants at the most competitive prices in the market."
+            title="Community aufbauen"
+            description="Starten Sie den Aufbau Ihrer Community mit aktiven Zuschauern und engagierten Chat-Teilnehmern zu den wettbewerbsfähigsten Preisen am Markt."
           />
           <BenefitCard
             icon={<MessageCircle className="h-8 w-8 text-primary" />}
-            title="Active Chat Environment"
-            description="Create a lively chat atmosphere that encourages real viewers to participate, improving your stream's authenticity."
+            title="Aktive Chat-Umgebung"
+            description="Schaffen Sie eine lebendige Chat-Atmosphäre, die echte Zuschauer zur Teilnahme ermutigt und die Authentizität Ihres Streams verbessert."
           />
           <BenefitCard
             icon={<TrendingUp className="h-8 w-8 text-primary" />}
-            title="Increase Visibility"
-            description="Higher viewer counts improve your ranking in Twitch's directory, especially within your language category, making you more discoverable."
+            title="Sichtbarkeit erhöhen"
+            description="Höhere Zuschauerzahlen verbessern Ihr Ranking im Twitch-Verzeichnis, besonders in Ihrer Sprachkategorie, und machen Sie besser auffindbar."
           />
           <BenefitCard
             icon={<Trophy className="h-8 w-8 text-primary" />}
-            title="Multi-Platform Support"
-            description="Grow your presence across Twitch, YouTube, TikTok, and Instagram with our comprehensive solutions."
+            title="Multi-Plattform Support"
+            description="Steigern Sie Ihre Präsenz auf Twitch, YouTube, TikTok und Instagram mit unseren umfassenden Lösungen."
           />
           <BenefitCard
             icon={<Zap className="h-8 w-8 text-primary" />}
-            title="Best Value Solutions"
-            description="We offer the most cost-effective packages in the market, with unmatched features and flexibility at every price point."
+            title="Beste Preis-Leistung"
+            description="Wir bieten die kosteneffektivsten Pakete auf dem Markt mit unübertroffenen Funktionen und Flexibilität in jeder Preisklasse."
           />
           <BenefitCard
             icon={<Heart className="h-8 w-8 text-primary" />}
-            title="Trust Building"
-            description="Our gradual viewer and chatter increase approach helps build trust and authenticity in your channel."
+            title="Vertrauensaufbau"
+            description="Unser schrittweiser Ansatz zur Steigerung der Zuschauer- und Chatterzahlen hilft beim Aufbau von Vertrauen und Authentizität in Ihrem Kanal."
           />
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">How to Get the Best Results</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">So erzielen Sie die besten Ergebnisse</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <BestPracticeCard
             icon={<Users2 className="h-8 w-8 text-primary" />}
-            title="Invite Real Friends"
-            description="Start by inviting friends to your stream, even if they're not familiar with the games you play. Real interactions create an authentic atmosphere."
+            title="Echte Freunde einladen"
+            description="Beginnen Sie damit, Freunde zu Ihrem Stream einzuladen, auch wenn sie mit den Spielen nicht vertraut sind. Echte Interaktionen schaffen eine authentische Atmosphäre."
           />
           <BestPracticeCard
             icon={<MessagesSquare className="h-8 w-8 text-primary" />}
-            title="Encourage Chat Activity"
-            description="Guide your friends to participate in chat discussions. Even basic comments help create an engaging environment that attracts organic viewers."
+            title="Chat-Aktivität fördern"
+            description="Ermutigen Sie Ihre Freunde zur Teilnahme an Chat-Diskussionen. Auch einfache Kommentare helfen, eine ansprechende Umgebung zu schaffen, die organische Zuschauer anzieht."
           />
           <BestPracticeCard
             icon={<Target className="h-8 w-8 text-primary" />}
-            title="Combine with Our Services"
-            description="Use our packages alongside real viewers to maximize your growth potential. This combination significantly improves your conversion rate with organic viewers."
+            title="Mit unseren Services kombinieren"
+            description="Nutzen Sie unsere Pakete zusammen mit echten Zuschauern, um Ihr Wachstumspotenzial zu maximieren. Diese Kombination verbessert Ihre Konversionsrate mit organischen Zuschauern deutlich."
           />
         </div>
         <div className="mt-12 text-center">
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-            Higher viewer counts significantly improve your visibility in Twitch rankings, especially within your language category. Our gradual growth approach ensures authentic channel development, while maintaining the most competitive pricing in the market. No other provider offers such comprehensive solutions at these price points.
+            Höhere Zuschauerzahlen verbessern Ihre Sichtbarkeit in den Twitch-Rankings erheblich, besonders in Ihrer Sprachkategorie. Unser schrittweiser Wachstumsansatz gewährleistet eine authentische Kanalentwicklung bei gleichzeitig wettbewerbsfähigsten Preisen am Markt.
           </p>
           <Link to="/register">
             <Button size="lg" className="gap-2">
-              Start Growing Your Channel <ArrowRight className="h-4 w-4" />
+              Starten Sie Ihr Kanalwachstum <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-3xl font-bold mb-12">Maximize Your Streaming Revenue</h2>
+        <h2 className="text-3xl font-bold mb-12">Maximieren Sie Ihre Streaming-Einnahmen</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           <RevenueCard
-            title="Subscriptions"
+            title="Abonnements"
             amount="$2.50"
-            description="Per subscriber monthly"
+            description="Pro Abonnent monatlich"
           />
           <RevenueCard
             title="Bits"
             amount="$0.01"
-            description="Per bit donated"
+            description="Pro gespendeten Bit"
           />
           <RevenueCard
-            title="Ads"
+            title="Werbung"
             amount="$3.50"
-            description="CPM for ads"
+            description="CPM für Werbung"
           />
         </div>
       </section>

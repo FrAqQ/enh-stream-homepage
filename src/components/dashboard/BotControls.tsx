@@ -15,6 +15,7 @@ interface BotControlsProps {
   streamUrl: string
 }
 
+// Renaming to MarketingControls but keeping the file name for now to avoid breaking imports
 export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [currentViewers, setCurrentViewers] = useState(0);
@@ -59,8 +60,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const modifyViewers = async (viewerCount: number) => {
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
-        title: "Not Enough Viewers",
-        description: `You can't remove ${Math.abs(viewerCount)} viewers when you only have ${currentViewers}.`,
+        title: "Nicht genügend Zuschauer",
+        description: `Sie können nicht ${Math.abs(viewerCount)} Zuschauer entfernen, wenn Sie nur ${currentViewers} haben.`,
         variant: "destructive",
       });
       return;
@@ -68,8 +69,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
     if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
       toast({
-        title: "Viewer Limit Reached",
-        description: `You can't add more viewers. Your plan allows a maximum of ${viewerLimit} viewers.`,
+        title: "Zuschauerlimit erreicht",
+        description: `Sie können keine weiteren Zuschauer hinzufügen. Ihr Plan erlaubt maximal ${viewerLimit} Zuschauer.`,
         variant: "destructive",
       });
       return;
@@ -78,8 +79,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     try {
       if (!hasShownCertWarning) {
         toast({
-          title: "Security Notice",
-          description: "Please visit https://v220250171253310506.hotsrv.de:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
+          title: "Sicherheitshinweis",
+          description: "Bitte besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt in Ihrem Browser, klicken Sie auf 'Erweitert' und akzeptieren Sie das Zertifikat, bevor Sie fortfahren.",
           duration: 10000,
           variant: "default",
         });
@@ -89,7 +90,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
-      console.log(`Starting viewer ${endpoint} request with details:`, {
+      console.log(`Starte Reichweitensteigerung mit Details:`, {
         user_id: user?.id,
         twitch_url: streamUrl,
         viewer_count: Math.abs(viewerCount)
@@ -125,22 +126,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       )) {
         console.error("Server reported an error:", data.message);
         toast({
-          title: "Warning",
-          description: "The viewer bot encountered an issue. Server message: " + data.message,
+          title: "Warnung",
+          description: "Es gab ein Problem bei der Reichweitensteigerung. Server-Nachricht: " + data.message,
           variant: "destructive",
         });
         return;
       }
 
-      // Update current viewers count
       const newViewerCount = currentViewers + viewerCount;
       setCurrentViewers(newViewerCount);
 
       toast({
-        title: "Success",
+        title: "Erfolgreich",
         description: viewerCount > 0 
-          ? "Viewers added successfully!" 
-          : "Viewers removed successfully!",
+          ? "Reichweite erfolgreich erhöht!" 
+          : "Zuschauer erfolgreich entfernt!",
       });
       
       onAdd(viewerCount);
@@ -151,21 +151,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         message: error instanceof Error ? error.message : 'Unknown error',
       });
       
-      let errorMessage = "Failed to modify viewers. ";
+      let errorMessage = "Fehler bei der Reichweitensteigerung. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage = "Server connection failed. Please:\n" +
-                        "1. Visit https://v220250171253310506.hotsrv.de:5000 directly\n" +
-                        "2. Click 'Advanced' and 'Accept the Risk'\n" +
-                        "3. Return here and try again\n" +
-                        "If issues persist, contact support.";
+          errorMessage = "Serververbindung fehlgeschlagen. Bitte:\n" +
+                        "1. Besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt\n" +
+                        "2. Klicken Sie auf 'Erweitert' und 'Risiko akzeptieren'\n" +
+                        "3. Kehren Sie hierher zurück und versuchen Sie es erneut\n" +
+                        "Bei anhaltenden Problemen kontaktieren Sie den Support.";
         } else {
           errorMessage += error.message;
         }
       }
 
       toast({
-        title: "Error",
+        title: "Fehler",
         description: errorMessage,
         variant: "destructive",
       });
@@ -176,7 +176,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (isOnCooldown) {
       toast({
         title: "Cooldown Aktiv",
-        description: "Bitte warten Sie 5 Sekunden, bevor Sie Bots modifizieren.",
+        description: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen.",
         variant: "destructive",
       });
       return;
@@ -213,7 +213,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>{type === "viewer" ? "Current Viewers" : "Current Chatters"}</span>
+              <span>{type === "viewer" ? "Aktuelle Zuschauer" : "Aktuelle Chatter"}</span>
               <span>{currentViewers}/{viewerLimit}</span>
             </div>
             <Progress value={(currentViewers / viewerLimit) * 100} />
@@ -224,21 +224,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               variant="outline"
               disabled={isButtonDisabled(1)}
             >
-              +1 {type}
+              +1 {type === "viewer" ? "Zuschauer" : "Chatter"}
             </Button>
             <Button 
               onClick={() => handleButtonClick(3)} 
               variant="outline"
               disabled={isButtonDisabled(3)}
             >
-              +3 {type}s
+              +3 {type === "viewer" ? "Zuschauer" : "Chatter"}
             </Button>
             <Button 
               onClick={() => handleButtonClick(5)} 
               variant="outline"
               disabled={isButtonDisabled(5)}
             >
-              +5 {type}s
+              +5 {type === "viewer" ? "Zuschauer" : "Chatter"}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -248,7 +248,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-1)}
             >
-              -1 {type}
+              -1 {type === "viewer" ? "Zuschauer" : "Chatter"}
             </Button>
           </div>
         </div>
