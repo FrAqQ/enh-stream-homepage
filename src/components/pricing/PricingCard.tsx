@@ -340,18 +340,18 @@ export function PricingCard({
   const savingsColor = isPopular ? "text-primary" : "text-accent-foreground";
 
   return (
-    <Card className={`p-4 relative flex flex-col h-[400px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+    <Card className={`p-4 relative flex flex-col h-[350px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
           {t.mostPopular}
         </span>
       )}
       
-      <div className="h-16">
-        <h3 className="text-lg font-bold mb-2">{planFullName}</h3>
+      <div className="h-14">
+        <h3 className="text-lg font-bold mb-1">{planFullName}</h3>
       </div>
       
-      <div className="h-28">
+      <div className="h-24">
         <div className="mb-2">
           <p className="text-2xl font-bold">
             {isFree ? t.free : `€${price.toFixed(2)}`}
@@ -396,7 +396,7 @@ export function PricingCard({
         </ul>
       </div>
 
-      <div className="h-10 mt-3">
+      <div className="h-10 mt-2">
         <Button 
           className="w-full"
           onClick={handleSelectPlan}
