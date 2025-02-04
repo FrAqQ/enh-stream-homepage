@@ -7,12 +7,12 @@ const Terms = () => {
   const translations = {
     en: {
       title: "Terms and Conditions",
-      lastUpdated: "These Terms and Conditions were last updated on May 28, 2024.",
+      lastUpdated: "These Terms and Conditions were last updated on March 19, 2024.",
       content: "English version of the Terms and Conditions will be provided soon."
     },
     de: {
       title: "Allgemeine Geschäftsbedingungen",
-      lastUpdated: "Diese Allgemeinen Geschäftsbedingungen wurden zuletzt am 28.05.2024 aktualisiert.",
+      lastUpdated: "Diese Allgemeinen Geschäftsbedingungen wurden zuletzt am 19.03.2024 aktualisiert.",
       content: `Die Betreiber der Website https://enhanceyour.stream und allen damit verbundenen Seiten und Unterseiten setzen die folgenden Allgemeinen Geschäftsbedingungen für die Nutzung der auf der Plattform angebotenen Dienstleistungen voraus.
 
 Funktion der AGB
