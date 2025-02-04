@@ -1,5 +1,4 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { PricingCard } from "@/components/pricing/PricingCard";
@@ -8,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/lib/LanguageContext";
 
 const Pricing = () => {
-  const { platform = 'twitch' } = useParams();
   const { user } = useUser();
   const [currentPlan, setCurrentPlan] = useState("Free");
   const [currentFollowerPlan, setCurrentFollowerPlan] = useState("None");
