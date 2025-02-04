@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -143,12 +144,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
+      // Extract channel name from URL
+      const channelName = streamUrl.split('/').pop() || '';
+      
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
-      console.log(`Starte Reichweitensteigerung mit Details:`, {
+      console.log(`Making API request to ${apiUrl} with details:`, {
         user_id: user?.id,
-        twitch_url: streamUrl,
+        channel: channelName,
         viewer_count: Math.abs(viewerCount)
       });
       
@@ -158,10 +162,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        mode: "cors",
         body: JSON.stringify({
           user_id: user?.id || "123",
-          twitch_url: streamUrl,
+          channel: channelName,
           viewer_count: Math.abs(viewerCount)
         })
       });
@@ -169,21 +172,19 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       console.log("Response status:", response.status);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.text();
+        console.error("API Error Response:", errorData);
+        throw new Error(`HTTP error! status: ${response.status}\nResponse: ${errorData}`);
       }
 
       const data = await response.json();
       console.log("API Response data:", data);
 
-      if (data.message && (
-        data.message.toLowerCase().includes('fehler') || 
-        data.message.toLowerCase().includes('error') ||
-        data.message.toLowerCase().includes('konnte nicht gestartet')
-      )) {
+      if (data.status === "error") {
         console.error("Server reported an error:", data.message);
         toast({
-          title: "Warnung",
-          description: "Es gab ein Problem bei der Reichweitensteigerung. Server-Nachricht: " + data.message,
+          title: t.error,
+          description: data.message,
           variant: "destructive",
         });
         return;
@@ -205,21 +206,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         message: error instanceof Error ? error.message : 'Unknown error',
       });
       
-      let errorMessage = "Fehler bei der Reichweitensteigerung. ";
+      let errorMessage = "Error processing request. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage = "Serververbindung fehlgeschlagen. Bitte:\n" +
-                        "1. Besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt\n" +
-                        "2. Klicken Sie auf 'Erweitert' und 'Risiko akzeptieren'\n" +
-                        "3. Kehren Sie hierher zurück und versuchen Sie es erneut\n" +
-                        "Bei anhaltenden Problemen kontaktieren Sie den Support.";
+          errorMessage = "Server connection failed. Please:\n" +
+                        "1. Visit https://v220250171253310506.hotsrv.de:5000 directly\n" +
+                        "2. Click 'Advanced' and 'Accept Risk'\n" +
+                        "3. Return here and try again\n" +
+                        "If problems persist, contact support.";
         } else {
           errorMessage += error.message;
         }
       }
 
       toast({
-        title: "Fehler",
+        title: t.error,
         description: errorMessage,
         variant: "destructive",
       });
