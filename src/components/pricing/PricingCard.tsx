@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { useUser } from "@/lib/useUser";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { useLanguage } from "@/lib/LanguageContext";
 
 interface PricingCardProps {
   title: string;
@@ -39,9 +40,63 @@ export function PricingCard({
 }: PricingCardProps) {
   const { user } = useUser();
   const { toast } = useToast();
+  const { language } = useLanguage();
   const planFullName = `${platform} ${title}`;
   const isCurrentPlan = currentPlan === planFullName;
   const isDefaultFreePlan = isFree && user && (!currentPlan || currentPlan === "Free");
+
+  const translations = {
+    en: {
+      mostPopular: "Most Popular",
+      free: "Free",
+      month: "month",
+      year: "year",
+      youSave: "You save",
+      forever: "Forever",
+      months: "Months",
+      month1: "Month",
+      duration: "Duration",
+      currentPlan: "Current Plan",
+      selectPlan: "Select Plan",
+      loginRequired: "Login Required",
+      loginToSubscribe: "Please login to subscribe to this plan",
+      alreadySubscribed: "Current Plan",
+      alreadySubscribedDesc: "You are already subscribed to this plan",
+      planUpdated: "Plan Updated",
+      planUpdatedDesc: "You have been switched to the {plan} plan",
+      error: "Error",
+      errorSwitchingPlan: "Failed to switch to free plan. Please try again.",
+      configError: "Configuration Error",
+      noPriceId: "No price ID configured for this plan",
+      checkoutError: "Failed to start checkout process. Please try again."
+    },
+    de: {
+      mostPopular: "Beliebtester Plan",
+      free: "Kostenlos",
+      month: "Monat",
+      year: "Jahr",
+      youSave: "Sie sparen",
+      forever: "Unbegrenzt",
+      months: "Monate",
+      month1: "Monat",
+      duration: "Laufzeit",
+      currentPlan: "Aktueller Plan",
+      selectPlan: "Plan wählen",
+      loginRequired: "Login erforderlich",
+      loginToSubscribe: "Bitte melden Sie sich an, um diesen Plan zu abonnieren",
+      alreadySubscribed: "Aktueller Plan",
+      alreadySubscribedDesc: "Sie haben diesen Plan bereits abonniert",
+      planUpdated: "Plan aktualisiert",
+      planUpdatedDesc: "Sie wurden zum Plan {plan} gewechselt",
+      error: "Fehler",
+      errorSwitchingPlan: "Fehler beim Wechsel zum kostenlosen Plan. Bitte versuchen Sie es erneut.",
+      configError: "Konfigurationsfehler",
+      noPriceId: "Keine Preis-ID für diesen Plan konfiguriert",
+      checkoutError: "Fehler beim Starten des Checkout-Prozesses. Bitte versuchen Sie es erneut."
+    }
+  };
+
+  const t = translations[language];
 
   function calculateDiscountedPrice(originalPrice: number, planTitle: string, isYearly: boolean): number {
     let price = originalPrice;
@@ -280,70 +335,66 @@ export function PricingCard({
     <Card className={`p-6 relative flex flex-col h-[440px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
-          Most Popular
+          {t.mostPopular}
         </span>
       )}
       
-      {/* Header Section - Fixed Height */}
       <div className="h-20">
         <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
       </div>
       
-      {/* Pricing Section - Fixed Height */}
       <div className="h-32">
         <div className="mb-2">
           <p className="text-3xl font-bold">
-            {isFree ? 'Free' : `€${price.toFixed(2)}`}
+            {isFree ? t.free : `€${price.toFixed(2)}`}
             <span className="text-sm font-normal text-muted-foreground block">
-              {!isFree && `/${isYearly ? 'year' : 'month'}`}
+              {!isFree && `/${isYearly ? t.year : t.month}`}
             </span>
           </p>
         </div>
         
         {!isFree && savings && (
           <div className={`text-sm ${savingsColor} font-medium`}>
-            <p>You save €{savings.amount}</p>
-            <p>({savings.percentage}%) / {isYearly ? 'year' : 'month'}</p>
+            <p>{t.youSave} €{savings.amount}</p>
+            <p>({savings.percentage}%) / {isYearly ? t.year : t.month}</p>
           </div>
         )}
       </div>
 
-      {/* Features Section - Fixed Height */}
       <div className="flex-grow space-y-3">
         <ul className="space-y-2">
           {isFollowerPlan ? (
             <>
               <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> {followersPerDay} Followers / Day
+                <span className="text-primary">✓</span> {followersPerDay} {t.followersPerDay}
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> {totalFollowers} Total Followers / Month
+                <span className="text-primary">✓</span> {totalFollowers} {t.totalFollowers}
               </li>
             </>
           ) : (
             <>
               <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> {viewers} Viewers
+                <span className="text-primary">✓</span> {viewers} {t.viewers}
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> {chatters} Chatters
+                <span className="text-primary">✓</span> {chatters} {t.chatters}
               </li>
             </>
           )}
           <li className="flex items-center gap-2">
-            <span className="text-primary">✓</span> Duration: {isFree ? 'Forever' : isYearly ? '12 Months' : '1 Month'}
+            <span className="text-primary">✓</span> {t.duration}: {isFree ? t.forever : isYearly ? '12 ' + t.months : '1 ' + t.month1}
           </li>
         </ul>
       </div>
 
-      {/* Button Section - Fixed Height */}
       <div className="h-10 mt-4">
         <Button 
           className="w-full"
           onClick={handleSelectPlan}
           variant={isCurrentPlan || isDefaultFreePlan ? "secondary" : "default"}
         >
-          {isCurrentPlan || isDefaultFreePlan ? 'Current Plan' : 'Select Plan'}
+          {isCurrentPlan || isDefaultFreePlan ? t.currentPlan : t.selectPlan}
         </Button>
       </div>
     </Card>

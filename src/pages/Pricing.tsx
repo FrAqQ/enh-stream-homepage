@@ -6,6 +6,7 @@ import { PricingCard } from "@/components/pricing/PricingCard";
 import { capitalize } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const Pricing = () => {
   const { platform = 'twitch' } = useParams();
@@ -14,6 +15,58 @@ const Pricing = () => {
   const [currentFollowerPlan, setCurrentFollowerPlan] = useState("None");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
   const [isYearly, setIsYearly] = useState(false);
+  const { language } = useLanguage();
+
+  const translations = {
+    en: {
+      title: "Plans",
+      subtitle: "Choose the perfect plan for your {platform} streaming needs",
+      monthly: "Monthly",
+      yearly: "Yearly",
+      save: "Save",
+      viewerPlans: "Viewer & Chatter Plans",
+      followerPlans: "Follower Plans",
+      free: "Free",
+      starter: "Starter",
+      basic: "Basic",
+      professional: "Professional",
+      expert: "Expert",
+      ultimate: "Ultimate",
+      followerBasic: "Follower Basic",
+      followerPlus: "Follower Plus",
+      followerPro: "Follower Pro",
+      followerElite: "Follower Elite",
+      viewers: "Viewers",
+      chatters: "Chatters",
+      followersPerDay: "Followers / Day",
+      totalFollowers: "Total Followers / Month"
+    },
+    de: {
+      title: "Pläne",
+      subtitle: "Wählen Sie den perfekten Plan für Ihre {platform} Streaming-Bedürfnisse",
+      monthly: "Monatlich",
+      yearly: "Jährlich",
+      save: "Sparen",
+      viewerPlans: "Zuschauer & Chatter Pläne",
+      followerPlans: "Follower Pläne",
+      free: "Kostenlos",
+      starter: "Starter",
+      basic: "Basic",
+      professional: "Professional",
+      expert: "Experte",
+      ultimate: "Ultimate",
+      followerBasic: "Follower Basic",
+      followerPlus: "Follower Plus",
+      followerPro: "Follower Pro",
+      followerElite: "Follower Elite",
+      viewers: "Zuschauer",
+      chatters: "Chatter",
+      followersPerDay: "Follower / Tag",
+      totalFollowers: "Gesamte Follower / Monat"
+    }
+  };
+
+  const t = translations[language];
 
   useEffect(() => {
     const fetchUserPlan = async () => {
@@ -63,28 +116,28 @@ const Pricing = () => {
 
   return (
     <div className="container mx-auto px-4 py-20">
-      <h1 className="text-4xl font-bold text-center mb-4">{capitalizedPlatform} Plans</h1>
+      <h1 className="text-4xl font-bold text-center mb-4">{capitalizedPlatform} {t.title}</h1>
       <p className="text-muted-foreground text-center mb-8">
-        Choose the perfect plan for your {platform} streaming needs
+        {t.subtitle.replace("{platform}", capitalizedPlatform)}
       </p>
 
       <div className="flex items-center justify-center gap-4 mb-12">
-        <Label htmlFor="billing-toggle" className={!isYearly ? "font-bold" : ""}>Monthly</Label>
+        <Label htmlFor="billing-toggle" className={!isYearly ? "font-bold" : ""}>{t.monthly}</Label>
         <Switch
           id="billing-toggle"
           checked={isYearly}
           onCheckedChange={setIsYearly}
         />
         <Label htmlFor="billing-toggle" className={isYearly ? "font-bold" : ""}>
-          Yearly <span className="text-primary">(Save 20%)</span>
+          {t.yearly} <span className="text-primary">({t.save} 20%)</span>
         </Label>
       </div>
       
       <div className="mb-16">
-        <h2 className="text-2xl font-bold text-center mb-8">Viewer & Chatter Plans</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">{t.viewerPlans}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <PricingCard 
-            title="Free" 
+            title={t.free}
             price={0} 
             viewers={10} 
             chatters={4}
@@ -94,7 +147,7 @@ const Pricing = () => {
             isYearly={isYearly}
           />
           <PricingCard 
-            title="Starter" 
+            title={t.starter}
             price={12.99} 
             viewers={25} 
             chatters={10}
@@ -104,7 +157,7 @@ const Pricing = () => {
             isYearly={isYearly}
           />
           <PricingCard 
-            title="Basic" 
+            title={t.basic}
             price={29.99} 
             viewers={50} 
             chatters={16}
@@ -114,7 +167,7 @@ const Pricing = () => {
             isYearly={isYearly}
           />
           <PricingCard 
-            title="Professional" 
+            title={t.professional}
             price={129.99} 
             viewers={200} 
             chatters={40}
@@ -125,7 +178,7 @@ const Pricing = () => {
             isYearly={isYearly}
           />
           <PricingCard 
-            title="Expert" 
+            title={t.expert}
             price={199.99} 
             viewers={300} 
             chatters={90}
@@ -135,7 +188,7 @@ const Pricing = () => {
             isYearly={isYearly}
           />
           <PricingCard 
-            title="Ultimate" 
+            title={t.ultimate}
             price={599.99} 
             viewers={1000} 
             chatters={200}
@@ -148,10 +201,10 @@ const Pricing = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-center mb-8">Follower Plans</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">{t.followerPlans}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <PricingCard 
-            title="Follower Basic" 
+            title={t.followerBasic}
             price={24.99} 
             viewers={0} 
             chatters={0}
@@ -165,7 +218,7 @@ const Pricing = () => {
             isYearly={false}
           />
           <PricingCard 
-            title="Follower Plus" 
+            title={t.followerPlus}
             price={49.99} 
             viewers={0} 
             chatters={0}
@@ -179,7 +232,7 @@ const Pricing = () => {
             isYearly={false}
           />
           <PricingCard 
-            title="Follower Pro" 
+            title={t.followerPro}
             price={99.99} 
             viewers={0} 
             chatters={0}
@@ -194,7 +247,7 @@ const Pricing = () => {
             isYearly={false}
           />
           <PricingCard 
-            title="Follower Elite" 
+            title={t.followerElite}
             price={199.99} 
             viewers={0} 
             chatters={0}
