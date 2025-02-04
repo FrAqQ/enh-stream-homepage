@@ -365,13 +365,13 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <BotControls
-          title="Viewer Bot Controls"
+          title="Viewer Controls"
           onAdd={addViewers}
           type="viewer"
           streamUrl={streamUrl}
         />
         <BotControls
-          title="Chatter Bot Controls"
+          title="Chatter Controls"
           onAdd={addChatters}
           type="chatter"
           streamUrl={streamUrl}
