@@ -340,20 +340,20 @@ export function PricingCard({
   const savingsColor = isPopular ? "text-primary" : "text-accent-foreground";
 
   return (
-    <Card className={`p-6 relative flex flex-col h-[440px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
+    <Card className={`p-4 relative flex flex-col h-[400px] ${isPopular ? 'border-primary' : 'bg-card/50 backdrop-blur'}`}>
       {isPopular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs">
           {t.mostPopular}
         </span>
       )}
       
-      <div className="h-20">
-        <h3 className="text-xl font-bold mb-2">{planFullName}</h3>
+      <div className="h-16">
+        <h3 className="text-lg font-bold mb-2">{planFullName}</h3>
       </div>
       
-      <div className="h-32">
+      <div className="h-28">
         <div className="mb-2">
-          <p className="text-3xl font-bold">
+          <p className="text-2xl font-bold">
             {isFree ? t.free : `€${price.toFixed(2)}`}
             <span className="text-sm font-normal text-muted-foreground block">
               {!isFree && `/${isYearly ? t.year : t.month}`}
@@ -369,8 +369,8 @@ export function PricingCard({
         )}
       </div>
 
-      <div className="flex-grow space-y-3">
-        <ul className="space-y-2">
+      <div className="flex-grow space-y-2">
+        <ul className="space-y-1.5 text-sm">
           {isFollowerPlan ? (
             <>
               <li className="flex items-center gap-2">
@@ -396,7 +396,7 @@ export function PricingCard({
         </ul>
       </div>
 
-      <div className="h-10 mt-4">
+      <div className="h-10 mt-3">
         <Button 
           className="w-full"
           onClick={handleSelectPlan}
@@ -408,4 +408,3 @@ export function PricingCard({
     </Card>
   );
 }
-
