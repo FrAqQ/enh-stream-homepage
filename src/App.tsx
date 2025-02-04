@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,6 +46,7 @@ const App = () => (
             <div className="flex-1">
               <Routes>
                 <Route path="/" element={<Landing />} />
+                <Route path="/index" element={<Landing />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />
