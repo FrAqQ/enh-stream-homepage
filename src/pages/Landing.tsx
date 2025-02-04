@@ -9,8 +9,8 @@ const Landing = () => {
   const translations = {
     en: {
       hero: {
-        title: "Increase Your Stream Reach",
-        subtitle: "Boost your presence on Twitch, YouTube, TikTok and Instagram with our comprehensive marketing solution. Perfect for aspiring streamers looking to increase their visibility."
+        title: "Enhance Your Stream Visibility",
+        subtitle: "Boost your presence on Twitch, YouTube, TikTok and Instagram with our comprehensive marketing solution. Perfect for content creators looking to increase their reach."
       },
       cta: {
         start: "Get Started",
@@ -19,16 +19,16 @@ const Landing = () => {
       whyUs: {
         title: "Why Choose Our Service?",
         community: {
-          title: "Build Community",
-          description: "Start building your community with active viewers and engaged chat participants at the most competitive prices in the market."
+          title: "Enhance Visibility",
+          description: "Start building your presence with our marketing solutions at competitive market prices."
         },
         chat: {
-          title: "Active Chat Environment",
-          description: "Create a vibrant chat atmosphere that encourages real viewers to participate and enhances your stream's authenticity."
+          title: "Active Environment",
+          description: "Create a vibrant atmosphere that enhances your stream's engagement metrics."
         },
         visibility: {
-          title: "Increase Visibility",
-          description: "Higher viewer numbers improve your ranking in the Twitch directory, especially in your language category, making you more discoverable."
+          title: "Improved Discoverability",
+          description: "Higher engagement metrics improve your ranking in platform directories, making your content more discoverable."
         },
         multiPlatform: {
           title: "Multi-Platform Support",
@@ -36,26 +36,26 @@ const Landing = () => {
         },
         pricing: {
           title: "Best Value",
-          description: "We offer the most cost-effective packages in the market with unmatched features and flexibility in every price tier."
+          description: "We offer the most cost-effective marketing packages with unmatched features and flexibility in every price tier."
         },
         trust: {
-          title: "Build Trust",
-          description: "Our gradual approach to increasing viewer and chatter numbers helps build trust and authenticity in your channel."
+          title: "Strategic Growth",
+          description: "Our gradual approach to increasing engagement helps build sustainable growth for your channel."
         }
       },
       bestResults: {
         title: "How to Achieve the Best Results",
         friends: {
-          title: "Invite Real Friends",
-          description: "Start by inviting friends to your stream, even if they're not familiar with the games. Real interactions create an authentic atmosphere."
+          title: "Community Engagement",
+          description: "Start by engaging with your community. Active participation creates an authentic atmosphere."
         },
         chat: {
-          title: "Encourage Chat Activity",
-          description: "Encourage your friends to participate in chat discussions. Even simple comments help create an engaging environment that attracts organic viewers."
+          title: "Encourage Activity",
+          description: "Foster discussions in your community. Even simple interactions help create an engaging environment."
         },
         combine: {
-          title: "Combine With Our Services",
-          description: "Use our packages along with real viewers to maximize your growth potential. This combination significantly improves your conversion rate with organic viewers."
+          title: "Marketing Strategy",
+          description: "Use our marketing packages to maximize your growth potential. Our solutions are designed to improve your platform metrics effectively."
         }
       },
       revenue: {
@@ -79,8 +79,8 @@ const Landing = () => {
     },
     de: {
       hero: {
-        title: "Steigern Sie Ihre Stream-Reichweite",
-        subtitle: "Erhöhen Sie Ihre Präsenz auf Twitch, YouTube, TikTok und Instagram mit unserer umfassenden Marketing-Lösung. Perfekt für aufstrebende Streamer, die ihre Sichtbarkeit steigern möchten."
+        title: "Verbessern Sie Ihre Stream-Sichtbarkeit",
+        subtitle: "Steigern Sie Ihre Präsenz auf Twitch, YouTube, TikTok und Instagram mit unserer umfassenden Marketing-Lösung. Perfekt für Content Creator, die ihre Reichweite erhöhen möchten."
       },
       cta: {
         start: "Jetzt starten",
@@ -89,16 +89,16 @@ const Landing = () => {
       whyUs: {
         title: "Warum unser Service?",
         community: {
-          title: "Community aufbauen",
-          description: "Starten Sie den Aufbau Ihrer Community mit aktiven Zuschauern und engagierten Chat-Teilnehmern zu den wettbewerbsfähigsten Preisen am Markt."
+          title: "Sichtbarkeit steigern",
+          description: "Starten Sie die Steigerung Ihrer Präsenz mit unseren Marketing-Lösungen zu wettbewerbsfähigen Marktpreisen."
         },
         chat: {
-          title: "Aktive Chat-Umgebung",
-          description: "Schaffen Sie eine lebendige Chat-Atmosphäre, die echte Zuschauer zur Teilnahme ermutigt und die Authentizität Ihres Streams verbessert."
+          title: "Aktive Umgebung",
+          description: "Schaffen Sie eine lebendige Atmosphäre, die Ihre Stream-Metriken verbessert."
         },
         visibility: {
-          title: "Sichtbarkeit erhöhen",
-          description: "Höhere Zuschauerzahlen verbessern Ihr Ranking im Twitch-Verzeichnis, besonders in Ihrer Sprachkategorie, und machen Sie besser auffindbar."
+          title: "Bessere Auffindbarkeit",
+          description: "Höhere Engagement-Metriken verbessern Ihr Ranking in Plattform-Verzeichnissen und machen Sie besser auffindbar."
         },
         multiPlatform: {
           title: "Multi-Plattform Support",
@@ -106,26 +106,26 @@ const Landing = () => {
         },
         pricing: {
           title: "Beste Preis-Leistung",
-          description: "Wir bieten die kosteneffektivsten Pakete auf dem Markt mit unübertroffenen Funktionen und Flexibilität in jeder Preisklasse."
+          description: "Wir bieten die kosteneffektivsten Marketing-Pakete mit unübertroffenen Funktionen und Flexibilität in jeder Preisklasse."
         },
         trust: {
-          title: "Vertrauensaufbau",
-          description: "Unser schrittweiser Ansatz zur Steigerung der Zuschauer- und Chatterzahlen hilft beim Aufbau von Vertrauen und Authentizität in Ihrem Kanal."
+          title: "Strategisches Wachstum",
+          description: "Unser schrittweiser Ansatz zur Steigerung des Engagements unterstützt nachhaltiges Wachstum Ihres Kanals."
         }
       },
       bestResults: {
         title: "So erzielen Sie die besten Ergebnisse",
         friends: {
-          title: "Echte Freunde einladen",
-          description: "Beginnen Sie damit, Freunde zu Ihrem Stream einzuladen, auch wenn sie mit den Spielen nicht vertraut sind. Echte Interaktionen schaffen eine authentische Atmosphäre."
+          title: "Community Engagement",
+          description: "Beginnen Sie damit, mit Ihrer Community zu interagieren. Aktive Teilnahme schafft eine authentische Atmosphäre."
         },
         chat: {
-          title: "Chat-Aktivität fördern",
-          description: "Ermutigen Sie Ihre Freunde zur Teilnahme an Chat-Diskussionen. Auch einfache Kommentare helfen, eine ansprechende Umgebung zu schaffen, die organische Zuschauer anzieht."
+          title: "Aktivität fördern",
+          description: "Fördern Sie Diskussionen in Ihrer Community. Auch einfache Interaktionen helfen, eine ansprechende Umgebung zu schaffen."
         },
         combine: {
-          title: "Mit unseren Services kombinieren",
-          description: "Nutzen Sie unsere Pakete zusammen mit Zuschauern, um Ihr Wachstumspotenzial zu maximieren. Diese Kombination verbessert Ihre Konversionsrate mit organischen Zuschauern deutlich."
+          title: "Marketing-Strategie",
+          description: "Nutzen Sie unsere Marketing-Pakete, um Ihr Wachstumspotenzial zu maximieren. Unsere Lösungen sind darauf ausgelegt, Ihre Plattform-Metriken effektiv zu verbessern."
         }
       },
       revenue: {
