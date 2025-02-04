@@ -68,7 +68,11 @@ export function PricingCard({
       errorSwitchingPlan: "Failed to switch to free plan. Please try again.",
       configError: "Configuration Error",
       noPriceId: "No price ID configured for this plan",
-      checkoutError: "Failed to start checkout process. Please try again."
+      checkoutError: "Failed to start checkout process. Please try again.",
+      followersPerDay: "Followers per Day",
+      totalFollowers: "Total Followers",
+      viewers: "Viewers",
+      chatters: "Chatters"
     },
     de: {
       mostPopular: "Beliebtester Plan",
@@ -92,7 +96,11 @@ export function PricingCard({
       errorSwitchingPlan: "Fehler beim Wechsel zum kostenlosen Plan. Bitte versuchen Sie es erneut.",
       configError: "Konfigurationsfehler",
       noPriceId: "Keine Preis-ID für diesen Plan konfiguriert",
-      checkoutError: "Fehler beim Starten des Checkout-Prozesses. Bitte versuchen Sie es erneut."
+      checkoutError: "Fehler beim Starten des Checkout-Prozesses. Bitte versuchen Sie es erneut.",
+      followersPerDay: "Follower pro Tag",
+      totalFollowers: "Gesamte Follower",
+      viewers: "Zuschauer",
+      chatters: "Chatter"
     }
   };
 
@@ -400,3 +408,4 @@ export function PricingCard({
     </Card>
   );
 }
+
