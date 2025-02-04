@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,6 +8,12 @@ import { AlertCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface BotControlsProps {
   title: string
@@ -15,7 +22,6 @@ interface BotControlsProps {
   streamUrl: string
 }
 
-// Renaming to MarketingControls but keeping the file name for now to avoid breaking imports
 export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [currentViewers, setCurrentViewers] = useState(0);
@@ -204,8 +210,17 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       <CardHeader>
         <CardTitle className="text-xl font-semibold flex items-center gap-2">
           {title}
-          {!hasShownCertWarning && (
-            <AlertCircle className="h-5 w-5 text-yellow-500" />
+          {!streamUrl && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <AlertCircle className="h-5 w-5 text-yellow-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Bitte geben Sie zuerst eine Stream-URL ein</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </CardTitle>
       </CardHeader>
@@ -256,3 +271,4 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     </Card>
   );
 }
+
