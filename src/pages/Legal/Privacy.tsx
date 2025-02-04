@@ -1,3 +1,4 @@
+
 import { useLanguage } from "@/lib/LanguageContext";
 
 const Privacy = () => {
@@ -11,7 +12,7 @@ const Privacy = () => {
       sections: [
         {
           title: "1. Responsible Party",
-          content: "The party responsible for this privacy policy and data processing on Enhance Stream is:\n\nTino Strasser\nWalther-Rathenau-Str. 59\n75180 Pforzheim\nEmail: info@enhanceyour.stream"
+          content: "The party responsible for this privacy policy and data processing on Enhance Stream is:\n\nTino Strasser\nWalther-Rathenau-Str. 57\n75180 Pforzheim\nEmail: info@enhanceyour.stream"
         },
         {
           title: "2. Personal Data",
@@ -70,7 +71,7 @@ const Privacy = () => {
       sections: [
         {
           title: "1. Verantwortlicher",
-          content: "Verantwortlicher für diese Datenschutzerklärung und für die Datenverarbeitung auf Enhance Stream ist:\n\nTino Strasser\nWalther-Rathenau-Str. 59\n75180 Pforzheim\nE-Mail: info@enhanceyour.stream"
+          content: "Verantwortlicher für diese Datenschutzerklärung und für die Datenverarbeitung auf Enhance Stream ist:\n\nTino Strasser\nWalther-Rathenau-Str. 57\n75180 Pforzheim\nE-Mail: info@enhanceyour.stream"
         },
         {
           title: "2. Personenbezogene Daten",

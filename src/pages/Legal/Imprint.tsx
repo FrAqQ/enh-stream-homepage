@@ -12,7 +12,7 @@ const Imprint = () => {
         title: "1. Contact",
         address: [
           "Tino Strasser",
-          "Walther-Rathenau-Str. 59",
+          "Walther-Rathenau-Str. 57",
           "75180 Pforzheim",
           "Germany",
           "",
@@ -53,7 +53,7 @@ const Imprint = () => {
         title: "1. Kontakt",
         address: [
           "Tino Strasser",
-          "Walther-Rathenau-Str. 59",
+          "Walther-Rathenau-Str. 57",
           "75180 Pforzheim",
           "Deutschland",
           "",

@@ -16,7 +16,7 @@ const Cancellation = () => {
       formHeader: "—————————————",
       address: [
         "Tino Strasser",
-        "Walther-Rathenau-Str. 59",
+        "Walther-Rathenau-Str. 57",
         "75180 Pforzheim",
         "Germany",
         "",
@@ -45,7 +45,7 @@ const Cancellation = () => {
       formHeader: "—————————————",
       address: [
         "Tino Strasser",
-        "Walther-Rathenau-Str. 59",
+        "Walther-Rathenau-Str. 57",
         "75180 Pforzheim",
         "Deutschland",
         "",
