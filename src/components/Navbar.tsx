@@ -50,27 +50,9 @@ const Navbar = () => {
             {t.dashboard}
           </Link>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-foreground/80 hover:text-foreground">
-                {t.pricing}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link to="/pricing/twitch" className="w-full">Twitch {t.pricing}</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/pricing/youtube" className="w-full">YouTube {t.pricing}</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/pricing/tiktok" className="w-full">TikTok {t.pricing}</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/pricing/instagram" className="w-full">Instagram {t.pricing}</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
+            {t.pricing}
+          </Link>
 
           <LanguageSwitcher />
           
