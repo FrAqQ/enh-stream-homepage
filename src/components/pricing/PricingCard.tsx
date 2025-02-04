@@ -362,14 +362,14 @@ export function PricingCard({
         </div>
         
         {!isFree && savings && (
-          <div className={`text-sm ${savingsColor} font-medium`}>
+          <div className={`text-sm ${savingsColor} font-medium mb-4`}>
             <p>{t.youSave} €{savings.amount}</p>
             <p>({savings.percentage}%) / {isYearly ? t.year : t.month}</p>
           </div>
         )}
       </div>
 
-      <div className="flex-grow space-y-2">
+      <div className="flex-grow space-y-2 mt-4">
         <ul className="space-y-1.5 text-sm">
           {isFollowerPlan ? (
             <>
