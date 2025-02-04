@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -62,7 +61,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       viewer: "Zuschauer",
       viewers: "Zuschauer",
       chatter: "Chatter",
-      chatters: "Chatter",
+      chatters: "Chatters",
       notEnoughViewers: "Nicht genügend Zuschauer",
       cantRemoveViewers: `Sie können nicht ${0} Zuschauer entfernen, wenn Sie nur ${0} haben`,
       viewerLimitReached: "Zuschauerlimit erreicht",
@@ -144,17 +143,19 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      // Extract channel name from URL
-      const channelName = streamUrl.split('/').pop() || '';
+      // Extract channel name from URL and ensure it's lowercase
+      const channelName = streamUrl.split('/').pop()?.toLowerCase() || '';
       
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
-      console.log(`Making API request to ${apiUrl} with details:`, {
-        user_id: user?.id,
-        channel: channelName,
-        viewer_count: Math.abs(viewerCount)
-      });
+      const requestData = {
+        channel_name: channelName,
+        amount: Math.abs(viewerCount),
+        user_id: user?.id || "anonymous"
+      };
+
+      console.log(`Making API request to ${apiUrl} with details:`, requestData);
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -162,11 +163,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify({
-          user_id: user?.id || "123",
-          channel: channelName,
-          viewer_count: Math.abs(viewerCount)
-        })
+        body: JSON.stringify(requestData)
       });
 
       console.log("Response status:", response.status);
