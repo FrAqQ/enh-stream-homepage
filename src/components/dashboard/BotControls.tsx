@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -42,9 +41,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       chatter: "Chatter",
       chatters: "Chatters",
       notEnoughViewers: "Not enough viewers",
-      cantRemoveViewers: "You cannot remove {count} viewers when you only have {current}",
+      cantRemoveViewers: `You cannot remove ${0} viewers when you only have ${0}`,
       viewerLimitReached: "Viewer limit reached",
-      maxViewersAllowed: "Your plan allows a maximum of {limit} viewers",
+      maxViewersAllowed: `Your plan allows a maximum of ${0} viewers`,
       securityNotice: "Security Notice",
       certificateWarning: "Please visit https://v220250171253310506.hotsrv.de:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
       warning: "Warning",
@@ -62,11 +61,11 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       viewer: "Zuschauer",
       viewers: "Zuschauer",
       chatter: "Chatter",
-      chatters: "Chatters",
+      chatters: "Chatter",
       notEnoughViewers: "Nicht genügend Zuschauer",
-      cantRemoveViewers: "Sie können nicht {count} Zuschauer entfernen, wenn Sie nur {current} haben",
+      cantRemoveViewers: `Sie können nicht ${0} Zuschauer entfernen, wenn Sie nur ${0} haben`,
       viewerLimitReached: "Zuschauerlimit erreicht",
-      maxViewersAllowed: "Ihr Plan erlaubt maximal {limit} Zuschauer",
+      maxViewersAllowed: `Ihr Plan erlaubt maximal ${0} Zuschauer`,
       securityNotice: "Sicherheitshinweis",
       certificateWarning: "Bitte besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt in Ihrem Browser, klicken Sie auf 'Erweitert' und akzeptieren Sie das Zertifikat, bevor Sie fortfahren.",
       warning: "Warnung",
@@ -118,9 +117,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
         title: t.notEnoughViewers,
-        description: t.cantRemoveViewers
-          .replace("{count}", Math.abs(viewerCount).toString())
-          .replace("{current}", currentViewers.toString()),
+        description: t.cantRemoveViewers.replace("${0}", Math.abs(viewerCount).toString()).replace("${0}", currentViewers.toString()),
         variant: "destructive",
       });
       return;
@@ -129,7 +126,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
       toast({
         title: t.viewerLimitReached,
-        description: t.maxViewersAllowed.replace("{limit}", viewerLimit.toString()),
+        description: t.maxViewersAllowed.replace("${0}", viewerLimit.toString()),
         variant: "destructive",
       });
       return;
@@ -145,17 +142,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         });
         setHasShownCertWarning(true);
       }
-      
+
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
-      const requestData = {
-        user_id: user?.id || "anonymous",
+      console.log(`Starte Reichweitensteigerung mit Details:`, {
+        user_id: user?.id,
         twitch_url: streamUrl,
         viewer_count: Math.abs(viewerCount)
-      };
-
-      console.log(`Making API request to ${apiUrl} with details:`, requestData);
+      });
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -163,25 +158,32 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify(requestData)
+        mode: "cors",
+        body: JSON.stringify({
+          user_id: user?.id || "123",
+          twitch_url: streamUrl,
+          viewer_count: Math.abs(viewerCount)
+        })
       });
 
       console.log("Response status:", response.status);
       
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("API Error Response:", errorData);
-        throw new Error(`HTTP error! status: ${response.status}\nResponse: ${errorData}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       console.log("API Response data:", data);
 
-      if (data.status === "error") {
+      if (data.message && (
+        data.message.toLowerCase().includes('fehler') || 
+        data.message.toLowerCase().includes('error') ||
+        data.message.toLowerCase().includes('konnte nicht gestartet')
+      )) {
         console.error("Server reported an error:", data.message);
         toast({
-          title: t.error,
-          description: data.message,
+          title: "Warnung",
+          description: "Es gab ein Problem bei der Reichweitensteigerung. Server-Nachricht: " + data.message,
           variant: "destructive",
         });
         return;
@@ -203,21 +205,21 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         message: error instanceof Error ? error.message : 'Unknown error',
       });
       
-      let errorMessage = "Error processing request. ";
+      let errorMessage = "Fehler bei der Reichweitensteigerung. ";
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage = "Server connection failed. Please:\n" +
-                        "1. Visit https://v220250171253310506.hotsrv.de:5000 directly\n" +
-                        "2. Click 'Advanced' and 'Accept Risk'\n" +
-                        "3. Return here and try again\n" +
-                        "If problems persist, contact support.";
+          errorMessage = "Serververbindung fehlgeschlagen. Bitte:\n" +
+                        "1. Besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt\n" +
+                        "2. Klicken Sie auf 'Erweitert' und 'Risiko akzeptieren'\n" +
+                        "3. Kehren Sie hierher zurück und versuchen Sie es erneut\n" +
+                        "Bei anhaltenden Problemen kontaktieren Sie den Support.";
         } else {
           errorMessage += error.message;
         }
       }
 
       toast({
-        title: t.error,
+        title: "Fehler",
         description: errorMessage,
         variant: "destructive",
       });

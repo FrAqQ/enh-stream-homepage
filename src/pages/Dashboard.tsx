@@ -1,25 +1,139 @@
-
-import { useState } from "react"
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
-import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabaseClient"
 import { StatsCard } from "@/components/dashboard/StatsCard"
 import { StreamPreview } from "@/components/dashboard/StreamPreview"
 import { StreamSettings } from "@/components/dashboard/StreamSettings"
 import { BotControls } from "@/components/dashboard/BotControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
-import { useStreamStats } from "@/hooks/useStreamStats"
-import { useSubscription } from "@/hooks/useSubscription"
-import { useStreamUrl } from "@/lib/StreamUrlContext"
+import { useToast } from "@/hooks/use-toast"
+import { getViewerCount } from "@/services/viewerScraper"
+import { getChatterCount } from "@/services/chatterScraper"
 
 const Dashboard = () => {
   const { user } = useUser();
   const { toast } = useToast();
-  const { streamUrl, setStreamUrl, twitchChannel, setTwitchChannel } = useStreamUrl();
-  const { viewerCount, chatterCount, viewerGrowth, setViewerCount, setChatterCount } = useStreamStats(streamUrl);
-  const { userPlan, subscriptionStatus } = useSubscription();
-  const [followerProgress] = useState(0);
-  const [followerPlan] = useState<any>(null);
+  const [streamUrl, setStreamUrl] = useState("");
+  const [viewerCount, setViewerCount] = useState(0);
+  const [chatterCount, setChatterCount] = useState(0);
+  const [viewerGrowth, setViewerGrowth] = useState("0");
+  const [followerProgress, setFollowerProgress] = useState(0);
+  const [followerPlan, setFollowerPlan] = useState<any>(null);
+  const [twitchChannel, setTwitchChannel] = useState("");
+  const [embed, setEmbed] = useState<any>(null);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [userPlan, setUserPlan] = useState("Free");
+  const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
+
+  const saveStreamStats = async (viewers: number, chatters: number) => {
+    try {
+      if (!user?.id || !streamUrl) {
+        console.log("Missing user ID or stream URL, skipping stats save");
+        return;
+      }
+
+      console.log("Saving stream stats:", {
+        user_id: user.id,
+        stream_url: streamUrl,
+        viewers,
+        chatters
+      });
+
+      const { error } = await supabase
+        .from('stream_stats')
+        .insert([
+          {
+            user_id: user.id,
+            stream_url: streamUrl,
+            viewer_count: viewers,
+            chatter_count: chatters
+          }
+        ]);
+
+      if (error) {
+        console.error('Error saving stream stats:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save stream statistics",
+          variant: "destructive",
+        });
+      } else {
+        console.log("Successfully saved stream stats");
+      }
+    } catch (error) {
+      console.error('Detailed error in saveStreamStats:', {
+        error,
+        type: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  };
+
+  const calculateViewerGrowth = async () => {
+    try {
+      if (!user?.id || !streamUrl) return;
+
+      console.log("Calculating viewer growth for:", {
+        user_id: user.id,
+        stream_url: streamUrl
+      });
+
+      // Get the first recorded viewer count for this URL
+      const { data: firstRecord, error: firstRecordError } = await supabase
+        .from('stream_stats')
+        .select('viewer_count')
+        .eq('user_id', user.id)
+        .eq('stream_url', streamUrl)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (firstRecordError) {
+        console.error('Error fetching first record:', firstRecordError);
+        return;
+      }
+
+      if (!firstRecord) {
+        console.log("No previous records found");
+        return;
+      }
+
+      // Get average of recent viewer counts (last month)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: recentStats, error: recentStatsError } = await supabase
+        .from('stream_stats')
+        .select('viewer_count')
+        .eq('user_id', user.id)
+        .eq('stream_url', streamUrl)
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      if (recentStatsError) {
+        console.error('Error fetching recent stats:', recentStatsError);
+        return;
+      }
+
+      if (!recentStats?.length) {
+        console.log("No recent stats found");
+        return;
+      }
+
+      const avgRecentViewers = recentStats.reduce((sum, stat) => sum + stat.viewer_count, 0) / recentStats.length;
+      const growthRate = ((avgRecentViewers - firstRecord.viewer_count) / firstRecord.viewer_count) * 100;
+      
+      console.log("Growth calculation:", {
+        firstCount: firstRecord.viewer_count,
+        avgRecent: avgRecentViewers,
+        growthRate
+      });
+
+      setViewerGrowth(growthRate.toFixed(1));
+    } catch (error) {
+      console.error('Error calculating viewer growth:', error);
+    }
+  };
 
   const handleSaveUrl = () => {
     try {
@@ -42,6 +156,128 @@ const Dashboard = () => {
     }
   };
 
+  const updateViewerCount = useCallback(async () => {
+    if (streamUrl) {
+      try {
+        const count = await getViewerCount(streamUrl);
+        setViewerCount(count);
+        return count;
+      } catch (error) {
+        console.error("Error updating viewer count:", error);
+      }
+    }
+    return 0;
+  }, [streamUrl]);
+
+  const updateChatterCount = useCallback(async () => {
+    if (streamUrl) {
+      try {
+        const count = await getChatterCount(streamUrl);
+        setChatterCount(count);
+        return count;
+      } catch (error) {
+        console.error("Error updating chatter count:", error);
+      }
+    }
+    return 0;
+  }, [streamUrl]);
+
+  useEffect(() => {
+    if (streamUrl) {
+      const fetchAndSaveStats = async () => {
+        console.log("Fetching and saving stats for URL:", streamUrl);
+        const viewers = await updateViewerCount();
+        const chatters = await updateChatterCount();
+        await saveStreamStats(viewers, chatters);
+        await calculateViewerGrowth();
+      };
+
+      console.log("Setting up stats tracking for URL:", streamUrl);
+      fetchAndSaveStats();
+      
+      // Update every 10 minutes instead of 10 seconds
+      const interval = setInterval(fetchAndSaveStats, 600000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [streamUrl, updateViewerCount, updateChatterCount]);
+
+  const fetchUserPlan = async () => {
+    if (user?.id) {
+      try {
+        console.log("Starting plan fetch for user:", user.id);
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('plan, subscription_status, current_period_end')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch subscription status",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("Raw profile data:", profile);
+
+        const isActive = profile?.subscription_status === 'active';
+        const periodEnd = profile?.current_period_end;
+        const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
+
+        console.log("Subscription check:", {
+          isActive,
+          periodEnd,
+          isExpired,
+          currentStatus: profile?.subscription_status,
+          currentPlan: profile?.plan
+        });
+
+        if (isActive && !isExpired) {
+          console.log("Active subscription found:", {
+            plan: profile.plan,
+            status: profile.subscription_status,
+            periodEnd: profile.current_period_end
+          });
+          
+          if (profile.plan !== userPlan) {
+            setUserPlan(profile.plan || "Free");
+            setSubscriptionStatus('active');
+            toast({
+              title: "Plan Updated",
+              description: `Your plan has been updated to ${profile.plan}`,
+            });
+          }
+        } else {
+          console.log("No active subscription or expired:", {
+            currentStatus: profile?.subscription_status,
+            currentPlan: profile?.plan,
+            periodEnd: profile?.current_period_end
+          });
+          setUserPlan("Free");
+          setSubscriptionStatus('inactive');
+        }
+      } catch (err) {
+        console.error("Unexpected error in subscription check:", err);
+        toast({
+          title: "Error",
+          description: "Failed to verify subscription status",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchUserPlan();
+    const interval = setInterval(fetchUserPlan, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, [user, toast]);
+
   const userData = {
     username: user?.email?.split('@')[0] || "DemoUser",
     email: user?.email || "demo@example.com",
@@ -57,6 +293,20 @@ const Dashboard = () => {
   const addChatters = (count: number) => {
     setChatterCount(prev => prev + count);
   };
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://embed.twitch.tv/embed/v1.js";
+    script.async = true;
+    script.onload = () => {
+      console.log("Twitch embed script loaded");
+      setIsScriptLoaded(true);
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
