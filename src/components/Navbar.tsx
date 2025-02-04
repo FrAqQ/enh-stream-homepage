@@ -10,9 +10,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const Navbar = () => {
   const { user } = useUser();
+  const { language } = useLanguage();
+
+  const translations = {
+    en: {
+      dashboard: "Dashboard",
+      pricing: "Pricing",
+      login: "Login",
+      register: "Register",
+      profile: "Profile",
+      logout: "Logout"
+    },
+    de: {
+      dashboard: "Dashboard",
+      pricing: "Preise",
+      login: "Anmelden",
+      register: "Registrieren",
+      profile: "Profil",
+      logout: "Abmelden"
+    }
+  };
+
+  const t = translations[language];
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -23,38 +47,40 @@ const Navbar = () => {
         
         <div className="flex items-center gap-6">
           <Link to="/dashboard" className="text-foreground/80 hover:text-foreground">
-            Dashboard
+            {t.dashboard}
           </Link>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="text-foreground/80 hover:text-foreground">
-                Pricing
+                {t.pricing}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild>
-                <Link to="/pricing/twitch" className="w-full">Twitch Pricing</Link>
+                <Link to="/pricing/twitch" className="w-full">Twitch {t.pricing}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/pricing/youtube" className="w-full">YouTube Pricing</Link>
+                <Link to="/pricing/youtube" className="w-full">YouTube {t.pricing}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/pricing/tiktok" className="w-full">TikTok Pricing</Link>
+                <Link to="/pricing/tiktok" className="w-full">TikTok {t.pricing}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/pricing/instagram" className="w-full">Instagram Pricing</Link>
+                <Link to="/pricing/instagram" className="w-full">Instagram {t.pricing}</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <LanguageSwitcher />
           
           {!user ? (
             <div className="flex items-center gap-2">
               <Link to="/login">
-                <Button variant="ghost">Login</Button>
+                <Button variant="ghost">{t.login}</Button>
               </Link>
               <Link to="/register">
-                <Button>Register</Button>
+                <Button>{t.register}</Button>
               </Link>
             </div>
           ) : (
@@ -71,11 +97,11 @@ const Navbar = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link to="/profile">Profile</Link>
+                  <Link to="/profile">{t.profile}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
-                  Logout
+                  {t.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
