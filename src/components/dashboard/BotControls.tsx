@@ -1,3 +1,4 @@
+```typescript
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -142,17 +143,14 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         });
         setHasShownCertWarning(true);
       }
-
-      // Extract channel name from URL and ensure it's lowercase
-      const channelName = streamUrl.split('/').pop()?.toLowerCase() || '';
       
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
       
       const requestData = {
-        channel_name: channelName,
-        amount: Math.abs(viewerCount),
-        user_id: user?.id || "anonymous"
+        user_id: user?.id || "anonymous",
+        twitch_url: streamUrl,
+        viewer_count: Math.abs(viewerCount)
       };
 
       console.log(`Making API request to ${apiUrl} with details:`, requestData);
@@ -317,3 +315,4 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     </Card>
   );
 }
+```
