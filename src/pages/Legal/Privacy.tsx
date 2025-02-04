@@ -67,7 +67,7 @@ const Privacy = () => {
     de: {
       title: "Datenschutzerklärung",
       lastUpdated: "Diese Datenschutzerklärung wurde zuletzt am 04.02.2025 aktualisiert.",
-      intro: "Die Betreiber der Website (im Folgenden auch „Enhance Stream", „Betreiber", „Wir" oder „Unsere" genannt) https://enhanceyour.stream und allen damit verbundenen Seiten und Unterseiten setzen die folgende Datenschutzerklärung für die Nutzung der auf der Plattform angebotenen Dienstleistungen voraus.",
+      intro: "Die Betreiber der Website (im Folgenden auch \"Enhance Stream\", \"Betreiber\", \"Wir\" oder \"Unsere\" genannt) https://enhanceyour.stream und allen damit verbundenen Seiten und Unterseiten setzen die folgende Datenschutzerklärung für die Nutzung der auf der Plattform angebotenen Dienstleistungen voraus.",
       sections: [
         {
           title: "1. Verantwortlicher",
