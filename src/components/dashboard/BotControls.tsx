@@ -42,9 +42,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       chatter: "Chatter",
       chatters: "Chatters",
       notEnoughViewers: "Not enough viewers",
-      cantRemoveViewers: `You cannot remove ${0} viewers when you only have ${0}`,
+      cantRemoveViewers: "You cannot remove {count} viewers when you only have {current}",
       viewerLimitReached: "Viewer limit reached",
-      maxViewersAllowed: `Your plan allows a maximum of ${0} viewers`,
+      maxViewersAllowed: "Your plan allows a maximum of {limit} viewers",
       securityNotice: "Security Notice",
       certificateWarning: "Please visit https://v220250171253310506.hotsrv.de:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
       warning: "Warning",
@@ -64,9 +64,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       chatter: "Chatter",
       chatters: "Chatters",
       notEnoughViewers: "Nicht genügend Zuschauer",
-      cantRemoveViewers: `Sie können nicht ${0} Zuschauer entfernen, wenn Sie nur ${0} haben`,
+      cantRemoveViewers: "Sie können nicht {count} Zuschauer entfernen, wenn Sie nur {current} haben",
       viewerLimitReached: "Zuschauerlimit erreicht",
-      maxViewersAllowed: `Ihr Plan erlaubt maximal ${0} Zuschauer`,
+      maxViewersAllowed: "Ihr Plan erlaubt maximal {limit} Zuschauer",
       securityNotice: "Sicherheitshinweis",
       certificateWarning: "Bitte besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt in Ihrem Browser, klicken Sie auf 'Erweitert' und akzeptieren Sie das Zertifikat, bevor Sie fortfahren.",
       warning: "Warnung",
@@ -118,7 +118,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
         title: t.notEnoughViewers,
-        description: t.cantRemoveViewers.replace("${0}", Math.abs(viewerCount).toString()).replace("${0}", currentViewers.toString()),
+        description: t.cantRemoveViewers
+          .replace("{count}", Math.abs(viewerCount).toString())
+          .replace("{current}", currentViewers.toString()),
         variant: "destructive",
       });
       return;
@@ -127,7 +129,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
       toast({
         title: t.viewerLimitReached,
-        description: t.maxViewersAllowed.replace("${0}", viewerLimit.toString()),
+        description: t.maxViewersAllowed.replace("{limit}", viewerLimit.toString()),
         variant: "destructive",
       });
       return;
