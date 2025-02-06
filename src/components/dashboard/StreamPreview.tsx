@@ -17,30 +17,22 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       }
     };
 
-    if (twitchChannel && window.Twitch) {
+    if (twitchChannel) {
       cleanup();
       const channelName = twitchChannel.split('/').pop() || '';
       console.log("Creating Twitch embed for channel:", channelName);
 
-      // Get the current hostname without www prefix
-      const hostname = window.location.hostname.replace('www.', '');
+      // Create the iframe element
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://player.twitch.tv/?channel=${channelName}&parent=${window.location.hostname}`;
+      iframe.height = "400";
+      iframe.width = "100%";
+      iframe.allowFullscreen = true;
+      iframe.style.border = "none";
       
-      // Define parent domains array - include both localhost and actual domain
-      const parentDomains = ['localhost', '127.0.0.1', hostname];
-      
-      console.log("Using parent domains:", parentDomains);
-
-      try {
-        new window.Twitch.Player("twitch-embed", {
-          width: "100%",
-          height: 400,
-          channel: channelName,
-          parent: parentDomains,
-          autoplay: false,
-          muted: true,
-        });
-      } catch (error) {
-        console.error("Error creating Twitch embed:", error);
+      // Add the iframe to the container
+      if (embedRef.current) {
+        embedRef.current.appendChild(iframe);
       }
     }
 
@@ -54,7 +46,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       </CardHeader>
       <CardContent>
         <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
-          <div ref={embedRef} id="twitch-embed" className="w-full h-full min-h-[400px]" />
+          <div ref={embedRef} className="w-full h-full min-h-[400px]" />
           <div className="mt-2 text-sm text-muted-foreground">
             <div>Current Channel: {twitchChannel || 'None'}</div>
           </div>
