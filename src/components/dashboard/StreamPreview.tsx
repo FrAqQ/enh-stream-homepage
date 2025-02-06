@@ -22,7 +22,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       const channelName = twitchChannel.split('/').pop() || '';
       console.log("Creating Twitch embed for channel:", channelName);
 
-      new window.Twitch.Player(embedRef.current!, {
+      new window.Twitch.Player("twitch-embed", {
         width: "100%",
         height: 400,
         channel: channelName,
@@ -40,7 +40,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       </CardHeader>
       <CardContent>
         <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
-          <div ref={embedRef} className="w-full h-full min-h-[400px]" />
+          <div id="twitch-embed" ref={embedRef} className="w-full h-full min-h-[400px]" />
           <div className="mt-2 text-sm text-muted-foreground">
             <div>Current Channel: {twitchChannel || 'None'}</div>
           </div>
