@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -7,7 +8,6 @@ interface StreamPreviewProps {
 
 export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
   const embedRef = useRef<HTMLDivElement>(null);
-  const embedInstance = useRef<any>(null);
 
   useEffect(() => {
     // Cleanup function for previous embed
@@ -15,7 +15,6 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       if (embedRef.current) {
         embedRef.current.innerHTML = '';
       }
-      embedInstance.current = null;
     };
 
     if (twitchChannel && window.Twitch) {
@@ -32,19 +31,13 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       console.log("Using parent domains:", parentDomains);
 
       try {
-        embedInstance.current = new window.Twitch.Embed("twitch-embed", {
+        new window.Twitch.Player("twitch-embed", {
           width: "100%",
-          height: "400",
+          height: 400,
           channel: channelName,
-          layout: "video",
+          parent: parentDomains,
           autoplay: false,
           muted: true,
-          theme: "dark",
-          parent: parentDomains
-        });
-
-        embedInstance.current.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
-          console.log("Twitch player is ready");
         });
       } catch (error) {
         console.error("Error creating Twitch embed:", error);
@@ -63,7 +56,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
         <div className="aspect-video w-full max-w-2xl mx-auto bg-black/20 rounded-lg overflow-hidden">
           <div ref={embedRef} id="twitch-embed" className="w-full h-full min-h-[400px]" />
           <div className="mt-2 text-sm text-muted-foreground">
-            <div>Current URL: {twitchChannel || 'None'}</div>
+            <div>Current Channel: {twitchChannel || 'None'}</div>
           </div>
         </div>
       </CardContent>
