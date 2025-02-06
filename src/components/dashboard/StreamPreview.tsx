@@ -25,7 +25,7 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       // Get the current hostname without www prefix
       const hostname = window.location.hostname.replace('www.', '');
       
-      // Define parent domains array
+      // Define parent domains array - include both localhost and actual domain
       const parentDomains = ['localhost', '127.0.0.1', hostname];
       
       console.log("Using parent domains:", parentDomains);
