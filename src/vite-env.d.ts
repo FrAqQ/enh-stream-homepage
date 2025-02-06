@@ -1,3 +1,4 @@
+
 /// <reference types="vite/client" />
 
 interface TwitchEmbed {
@@ -16,8 +17,20 @@ interface TwitchEmbed {
   }
 }
 
+interface TwitchPlayer {
+  new (elementId: string, options: {
+    width: string | number
+    height: number
+    channel: string
+    parent: string[]
+    autoplay?: boolean
+    muted?: boolean
+  }): void
+}
+
 interface Window {
   Twitch?: {
     Embed: TwitchEmbed
+    Player: TwitchPlayer
   }
 }
