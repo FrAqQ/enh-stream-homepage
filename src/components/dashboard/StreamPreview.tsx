@@ -17,23 +17,17 @@ export function StreamPreview({ twitchChannel }: StreamPreviewProps) {
       }
     };
 
-    if (twitchChannel) {
+    if (twitchChannel && window.Twitch) {
       cleanup();
       const channelName = twitchChannel.split('/').pop() || '';
       console.log("Creating Twitch embed for channel:", channelName);
 
-      // Create the iframe element
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://player.twitch.tv/?channel=${channelName}&parent=${window.location.hostname}`;
-      iframe.height = "400";
-      iframe.width = "100%";
-      iframe.allowFullscreen = true;
-      iframe.style.border = "none";
-      
-      // Add the iframe to the container
-      if (embedRef.current) {
-        embedRef.current.appendChild(iframe);
-      }
+      new window.Twitch.Player(embedRef.current!, {
+        width: "100%",
+        height: 400,
+        channel: channelName,
+        parent: [window.location.hostname]
+      });
     }
 
     return cleanup;
