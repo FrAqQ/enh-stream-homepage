@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,6 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
+import { getNextEndpoint } from "@/config/apiEndpoints"
 import {
   Tooltip,
   TooltipContent,
@@ -144,12 +146,14 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       }
 
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
-      const apiUrl = `https://v220250171253310506.hotsrv.de:5000/${endpoint}`;
+      const currentHost = getNextEndpoint();
+      const apiUrl = `https://${currentHost}:5000/${endpoint}`;
       
       console.log(`Starte Reichweitensteigerung mit Details:`, {
         user_id: user?.id,
         twitch_url: streamUrl,
-        viewer_count: Math.abs(viewerCount)
+        viewer_count: Math.abs(viewerCount),
+        api_host: currentHost
       });
       
       const response = await fetch(apiUrl, {
@@ -209,7 +213,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       if (error instanceof Error) {
         if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
           errorMessage = "Serververbindung fehlgeschlagen. Bitte:\n" +
-                        "1. Besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt\n" +
+                        "1. Besuchen Sie die API-URL direkt\n" +
                         "2. Klicken Sie auf 'Erweitert' und 'Risiko akzeptieren'\n" +
                         "3. Kehren Sie hierher zurück und versuchen Sie es erneut\n" +
                         "Bei anhaltenden Problemen kontaktieren Sie den Support.";
