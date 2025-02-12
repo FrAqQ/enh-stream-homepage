@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -115,6 +114,68 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
+  const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
+    try {
+      const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
+      const currentHost = getNextEndpoint();
+      const apiUrl = `https://${currentHost}:5000/${endpoint}`;
+      
+      console.log(`Versuche Request an Server mit Details:`, {
+        user_id: user?.id,
+        twitch_url: streamUrl,
+        viewer_count: Math.abs(viewerCount),
+        api_host: currentHost,
+        retriesLeft
+      });
+      
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        mode: "cors",
+        body: JSON.stringify({
+          user_id: user?.id || "123",
+          twitch_url: streamUrl,
+          viewer_count: Math.abs(viewerCount)
+        })
+      });
+
+      console.log("Response status:", response.status);
+
+      // Wenn Server überlastet ist (503) und noch Versuche übrig sind
+      if (response.status === 503 && retriesLeft > 1) {
+        console.log("Server überlastet (503), versuche nächsten Server...");
+        return tryRequest(viewerCount, retriesLeft - 1);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("API Response data:", data);
+
+      if (data.message && (
+        data.message.toLowerCase().includes('fehler') || 
+        data.message.toLowerCase().includes('error') ||
+        data.message.toLowerCase().includes('konnte nicht gestartet')
+      )) {
+        console.error("Server reported an error:", data.message);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      if (retriesLeft > 1) {
+        console.log("Fehler aufgetreten, versuche nächsten Server...", error);
+        return tryRequest(viewerCount, retriesLeft - 1);
+      }
+      throw error;
+    }
+  };
+
   const modifyViewers = async (viewerCount: number) => {
     if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
       toast({
@@ -145,68 +206,30 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setHasShownCertWarning(true);
       }
 
-      const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
-      const currentHost = getNextEndpoint();
-      const apiUrl = `https://${currentHost}:5000/${endpoint}`;
+      const success = await tryRequest(viewerCount);
       
-      console.log(`Starte Reichweitensteigerung mit Details:`, {
-        user_id: user?.id,
-        twitch_url: streamUrl,
-        viewer_count: Math.abs(viewerCount),
-        api_host: currentHost
-      });
-      
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        mode: "cors",
-        body: JSON.stringify({
-          user_id: user?.id || "123",
-          twitch_url: streamUrl,
-          viewer_count: Math.abs(viewerCount)
-        })
-      });
+      if (success) {
+        const newViewerCount = currentViewers + viewerCount;
+        setCurrentViewers(newViewerCount);
 
-      console.log("Response status:", response.status);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("API Response data:", data);
-
-      if (data.message && (
-        data.message.toLowerCase().includes('fehler') || 
-        data.message.toLowerCase().includes('error') ||
-        data.message.toLowerCase().includes('konnte nicht gestartet')
-      )) {
-        console.error("Server reported an error:", data.message);
+        toast({
+          title: t.success,
+          description: viewerCount > 0 ? t.reachIncreased : t.viewersRemoved,
+        });
+        
+        onAdd(viewerCount);
+      } else {
         toast({
           title: "Warnung",
-          description: "Es gab ein Problem bei der Reichweitensteigerung. Server-Nachricht: " + data.message,
+          description: "Es gab ein Problem bei der Reichweitensteigerung.",
           variant: "destructive",
         });
-        return;
       }
-
-      const newViewerCount = currentViewers + viewerCount;
-      setCurrentViewers(newViewerCount);
-
-      toast({
-        title: t.success,
-        description: viewerCount > 0 ? t.reachIncreased : t.viewersRemoved,
-      });
-      
-      onAdd(viewerCount);
     } catch (error) {
       console.error("Detailed error information:", {
         error,
         type: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : String(error)
       });
       
       let errorMessage = "Fehler bei der Reichweitensteigerung. ";
