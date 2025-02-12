@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
-import { getNextEndpoint } from "@/config/apiEndpoints"
+import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
 import {
   Tooltip,
   TooltipContent,
