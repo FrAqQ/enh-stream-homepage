@@ -1,5 +1,16 @@
 
-export const API_ENDPOINTS = [
+export interface EndpointStatus {
+  isOnline: boolean;
+  lastChecked: Date;
+  apiStatus: boolean;
+}
+
+export interface Endpoint {
+  host: string;
+  status: EndpointStatus;
+}
+
+export const API_ENDPOINTS: string[] = [
   "v220250171253310506.hotsrv.de",
   "v2202501252999311567.powersrv.de",
   "v2202502252999313946.bestsrv.de"

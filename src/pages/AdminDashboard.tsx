@@ -6,7 +6,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { MessageCircle, Plus, Minus, Server } from "lucide-react";
+import { MessageCircle, Plus, Minus, Server, CheckCircle, XCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { API_ENDPOINTS } from "@/config/apiEndpoints";
+import { API_ENDPOINTS, Endpoint, EndpointStatus } from "@/config/apiEndpoints";
 
 interface Profile {
   id: string;
@@ -63,6 +63,11 @@ const FOLLOWER_PLANS = [
   "Ultimate Followers"
 ];
 
+interface EndpointWithStatus extends Endpoint {
+  host: string;
+  status: EndpointStatus;
+}
+
 const AdminDashboard = () => {
   const { user } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -74,7 +79,16 @@ const AdminDashboard = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
-  const [endpoints, setEndpoints] = useState<string[]>(API_ENDPOINTS);
+  const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(
+    API_ENDPOINTS.map(host => ({
+      host,
+      status: {
+        isOnline: false,
+        lastChecked: new Date(),
+        apiStatus: false
+      }
+    }))
+  );
   const [newEndpoint, setNewEndpoint] = useState('');
 
   useEffect(() => {
@@ -319,38 +333,88 @@ const AdminDashboard = () => {
       return;
     }
 
-    if (endpoints.includes(newEndpoint.trim())) {
+    if (endpoints.some(e => e.host === newEndpoint.trim())) {
       toast.error('Dieser Endpunkt existiert bereits');
       return;
     }
 
     try {
-      const updatedEndpoints = [...endpoints, newEndpoint.trim()];
-      setEndpoints(updatedEndpoints);
-      setNewEndpoint('');
+      const newEndpointWithStatus: EndpointWithStatus = {
+        host: newEndpoint.trim(),
+        status: {
+          isOnline: false,
+          lastChecked: new Date(),
+          apiStatus: false
+        }
+      };
       
-      // Hier könnte man die API-Endpunkte in einer Datenbank speichern
+      setEndpoints([...endpoints, newEndpointWithStatus]);
+      setNewEndpoint('');
       toast.success('Endpunkt erfolgreich hinzugefügt');
     } catch (error) {
       toast.error('Fehler beim Hinzufügen des Endpunkts');
     }
   };
 
-  const handleRemoveEndpoint = (endpoint: string) => {
+  const handleRemoveEndpoint = (host: string) => {
     try {
-      const updatedEndpoints = endpoints.filter(e => e !== endpoint);
+      const updatedEndpoints = endpoints.filter(e => e.host !== host);
       if (updatedEndpoints.length === 0) {
         toast.error('Es muss mindestens ein Endpunkt vorhanden sein');
         return;
       }
       setEndpoints(updatedEndpoints);
-      
-      // Hier könnte man die API-Endpunkte in einer Datenbank aktualisieren
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
       toast.error('Fehler beim Entfernen des Endpunkts');
     }
   };
+
+  useEffect(() => {
+    const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
+      try {
+        const pingResult = await fetch(`https://${endpoint.host}`, { 
+          mode: 'no-cors',
+          timeout: 5000 
+        }).then(() => true).catch(() => false);
+
+        const apiUrl = `https://${endpoint.host}:5000/add_viewer`;
+        const apiResult = await fetch(apiUrl, { 
+          method: 'GET',
+          timeout: 5000 
+        }).then(response => response.ok).catch(() => false);
+
+        return {
+          isOnline: pingResult,
+          lastChecked: new Date(),
+          apiStatus: apiResult
+        };
+      } catch (error) {
+        console.error(`Error checking endpoint ${endpoint.host}:`, error);
+        return {
+          isOnline: false,
+          lastChecked: new Date(),
+          apiStatus: false
+        };
+      }
+    };
+
+    const updateEndpointStatuses = async () => {
+      const updatedEndpoints = await Promise.all(
+        endpoints.map(async (endpoint) => ({
+          ...endpoint,
+          status: await checkEndpointHealth(endpoint)
+        }))
+      );
+      setEndpoints(updatedEndpoints);
+    };
+
+    updateEndpointStatuses();
+
+    const intervalId = setInterval(updateEndpointStatuses, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
@@ -627,19 +691,34 @@ const AdminDashboard = () => {
               </div>
               
               <div className="space-y-2">
-                {endpoints.map((endpoint, index) => (
+                {endpoints.map((endpoint) => (
                   <div
-                    key={index}
+                    key={endpoint.host}
                     className="flex items-center justify-between p-3 bg-secondary rounded-lg"
                   >
                     <div className="flex items-center gap-2">
                       <Server className="w-4 h-4" />
-                      <span>{endpoint}</span>
+                      <span>{endpoint.host}</span>
+                      <div className="flex items-center gap-1 ml-2">
+                        {endpoint.status.isOnline ? (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        )}
+                        {endpoint.status.apiStatus ? (
+                          <span className="text-xs text-green-500">API OK</span>
+                        ) : (
+                          <span className="text-xs text-red-500">API Error</span>
+                        )}
+                        <span className="text-xs text-gray-500 ml-2">
+                          Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
+                        </span>
+                      </div>
                     </div>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleRemoveEndpoint(endpoint)}
+                      onClick={() => handleRemoveEndpoint(endpoint.host)}
                     >
                       <Minus className="w-4 h-4" />
                     </Button>
