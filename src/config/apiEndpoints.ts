@@ -3,6 +3,7 @@ export interface EndpointStatus {
   isOnline: boolean;
   lastChecked: Date;
   apiStatus: boolean;
+  isSecure: boolean;
 }
 
 export interface Endpoint {

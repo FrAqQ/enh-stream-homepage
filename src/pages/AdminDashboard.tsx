@@ -85,7 +85,8 @@ const AdminDashboard = () => {
       status: {
         isOnline: false,
         lastChecked: new Date(),
-        apiStatus: false
+        apiStatus: false,
+        isSecure: false
       }
     }))
   );
@@ -344,7 +345,8 @@ const AdminDashboard = () => {
         status: {
           isOnline: false,
           lastChecked: new Date(),
-          apiStatus: false
+          apiStatus: false,
+          isSecure: false
         }
       };
       
@@ -394,22 +396,44 @@ const AdminDashboard = () => {
           mode: 'no-cors'
         }).then(() => true).catch(() => false);
 
-        const apiUrl = `https://${endpoint.host}:5000/add_viewer`;
-        const apiResult = await fetchWithTimeout(apiUrl, { 
-          method: 'GET'
-        }).then(response => response.ok).catch(() => false);
+        const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
+        const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
+        
+        let apiResult = false;
+        let isSecure = false;
+
+        try {
+          const httpsResult = await fetchWithTimeout(apiUrlHttps, { 
+            method: 'GET'
+          });
+          apiResult = true;
+          isSecure = true;
+        } catch (httpsError) {
+          try {
+            const httpResult = await fetchWithTimeout(apiUrlHttp, { 
+              method: 'GET'
+            });
+            apiResult = true;
+            isSecure = false;
+          } catch (httpError) {
+            apiResult = false;
+            isSecure = false;
+          }
+        }
 
         return {
           isOnline: pingResult,
           lastChecked: new Date(),
-          apiStatus: apiResult
+          apiStatus: apiResult,
+          isSecure: isSecure
         };
       } catch (error) {
         console.error(`Error checking endpoint ${endpoint.host}:`, error);
         return {
           isOnline: false,
           lastChecked: new Date(),
-          apiStatus: false
+          apiStatus: false,
+          isSecure: false
         };
       }
     };
@@ -443,26 +467,70 @@ const AdminDashboard = () => {
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
       
       <div className="grid gap-6">
-        {/* Admin-Hinzufügen-Formular */}
         <Card>
           <CardHeader>
-            <CardTitle>Admin hinzufügen</CardTitle>
+            <CardTitle>API Endpunkte</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Input
-                type="email"
-                placeholder="E-Mail des neuen Admins"
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
-              />
-              <Button onClick={handleAddAdmin}>Als Admin hinzufügen</Button>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <Input
+                  type="text"
+                  placeholder="Neuer Endpunkt (z.B. example.server.de)"
+                  value={newEndpoint}
+                  onChange={(e) => setNewEndpoint(e.target.value)}
+                />
+                <Button onClick={handleAddEndpoint}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Hinzufügen
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {endpoints.map((endpoint) => (
+                  <div
+                    key={endpoint.host}
+                    className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Server className="w-4 h-4" />
+                      <span>{endpoint.host}</span>
+                      <div className="flex items-center gap-1 ml-2">
+                        {endpoint.status.isOnline ? (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        )}
+                        {endpoint.status.apiStatus ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-green-500">API OK</span>
+                            {!endpoint.status.isSecure && (
+                              <span className="text-xs text-yellow-500">(Unsicher)</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-red-500">API Error</span>
+                        )}
+                        <span className="text-xs text-gray-500 ml-2">
+                          Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveEndpoint(endpoint.host)}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Admin-Liste */}
           <Card className="md:col-span-1">
             <CardHeader>
               <CardTitle>Admin-Liste</CardTitle>
@@ -512,7 +580,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Chat-Bereich */}
           <Card className="md:col-span-1">
             <CardHeader>
               <CardTitle>
@@ -570,7 +637,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Chat-Anfragen */}
         <Card>
           <CardHeader>
             <CardTitle>Chat-Anfragen</CardTitle>
@@ -605,7 +671,6 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Benutzerübersicht mit Plan-Management */}
         <Card>
           <CardHeader>
             <CardTitle>Benutzerübersicht und Plan-Management</CardTitle>
@@ -680,65 +745,6 @@ const AdminDashboard = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* API Endpunkte Verwaltung */}
-        <Card>
-          <CardHeader>
-            <CardTitle>API Endpunkte</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Input
-                  type="text"
-                  placeholder="Neuer Endpunkt (z.B. example.server.de)"
-                  value={newEndpoint}
-                  onChange={(e) => setNewEndpoint(e.target.value)}
-                />
-                <Button onClick={handleAddEndpoint}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Hinzufügen
-                </Button>
-              </div>
-              
-              <div className="space-y-2">
-                {endpoints.map((endpoint) => (
-                  <div
-                    key={endpoint.host}
-                    className="flex items-center justify-between p-3 bg-secondary rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Server className="w-4 h-4" />
-                      <span>{endpoint.host}</span>
-                      <div className="flex items-center gap-1 ml-2">
-                        {endpoint.status.isOnline ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500" />
-                        )}
-                        {endpoint.status.apiStatus ? (
-                          <span className="text-xs text-green-500">API OK</span>
-                        ) : (
-                          <span className="text-xs text-red-500">API Error</span>
-                        )}
-                        <span className="text-xs text-gray-500 ml-2">
-                          Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRemoveEndpoint(endpoint.host)}
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
             </div>
           </CardContent>
         </Card>
