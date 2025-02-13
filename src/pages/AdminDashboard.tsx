@@ -107,7 +107,8 @@ const AdminDashboard = () => {
         lastChecked: new Date(),
         apiStatus: false,
         isSecure: false,
-        pingStatus: false
+        pingStatus: false,
+        systemMetrics: null  // Hier fehlte der systemMetrics-Wert
       }
     }))
   );
@@ -368,7 +369,8 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: false,
           isSecure: false,
-          pingStatus: false
+          pingStatus: false,
+          systemMetrics: null  // Hier fehlte der systemMetrics-Wert
         }
       };
       
