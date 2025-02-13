@@ -380,10 +380,11 @@ const AdminDashboard = () => {
         const fetchSystemMetrics = async () => {
           try {
             const response = await fetch(`http://${endpoint.host}:5000/status`, {
-              method: 'POST',
+              method: 'GET',
               headers: {
-                'Content-Type': 'application/json'
-              }
+                'Accept': 'application/json'
+              },
+              mode: 'no-cors'
             });
             
             if (response.ok) {
@@ -396,10 +397,11 @@ const AdminDashboard = () => {
           }
 
           const httpsResponse = await fetch(`https://${endpoint.host}:5000/status`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
-              'Content-Type': 'application/json'
-            }
+              'Accept': 'application/json'
+            },
+            mode: 'no-cors'
           });
           
           if (httpsResponse.ok) {
@@ -412,20 +414,25 @@ const AdminDashboard = () => {
         };
 
         const systemMetrics = await fetchSystemMetrics();
-        const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
-        const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
-        
+        console.log(`Fetched metrics for ${endpoint.host}:`, systemMetrics);
+
         let apiResult = false;
         let isSecure = false;
 
         try {
-          const response = await fetch(apiUrlHttps);
-          apiResult = response.ok;
+          const response = await fetch(`https://${endpoint.host}:5000/add_viewer`, {
+            method: 'HEAD',
+            mode: 'no-cors'
+          });
+          apiResult = true;
           isSecure = true;
         } catch (httpsError) {
           try {
-            const response = await fetch(apiUrlHttp);
-            apiResult = response.ok;
+            const response = await fetch(`http://${endpoint.host}:5000/add_viewer`, {
+              method: 'HEAD',
+              mode: 'no-cors'
+            });
+            apiResult = true;
             isSecure = false;
           } catch (httpError) {
             apiResult = false;
