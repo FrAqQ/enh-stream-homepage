@@ -1,7 +1,7 @@
 
 export const API_ENDPOINTS = [
   "v220250171253310506.hotsrv.de",
-  "152.53.121.61"
+  "v2202501252999311567.powersrv.de"
 ];
 
 let currentEndpointIndex = 0;
@@ -11,3 +11,4 @@ export const getNextEndpoint = () => {
   currentEndpointIndex = (currentEndpointIndex + 1) % API_ENDPOINTS.length;
   return endpoint;
 };
+
