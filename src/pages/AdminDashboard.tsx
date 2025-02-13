@@ -377,56 +377,38 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
-        const checkPing = async () => {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            
-            const result = await fetch(`http://${endpoint.host}`, {
-              method: 'HEAD',
-              mode: 'no-cors',
-              signal: controller.signal
-            }).then(() => {
-              clearTimeout(timeoutId);
-              return true;
-            }).catch(async () => {
-              clearTimeout(timeoutId);
-              // Wenn HTTP fehlschlägt, versuche HTTPS
-              const httpsController = new AbortController();
-              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
-              
-              return fetch(`https://${endpoint.host}`, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                signal: httpsController.signal
-              }).then(() => {
-                clearTimeout(httpsTimeoutId);
-                return true;
-              }).catch(() => {
-                clearTimeout(httpsTimeoutId);
-                return false;
-              });
-            });
-
-            return result;
-          } catch {
-            return false;
-          }
-        };
-
-        const pingResult = await checkPing();
-
         const fetchSystemMetrics = async () => {
           try {
-            const response = await fetch(`http://${endpoint.host}:5000/status`);
+            const response = await fetch(`http://${endpoint.host}:5000/status`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            
             if (response.ok) {
-              return await response.json();
+              const data = await response.json();
+              console.log("Received metrics for", endpoint.host, ":", data);
+              return data;
             }
-            return null;
           } catch (error) {
-            console.error('Error fetching system metrics:', error);
-            return null;
+            console.log("HTTP failed, trying HTTPS...");
           }
+
+          const httpsResponse = await fetch(`https://${endpoint.host}:5000/status`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (httpsResponse.ok) {
+            const data = await httpsResponse.json();
+            console.log("Received metrics for", endpoint.host, ":", data);
+            return data;
+          }
+
+          return null;
         };
 
         const systemMetrics = await fetchSystemMetrics();
@@ -437,26 +419,32 @@ const AdminDashboard = () => {
         let isSecure = false;
 
         try {
-          await fetch(apiUrlHttps);
-          apiResult = true;
+          const response = await fetch(apiUrlHttps);
+          apiResult = response.ok;
           isSecure = true;
         } catch (httpsError) {
           try {
-            await fetch(apiUrlHttp);
-            apiResult = true;
+            const response = await fetch(apiUrlHttp);
+            apiResult = response.ok;
             isSecure = false;
           } catch (httpError) {
-            apiResult = true;
+            apiResult = false;
             isSecure = false;
           }
         }
 
+        console.log(`Status for ${endpoint.host}:`, {
+          apiResult,
+          isSecure,
+          systemMetrics
+        });
+
         return {
-          isOnline: pingResult || apiResult,
+          isOnline: apiResult,
           lastChecked: new Date(),
           apiStatus: apiResult,
           isSecure: isSecure,
-          pingStatus: pingResult,
+          pingStatus: apiResult,
           systemMetrics
         };
       } catch (error) {
@@ -486,7 +474,7 @@ const AdminDashboard = () => {
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [endpoints.length]);
 
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
