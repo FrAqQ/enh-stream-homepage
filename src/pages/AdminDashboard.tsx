@@ -6,7 +6,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Plus, Minus, Server } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { API_ENDPOINTS } from "@/config/apiEndpoints";
 
 interface Profile {
   id: string;
@@ -73,6 +74,8 @@ const AdminDashboard = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
+  const [endpoints, setEndpoints] = useState<string[]>(API_ENDPOINTS);
+  const [newEndpoint, setNewEndpoint] = useState('');
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -307,6 +310,45 @@ const AdminDashboard = () => {
       toast.success('Follower Plan erfolgreich aktualisiert');
     } catch (error) {
       toast.error('Fehler beim Aktualisieren des Follower Plans');
+    }
+  };
+
+  const handleAddEndpoint = () => {
+    if (!newEndpoint.trim()) {
+      toast.error('Bitte geben Sie einen Endpunkt ein');
+      return;
+    }
+
+    if (endpoints.includes(newEndpoint.trim())) {
+      toast.error('Dieser Endpunkt existiert bereits');
+      return;
+    }
+
+    try {
+      const updatedEndpoints = [...endpoints, newEndpoint.trim()];
+      setEndpoints(updatedEndpoints);
+      setNewEndpoint('');
+      
+      // Hier könnte man die API-Endpunkte in einer Datenbank speichern
+      toast.success('Endpunkt erfolgreich hinzugefügt');
+    } catch (error) {
+      toast.error('Fehler beim Hinzufügen des Endpunkts');
+    }
+  };
+
+  const handleRemoveEndpoint = (endpoint: string) => {
+    try {
+      const updatedEndpoints = endpoints.filter(e => e !== endpoint);
+      if (updatedEndpoints.length === 0) {
+        toast.error('Es muss mindestens ein Endpunkt vorhanden sein');
+        return;
+      }
+      setEndpoints(updatedEndpoints);
+      
+      // Hier könnte man die API-Endpunkte in einer Datenbank aktualisieren
+      toast.success('Endpunkt erfolgreich entfernt');
+    } catch (error) {
+      toast.error('Fehler beim Entfernen des Endpunkts');
     }
   };
 
@@ -560,6 +602,50 @@ const AdminDashboard = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* API Endpunkte Verwaltung */}
+        <Card>
+          <CardHeader>
+            <CardTitle>API Endpunkte</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <Input
+                  type="text"
+                  placeholder="Neuer Endpunkt (z.B. example.server.de)"
+                  value={newEndpoint}
+                  onChange={(e) => setNewEndpoint(e.target.value)}
+                />
+                <Button onClick={handleAddEndpoint}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Hinzufügen
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {endpoints.map((endpoint, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Server className="w-4 h-4" />
+                      <span>{endpoint}</span>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveEndpoint(endpoint)}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
