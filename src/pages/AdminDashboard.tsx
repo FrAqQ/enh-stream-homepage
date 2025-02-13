@@ -422,7 +422,7 @@ const AdminDashboard = () => {
         }
 
         return {
-          isOnline: pingResult,
+          isOnline: pingResult || apiResult, // Wenn API erreichbar ist, ist der Server online
           lastChecked: new Date(),
           apiStatus: apiResult,
           isSecure: isSecure
