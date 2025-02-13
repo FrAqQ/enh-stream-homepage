@@ -515,13 +515,13 @@ const AdminDashboard = () => {
                       <span>{endpoint.host}</span>
                       <div className="flex items-center gap-2 ml-2">
                         <div className="flex items-center gap-1">
-                          {endpoint.status.pingStatus ? (
+                          {endpoint.status.apiStatus ? (
                             <CheckCircle className="w-4 h-4 text-green-500" />
                           ) : (
                             <XCircle className="w-4 h-4 text-red-500" />
                           )}
-                          <span className={`text-xs ${endpoint.status.pingStatus ? 'text-green-500' : 'text-red-500'}`}>
-                            Ping {endpoint.status.pingStatus ? 'OK' : 'Error'}
+                          <span className={`text-xs ${endpoint.status.apiStatus ? 'text-green-500' : 'text-red-500'}`}>
+                            Ping {endpoint.status.apiStatus ? 'OK' : 'Error'}
                           </span>
                         </div>
 
