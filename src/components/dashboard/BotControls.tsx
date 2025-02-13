@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -144,9 +145,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
       console.log("Response status:", response.status);
 
-      // Wenn Server überlastet ist (503) und noch Versuche übrig sind
-      if (response.status === 503 && retriesLeft > 1) {
-        console.log("Server überlastet (503), versuche nächsten Server...");
+      // Wenn Server überlastet ist (503) oder NetworkError auftritt und noch Versuche übrig sind
+      if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
+        console.log(`Server ${currentHost} nicht erreichbar, versuche nächsten Server...`);
         return tryRequest(viewerCount, retriesLeft - 1);
       }
       
@@ -168,8 +169,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
       return true;
     } catch (error) {
+      console.log("Fehler aufgetreten, versuche nächsten Server...", error);
       if (retriesLeft > 1) {
-        console.log("Fehler aufgetreten, versuche nächsten Server...", error);
         return tryRequest(viewerCount, retriesLeft - 1);
       }
       throw error;
