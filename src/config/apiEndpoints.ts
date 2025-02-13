@@ -1,10 +1,20 @@
 
+export interface SystemMetrics {
+  cpu: number;
+  memory: {
+    total: number;
+    used: number;
+    free: number;
+  };
+}
+
 export interface EndpointStatus {
   isOnline: boolean;
   lastChecked: Date;
   apiStatus: boolean;
   isSecure: boolean;
   pingStatus: boolean;
+  systemMetrics?: SystemMetrics;
 }
 
 export interface Endpoint {

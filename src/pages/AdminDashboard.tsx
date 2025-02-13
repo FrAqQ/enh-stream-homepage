@@ -416,6 +416,20 @@ const AdminDashboard = () => {
 
         const pingResult = await checkPing();
 
+        const fetchSystemMetrics = async () => {
+          try {
+            const response = await fetch(`http://${endpoint.host}/status`);
+            if (response.ok) {
+              return await response.json();
+            }
+            return null;
+          } catch (error) {
+            console.error('Error fetching system metrics:', error);
+            return null;
+          }
+        };
+
+        const systemMetrics = await fetchSystemMetrics();
         const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
         const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
         
@@ -442,7 +456,8 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: apiResult,
           isSecure: isSecure,
-          pingStatus: pingResult
+          pingStatus: pingResult,
+          systemMetrics
         };
       } catch (error) {
         console.error(`Error checking endpoint ${endpoint.host}:`, error);
@@ -451,7 +466,8 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: false,
           isSecure: false,
-          pingStatus: false
+          pingStatus: false,
+          systemMetrics: null
         };
       }
     };
@@ -537,6 +553,38 @@ const AdminDashboard = () => {
                             <span className="text-xs text-red-500">API Error</span>
                           )}
                         </div>
+
+                        {endpoint.status.systemMetrics && (
+                          <div className="flex items-center gap-4 ml-4">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-medium">CPU:</span>
+                              <span className={`text-xs ${
+                                endpoint.status.systemMetrics.cpu > 80 
+                                  ? 'text-red-500' 
+                                  : endpoint.status.systemMetrics.cpu > 60 
+                                  ? 'text-yellow-500' 
+                                  : 'text-green-500'
+                              }`}>
+                                {endpoint.status.systemMetrics.cpu.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-medium">RAM:</span>
+                              <span className={`text-xs ${
+                                (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
+                                  ? 'text-red-500'
+                                  : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
+                                  ? 'text-yellow-500'
+                                  : 'text-green-500'
+                              }`}>
+                                {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                ({(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB)
+                              </span>
+                            </div>
+                          </div>
+                        )}
 
                         <span className="text-xs text-gray-500">
                           Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
