@@ -63,6 +63,23 @@ const FOLLOWER_PLANS = [
   "Ultimate Followers"
 ];
 
+interface EndpointStatus {
+  isOnline: boolean;
+  lastChecked: Date;
+  apiStatus: boolean;
+  isSecure: boolean;
+  pingStatus: boolean;
+  systemMetrics: {
+    cpu: number;
+    memory: {
+      total: number;
+      used: number;
+      free: number;
+      percent: number;
+    };
+  } | null;
+}
+
 interface EndpointWithStatus extends Endpoint {
   host: string;
   status: EndpointStatus;
@@ -377,50 +394,13 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
-        const checkPing = async () => {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
-            
-            const result = await fetch(`http://${endpoint.host}`, {
-              method: 'HEAD',
-              mode: 'no-cors',
-              signal: controller.signal
-            }).then(() => {
-              clearTimeout(timeoutId);
-              return true;
-            }).catch(async () => {
-              clearTimeout(timeoutId);
-              // Wenn HTTP fehlschlägt, versuche HTTPS
-              const httpsController = new AbortController();
-              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
-              
-              return fetch(`https://${endpoint.host}`, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                signal: httpsController.signal
-              }).then(() => {
-                clearTimeout(httpsTimeoutId);
-                return true;
-              }).catch(() => {
-                clearTimeout(httpsTimeoutId);
-                return false;
-              });
-            });
-
-            return result;
-          } catch {
-            return false;
-          }
-        };
-
-        const pingResult = await checkPing();
-
         const fetchSystemMetrics = async () => {
           try {
-            const response = await fetch(`http://${endpoint.host}/status`);
+            const response = await fetch(`http://${endpoint.host}:5000/status`);
             if (response.ok) {
-              return await response.json();
+              const data = await response.json();
+              console.log("Received metrics for", endpoint.host, ":", data);
+              return data;
             }
             return null;
           } catch (error) {
@@ -430,33 +410,31 @@ const AdminDashboard = () => {
         };
 
         const systemMetrics = await fetchSystemMetrics();
-        const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
-        const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
         
         let apiResult = false;
         let isSecure = false;
 
         try {
-          await fetch(apiUrlHttps);
-          apiResult = true;
+          const response = await fetch(`https://${endpoint.host}:5000/add_viewer`);
+          apiResult = response.ok;
           isSecure = true;
         } catch (httpsError) {
           try {
-            await fetch(apiUrlHttp);
-            apiResult = true;
+            const response = await fetch(`http://${endpoint.host}:5000/add_viewer`);
+            apiResult = response.ok;
             isSecure = false;
           } catch (httpError) {
-            apiResult = true;
+            apiResult = false;
             isSecure = false;
           }
         }
 
         return {
-          isOnline: pingResult || apiResult,
+          isOnline: apiResult,
           lastChecked: new Date(),
           apiStatus: apiResult,
           isSecure: isSecure,
-          pingStatus: pingResult,
+          pingStatus: apiResult,
           systemMetrics
         };
       } catch (error) {
@@ -486,7 +464,7 @@ const AdminDashboard = () => {
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [endpoints.length]);
 
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
@@ -526,7 +504,7 @@ const AdminDashboard = () => {
                     key={endpoint.host}
                     className="flex items-center justify-between p-3 bg-secondary rounded-lg"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-grow">
                       <Server className="w-4 h-4" />
                       <span>{endpoint.host}</span>
                       <div className="flex items-center gap-2 ml-2">
@@ -543,12 +521,12 @@ const AdminDashboard = () => {
 
                         <div className="flex items-center gap-1">
                           {endpoint.status.apiStatus ? (
-                            <div className="flex items-center gap-1">
+                            <>
                               <span className="text-xs text-green-500">API OK</span>
                               {!endpoint.status.isSecure && (
                                 <span className="text-xs text-yellow-500">(Unsicher)</span>
                               )}
-                            </div>
+                            </>
                           ) : (
                             <span className="text-xs text-red-500">API Error</span>
                           )}
@@ -571,24 +549,17 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-1">
                               <span className="text-xs font-medium">RAM:</span>
                               <span className={`text-xs ${
-                                (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
+                                endpoint.status.systemMetrics.memory.percent > 80
                                   ? 'text-red-500'
-                                  : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
+                                  : endpoint.status.systemMetrics.memory.percent > 60
                                   ? 'text-yellow-500'
                                   : 'text-green-500'
                               }`}>
-                                {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                ({(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB)
+                                {endpoint.status.systemMetrics.memory.percent.toFixed(1)}%
                               </span>
                             </div>
                           </div>
                         )}
-
-                        <span className="text-xs text-gray-500">
-                          Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
-                        </span>
                       </div>
                     </div>
                     <Button
