@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -116,6 +115,11 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
   const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
+    if (retriesLeft <= 0) {
+      console.error("Alle Server wurden versucht und keiner war erfolgreich");
+      throw new Error("Alle Server sind nicht erreichbar");
+    }
+
     try {
       const endpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       const currentHost = getNextEndpoint();
@@ -128,52 +132,55 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         api_host: currentHost,
         retriesLeft
       });
-      
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        mode: "cors",
-        body: JSON.stringify({
-          user_id: user?.id || "123",
-          twitch_url: streamUrl,
-          viewer_count: Math.abs(viewerCount)
-        })
-      });
 
-      console.log("Response status:", response.status);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 Sekunden Timeout
 
-      // Wenn Server überlastet ist (503) oder NetworkError auftritt und noch Versuche übrig sind
-      if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
-        console.log(`Server ${currentHost} nicht erreichbar, versuche nächsten Server...`);
-        return tryRequest(viewerCount, retriesLeft - 1);
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          mode: "cors",
+          signal: controller.signal,
+          body: JSON.stringify({
+            user_id: user?.id || "123",
+            twitch_url: streamUrl,
+            viewer_count: Math.abs(viewerCount)
+          })
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.log(`Server ${currentHost} meldete Fehler ${response.status}, versuche nächsten Server...`);
+          return tryRequest(viewerCount, retriesLeft - 1);
+        }
+
+        const data = await response.json();
+        console.log("API Response data:", data);
+
+        if (data.status === 'error' || 
+            (data.message && (
+              data.message.toLowerCase().includes('fehler') || 
+              data.message.toLowerCase().includes('error') ||
+              data.message.toLowerCase().includes('konnte nicht gestartet')
+            ))
+        ) {
+          console.error("Server reported an error:", data.message);
+          return tryRequest(viewerCount, retriesLeft - 1);
+        }
+
+        return true;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("API Response data:", data);
-
-      if (data.message && (
-        data.message.toLowerCase().includes('fehler') || 
-        data.message.toLowerCase().includes('error') ||
-        data.message.toLowerCase().includes('konnte nicht gestartet')
-      )) {
-        console.error("Server reported an error:", data.message);
-        return false;
-      }
-
-      return true;
     } catch (error) {
-      console.log("Fehler aufgetreten, versuche nächsten Server...", error);
-      if (retriesLeft > 1) {
-        return tryRequest(viewerCount, retriesLeft - 1);
-      }
-      throw error;
+      console.log(`Fehler bei Server-Request: ${error}. Versuche nächsten Server...`);
+      return tryRequest(viewerCount, retriesLeft - 1);
     }
   };
 
