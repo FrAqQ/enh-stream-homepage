@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { MessageCircle } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Profile {
   id: string;
@@ -38,6 +45,22 @@ interface ChatRequest {
     email: string;
   };
 }
+
+const AVAILABLE_PLANS = [
+  "Free",
+  "Twitch Starter",
+  "Twitch Basic",
+  "Twitch Professional",
+  "Twitch Expert",
+  "Twitch Ultimate"
+];
+
+const FOLLOWER_PLANS = [
+  "None",
+  "Basic Followers",
+  "Pro Followers",
+  "Ultimate Followers"
+];
 
 const AdminDashboard = () => {
   const { user } = useUser();
@@ -247,6 +270,46 @@ const AdminDashboard = () => {
     }
   };
 
+  const handlePlanChange = async (userId: string, newPlan: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan: newPlan })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Update local state
+      setProfiles(profiles.map(profile => 
+        profile.id === userId ? { ...profile, plan: newPlan } : profile
+      ));
+
+      toast.success('Plan erfolgreich aktualisiert');
+    } catch (error) {
+      toast.error('Fehler beim Aktualisieren des Plans');
+    }
+  };
+
+  const handleFollowerPlanChange = async (userId: string, newPlan: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ follower_plan: newPlan })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Update local state
+      setProfiles(profiles.map(profile => 
+        profile.id === userId ? { ...profile, follower_plan: newPlan } : profile
+      ));
+
+      toast.success('Follower Plan erfolgreich aktualisiert');
+    } catch (error) {
+      toast.error('Fehler beim Aktualisieren des Follower Plans');
+    }
+  };
+
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
   }
@@ -422,10 +485,10 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Allgemeine Benutzerübersicht */}
+        {/* Benutzerübersicht mit Plan-Management */}
         <Card>
           <CardHeader>
-            <CardTitle>Benutzerübersicht</CardTitle>
+            <CardTitle>Benutzerübersicht und Plan-Management</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -433,18 +496,51 @@ const AdminDashboard = () => {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2">Email</th>
-                    <th className="text-left p-2">Plan</th>
+                    <th className="text-left p-2">Stream Plan</th>
                     <th className="text-left p-2">Follower Plan</th>
                     <th className="text-left p-2">Admin Status</th>
                     <th className="text-left p-2">Erstellt am</th>
+                    <th className="text-left p-2">Letzter Login</th>
                   </tr>
                 </thead>
                 <tbody>
                   {profiles.map((profile) => (
                     <tr key={profile.id} className="border-b">
                       <td className="p-2">{profile.email}</td>
-                      <td className="p-2">{profile.plan}</td>
-                      <td className="p-2">{profile.follower_plan}</td>
+                      <td className="p-2">
+                        <Select
+                          value={profile.plan}
+                          onValueChange={(value) => handlePlanChange(profile.id, value)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Wähle einen Plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AVAILABLE_PLANS.map((plan) => (
+                              <SelectItem key={plan} value={plan}>
+                                {plan}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-2">
+                        <Select
+                          value={profile.follower_plan}
+                          onValueChange={(value) => handleFollowerPlanChange(profile.id, value)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Wähle einen Follower Plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FOLLOWER_PLANS.map((plan) => (
+                              <SelectItem key={plan} value={plan}>
+                                {plan}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
                       <td className="p-2">
                         {profile.is_admin ? (
                           <span className="text-green-500">Admin</span>
@@ -454,6 +550,11 @@ const AdminDashboard = () => {
                       </td>
                       <td className="p-2">
                         {new Date(profile.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-2">
+                        {profile.last_sign_in_at 
+                          ? new Date(profile.last_sign_in_at).toLocaleDateString()
+                          : 'Nie'}
                       </td>
                     </tr>
                   ))}
