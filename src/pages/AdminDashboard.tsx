@@ -7,6 +7,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { MessageCircle } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -18,6 +19,15 @@ interface Profile {
   last_sign_in_at?: string;
 }
 
+interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+}
+
 const AdminDashboard = () => {
   const { user } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -25,6 +35,9 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [adminProfiles, setAdminProfiles] = useState<Profile[]>([]);
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -56,19 +69,59 @@ const AdminDashboard = () => {
     // Echtzeit-Updates für Online-Status
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
-        // Aktualisiere die Profile-Liste
         checkAdminStatus();
       })
       .subscribe();
 
+    // Echtzeit-Updates für neue Nachrichten
+    const messageChannel = supabase.channel('messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_messages',
+        },
+        () => {
+          if (selectedChat) {
+            loadMessages(selectedChat);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       channel.unsubscribe();
+      messageChannel.unsubscribe();
     };
-  }, [user]);
+  }, [user, selectedChat]);
+
+  useEffect(() => {
+    if (selectedChat) {
+      loadMessages(selectedChat);
+    }
+  }, [selectedChat]);
+
+  const loadMessages = async (receiverId: string) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('admin_messages')
+      .select('*')
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .or(`sender_id.eq.${receiverId},receiver_id.eq.${receiverId}`)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      toast.error('Fehler beim Laden der Nachrichten');
+      return;
+    }
+
+    setMessages(data || []);
+  };
 
   const handleAddAdmin = async () => {
     try {
-      // Überprüfe, ob die E-Mail existiert
       const { data: userToUpdate } = await supabase
         .from('profiles')
         .select('*')
@@ -80,7 +133,6 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Aktualisiere den Admin-Status
       const { error } = await supabase
         .from('profiles')
         .update({ is_admin: true })
@@ -91,7 +143,6 @@ const AdminDashboard = () => {
       toast.success('Admin erfolgreich hinzugefügt');
       setNewAdminEmail('');
       
-      // Aktualisiere die Profile-Liste
       const { data: updatedProfiles } = await supabase
         .from('profiles')
         .select('*')
@@ -101,6 +152,29 @@ const AdminDashboard = () => {
       setAdminProfiles(updatedProfiles?.filter(p => p.is_admin) || []);
     } catch (error) {
       toast.error('Fehler beim Hinzufügen des Admins');
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!user || !selectedChat || !newMessage.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('admin_messages')
+        .insert([
+          {
+            sender_id: user.id,
+            receiver_id: selectedChat,
+            message: newMessage.trim()
+          }
+        ]);
+
+      if (error) throw error;
+
+      setNewMessage('');
+      await loadMessages(selectedChat);
+    } catch (error) {
+      toast.error('Fehler beim Senden der Nachricht');
     }
   };
 
@@ -135,49 +209,114 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Admin-Liste */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Admin-Liste</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Email</th>
-                    <th className="text-left p-2">Status</th>
-                    <th className="text-left p-2">Letzte Anmeldung</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {adminProfiles.map((profile) => (
-                    <tr key={profile.id} className="border-b">
-                      <td className="p-2">{profile.email}</td>
-                      <td className="p-2">
-                        {profile.last_sign_in_at && 
-                         new Date(profile.last_sign_in_at).getTime() > Date.now() - 5 * 60 * 1000 ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Online
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            Offline
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-2">
-                        {profile.last_sign_in_at ? 
-                          new Date(profile.last_sign_in_at).toLocaleString() : 
-                          'Noch nie'}
-                      </td>
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Admin-Liste */}
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle>Admin-Liste</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Email</th>
+                      <th className="text-left p-2">Status</th>
+                      <th className="text-left p-2">Aktionen</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {adminProfiles.map((profile) => (
+                      <tr key={profile.id} className="border-b">
+                        <td className="p-2">{profile.email}</td>
+                        <td className="p-2">
+                          {profile.last_sign_in_at && 
+                           new Date(profile.last_sign_in_at).getTime() > Date.now() - 5 * 60 * 1000 ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Online
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Offline
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedChat(profile.id)}
+                            disabled={profile.id === user?.id}
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Chat
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Chat-Bereich */}
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle>
+                {selectedChat 
+                  ? `Chat mit ${adminProfiles.find(p => p.id === selectedChat)?.email}`
+                  : 'Chat'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedChat ? (
+                <div className="flex flex-col h-[400px]">
+                  <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                            message.sender_id === user?.id
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm">
+                            {message.message}
+                          </p>
+                          <p className="text-xs mt-1 opacity-70">
+                            {new Date(message.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nachricht eingeben..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          sendMessage();
+                        }
+                      }}
+                    />
+                    <Button onClick={sendMessage}>Senden</Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  Wählen Sie einen Admin aus der Liste aus, um einen Chat zu starten
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Allgemeine Benutzerübersicht */}
         <Card>
