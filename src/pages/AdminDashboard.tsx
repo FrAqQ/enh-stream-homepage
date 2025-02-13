@@ -373,15 +373,30 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
-        const pingResult = await fetch(`https://${endpoint.host}`, { 
-          mode: 'no-cors',
-          timeout: 5000 
+        const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 5000) => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+          try {
+            const response = await fetch(url, {
+              ...options,
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+          } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+          }
+        };
+
+        const pingResult = await fetchWithTimeout(`https://${endpoint.host}`, { 
+          mode: 'no-cors'
         }).then(() => true).catch(() => false);
 
         const apiUrl = `https://${endpoint.host}:5000/add_viewer`;
-        const apiResult = await fetch(apiUrl, { 
-          method: 'GET',
-          timeout: 5000 
+        const apiResult = await fetchWithTimeout(apiUrl, { 
+          method: 'GET'
         }).then(response => response.ok).catch(() => false);
 
         return {
@@ -410,7 +425,6 @@ const AdminDashboard = () => {
     };
 
     updateEndpointStatuses();
-
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
