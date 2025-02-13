@@ -382,7 +382,7 @@ const AdminDashboard = () => {
         const checkPing = async () => {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             
             const result = await fetch(`http://${endpoint.host}:5000/status`, {
               method: 'GET',
@@ -394,7 +394,7 @@ const AdminDashboard = () => {
               clearTimeout(timeoutId);
               // Wenn HTTP fehlschlägt, versuche HTTPS
               const httpsController = new AbortController();
-              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
+              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 5000);
               
               return fetch(`https://${endpoint.host}:5000/status`, {
                 method: 'GET',
