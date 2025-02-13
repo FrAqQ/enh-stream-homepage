@@ -71,7 +71,7 @@ const Navbar = () => {
       register: "Register",
       profile: "Profile",
       logout: "Logout",
-      chatWithUs: "Chat with us",
+      chatWithUs: "Support Chat",
       sendRequest: "Send request",
       chatMessage: "How can we help you?"
     },
@@ -83,7 +83,7 @@ const Navbar = () => {
       register: "Registrieren",
       profile: "Profil",
       logout: "Abmelden",
-      chatWithUs: "Chatte mit uns",
+      chatWithUs: "Support Chat",
       sendRequest: "Anfrage senden",
       chatMessage: "Wie können wir Ihnen helfen?"
     }
