@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { API_ENDPOINTS, updateEndpoints } from "@/config/apiEndpoints";
+import { API_ENDPOINTS, Endpoint, EndpointStatus, updateEndpoints } from "@/config/apiEndpoints";
 
 interface Profile {
   id: string;
@@ -47,6 +47,11 @@ interface ChatRequest {
   };
 }
 
+interface EndpointWithStatus extends Endpoint {
+  host: string;
+  status: EndpointStatus;
+}
+
 const AVAILABLE_PLANS = [
   "Free",
   "Twitch Starter",
@@ -62,11 +67,6 @@ const FOLLOWER_PLANS = [
   "Pro Followers",
   "Ultimate Followers"
 ];
-
-interface EndpointWithStatus extends Endpoint {
-  host: string;
-  status: EndpointStatus;
-}
 
 const AdminDashboard = () => {
   const { user } = useUser();
