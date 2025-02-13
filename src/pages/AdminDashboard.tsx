@@ -377,81 +377,86 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
+        const checkPing = async () => {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
+            
+            const result = await fetch(`http://${endpoint.host}`, {
+              method: 'HEAD',
+              mode: 'no-cors',
+              signal: controller.signal
+            }).then(() => {
+              clearTimeout(timeoutId);
+              return true;
+            }).catch(async () => {
+              clearTimeout(timeoutId);
+              // Wenn HTTP fehlschlägt, versuche HTTPS
+              const httpsController = new AbortController();
+              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
+              
+              return fetch(`https://${endpoint.host}`, {
+                method: 'HEAD',
+                mode: 'no-cors',
+                signal: httpsController.signal
+              }).then(() => {
+                clearTimeout(httpsTimeoutId);
+                return true;
+              }).catch(() => {
+                clearTimeout(httpsTimeoutId);
+                return false;
+              });
+            });
+
+            return result;
+          } catch {
+            return false;
+          }
+        };
+
+        const pingResult = await checkPing();
+
         const fetchSystemMetrics = async () => {
           try {
-            const response = await fetch(`http://${endpoint.host}:5000/status`, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json'
-              },
-              mode: 'no-cors'
-            });
-            
+            const response = await fetch(`http://${endpoint.host}/status`);
             if (response.ok) {
-              const data = await response.json();
-              console.log("Received metrics for", endpoint.host, ":", data);
-              return data;
+              return await response.json();
             }
+            return null;
           } catch (error) {
-            console.log("HTTP failed, trying HTTPS...");
+            console.error('Error fetching system metrics:', error);
+            return null;
           }
-
-          const httpsResponse = await fetch(`https://${endpoint.host}:5000/status`, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json'
-            },
-            mode: 'no-cors'
-          });
-          
-          if (httpsResponse.ok) {
-            const data = await httpsResponse.json();
-            console.log("Received metrics for", endpoint.host, ":", data);
-            return data;
-          }
-
-          return null;
         };
 
         const systemMetrics = await fetchSystemMetrics();
-        console.log(`Fetched metrics for ${endpoint.host}:`, systemMetrics);
-
+        const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
+        const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
+        
         let apiResult = false;
         let isSecure = false;
 
         try {
-          const response = await fetch(`https://${endpoint.host}:5000/add_viewer`, {
-            method: 'HEAD',
-            mode: 'no-cors'
-          });
+          await fetch(apiUrlHttps);
           apiResult = true;
           isSecure = true;
         } catch (httpsError) {
           try {
-            const response = await fetch(`http://${endpoint.host}:5000/add_viewer`, {
-              method: 'HEAD',
-              mode: 'no-cors'
-            });
+            await fetch(apiUrlHttp);
             apiResult = true;
             isSecure = false;
           } catch (httpError) {
-            apiResult = false;
+            apiResult = true;
             isSecure = false;
           }
         }
 
-        console.log(`Status for ${endpoint.host}:`, {
-          apiResult,
-          isSecure,
-          systemMetrics
-        });
-
         return {
-          isOnline: apiResult,
+          isOnline: pingResult || apiResult,
           lastChecked: new Date(),
           apiStatus: apiResult,
           isSecure: isSecure,
-          pingStatus: apiResult,
+          pingStatus: pingResult,
           systemMetrics
         };
       } catch (error) {
@@ -481,7 +486,7 @@ const AdminDashboard = () => {
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
-  }, [endpoints.length]);
+  }, []);
 
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
@@ -538,12 +543,12 @@ const AdminDashboard = () => {
 
                         <div className="flex items-center gap-1">
                           {endpoint.status.apiStatus ? (
-                            <>
+                            <div className="flex items-center gap-1">
                               <span className="text-xs text-green-500">API OK</span>
                               {!endpoint.status.isSecure && (
                                 <span className="text-xs text-yellow-500">(Unsicher)</span>
                               )}
-                            </>
+                            </div>
                           ) : (
                             <span className="text-xs text-red-500">API Error</span>
                           )}
