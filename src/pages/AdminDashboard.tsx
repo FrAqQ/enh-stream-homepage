@@ -377,13 +377,44 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
-        const pingResult = await fetch(`https://${endpoint.host}`, { 
-          mode: 'no-cors'
-        }).then(() => true).catch(() => 
-          fetch(`http://${endpoint.host}`, { 
-            mode: 'no-cors'
-          }).then(() => true).catch(() => false)
-        );
+        const checkPing = async () => {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
+            
+            const result = await fetch(`http://${endpoint.host}`, {
+              method: 'HEAD',
+              mode: 'no-cors',
+              signal: controller.signal
+            }).then(() => {
+              clearTimeout(timeoutId);
+              return true;
+            }).catch(async () => {
+              clearTimeout(timeoutId);
+              // Wenn HTTP fehlschlägt, versuche HTTPS
+              const httpsController = new AbortController();
+              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
+              
+              return fetch(`https://${endpoint.host}`, {
+                method: 'HEAD',
+                mode: 'no-cors',
+                signal: httpsController.signal
+              }).then(() => {
+                clearTimeout(httpsTimeoutId);
+                return true;
+              }).catch(() => {
+                clearTimeout(httpsTimeoutId);
+                return false;
+              });
+            });
+
+            return result;
+          } catch {
+            return false;
+          }
+        };
+
+        const pingResult = await checkPing();
 
         const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
         const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
