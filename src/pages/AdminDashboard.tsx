@@ -543,48 +543,25 @@ const AdminDashboard = () => {
 
                         <div className="flex items-center gap-1">
                           {endpoint.status.apiStatus ? (
-                            <div className="flex items-center gap-1">
+                            <>
                               <span className="text-xs text-green-500">API OK</span>
+                              <span className="text-xs">
+                                Status: CPU: {endpoint.status.systemMetrics ? 
+                                  `${endpoint.status.systemMetrics.cpu.toFixed(1)}%` : 
+                                  '-'} RAM: {
+                                  endpoint.status.systemMetrics ? 
+                                    `${((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%` : 
+                                    '-'
+                                }
+                              </span>
                               {!endpoint.status.isSecure && (
                                 <span className="text-xs text-yellow-500">(Unsicher)</span>
                               )}
-                            </div>
+                            </>
                           ) : (
                             <span className="text-xs text-red-500">API Error</span>
                           )}
                         </div>
-
-                        {endpoint.status.systemMetrics && (
-                          <div className="flex items-center gap-4 ml-4">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-medium">CPU:</span>
-                              <span className={`text-xs ${
-                                endpoint.status.systemMetrics.cpu > 80 
-                                  ? 'text-red-500' 
-                                  : endpoint.status.systemMetrics.cpu > 60 
-                                  ? 'text-yellow-500' 
-                                  : 'text-green-500'
-                              }`}>
-                                {endpoint.status.systemMetrics.cpu.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-medium">RAM:</span>
-                              <span className={`text-xs ${
-                                (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                                  ? 'text-red-500'
-                                  : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                                  ? 'text-yellow-500'
-                                  : 'text-green-500'
-                              }`}>
-                                {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                ({(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB)
-                              </span>
-                            </div>
-                          </div>
-                        )}
 
                         <span className="text-xs text-gray-500">
                           Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
