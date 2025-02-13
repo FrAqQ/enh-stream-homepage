@@ -14,11 +14,16 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "@/lib/LanguageContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const { user } = useUser();
   const { language } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -36,6 +41,27 @@ const Navbar = () => {
     checkAdminStatus();
   }, [user]);
 
+  const handleChatRequest = async () => {
+    if (!user) {
+      toast.error('Bitte melden Sie sich an, um mit uns zu chatten');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chat_requests')
+        .insert([{ user_id: user.id }]);
+
+      if (error) throw error;
+
+      toast.success('Chat-Anfrage wurde gesendet');
+      setIsChatOpen(false);
+      setMessage("");
+    } catch (error) {
+      toast.error('Fehler beim Senden der Chat-Anfrage');
+    }
+  };
+
   const translations = {
     en: {
       dashboard: "Dashboard",
@@ -44,7 +70,10 @@ const Navbar = () => {
       login: "Login",
       register: "Register",
       profile: "Profile",
-      logout: "Logout"
+      logout: "Logout",
+      chatWithUs: "Chat with us",
+      sendRequest: "Send request",
+      chatMessage: "How can we help you?"
     },
     de: {
       dashboard: "Dashboard",
@@ -53,7 +82,10 @@ const Navbar = () => {
       login: "Anmelden",
       register: "Registrieren",
       profile: "Profil",
-      logout: "Abmelden"
+      logout: "Abmelden",
+      chatWithUs: "Chatte mit uns",
+      sendRequest: "Anfrage senden",
+      chatMessage: "Wie können wir Ihnen helfen?"
     }
   };
 
@@ -80,6 +112,10 @@ const Navbar = () => {
           <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
             {t.pricing}
           </Link>
+
+          <Button variant="outline" onClick={() => setIsChatOpen(true)}>
+            {t.chatWithUs}
+          </Button>
 
           <LanguageSwitcher />
           
@@ -117,6 +153,22 @@ const Navbar = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.chatMessage}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder={t.chatMessage}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <Button onClick={handleChatRequest}>{t.sendRequest}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 };

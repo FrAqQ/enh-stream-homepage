@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -28,6 +27,15 @@ interface Message {
   read: boolean;
 }
 
+interface ChatRequest {
+  id: string;
+  user_id: string;
+  status: string;
+  created_at: string;
+  completed_at?: string;
+  completed_by?: string;
+}
+
 const AdminDashboard = () => {
   const { user } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -38,6 +46,7 @@ const AdminDashboard = () => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -90,9 +99,25 @@ const AdminDashboard = () => {
       )
       .subscribe();
 
+    // Echtzeit-Updates für Chat-Anfragen
+    const chatRequestChannel = supabase.channel('chat-requests')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_requests',
+        },
+        () => {
+          loadChatRequests();
+        }
+      )
+      .subscribe();
+
     return () => {
       channel.unsubscribe();
       messageChannel.unsubscribe();
+      chatRequestChannel.unsubscribe();
     };
   }, [user, selectedChat]);
 
@@ -118,6 +143,28 @@ const AdminDashboard = () => {
     }
 
     setMessages(data || []);
+  };
+
+  const loadChatRequests = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('chat_requests')
+      .select(`
+        *,
+        profiles:user_id (
+          email
+        )
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error('Fehler beim Laden der Chat-Anfragen');
+      return;
+    }
+
+    setChatRequests(data || []);
   };
 
   const handleAddAdmin = async () => {
@@ -175,6 +222,25 @@ const AdminDashboard = () => {
       await loadMessages(selectedChat);
     } catch (error) {
       toast.error('Fehler beim Senden der Nachricht');
+    }
+  };
+
+  const handleChatRequest = async (requestId: string, userId: string) => {
+    try {
+      await supabase
+        .from('chat_requests')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          completed_by: user?.id
+        })
+        .eq('id', requestId);
+
+      setSelectedChat(userId);
+      loadChatRequests();
+      toast.success('Chat-Anfrage angenommen');
+    } catch (error) {
+      toast.error('Fehler beim Bearbeiten der Chat-Anfrage');
     }
   };
 
@@ -317,6 +383,41 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Chat-Anfragen */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Chat-Anfragen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {chatRequests.length === 0 ? (
+              <p className="text-center text-muted-foreground">
+                Keine offenen Chat-Anfragen
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {chatRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {request.profiles?.email}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(request.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button onClick={() => handleChatRequest(request.id, request.user_id)}>
+                      Chat öffnen
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Allgemeine Benutzerübersicht */}
         <Card>
