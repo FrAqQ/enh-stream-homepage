@@ -2,9 +2,17 @@
 from flask import Blueprint, request, jsonify
 import requests
 import psutil
+from flask_cors import CORS
 
 # Blueprint für API-Routen erstellen
 api_blueprint = Blueprint('api', __name__)
+CORS(api_blueprint, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Accept"]
+    }
+})
 
 @api_blueprint.route('/status', methods=['GET'])
 def get_status():
@@ -29,11 +37,18 @@ def get_status():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@api_blueprint.route('/add_viewer', methods=['POST'])
+@api_blueprint.route('/add_viewer', methods=['POST', 'OPTIONS'])
 def add_viewer():
     """
     Leitet die Anfrage an main_gui.py weiter, um einen Viewer hinzuzufügen.
     """
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        return response
+
     data = request.json
     user_id = data.get('user_id')
     twitch_url = data.get('twitch_url')
@@ -55,11 +70,18 @@ def add_viewer():
     except requests.exceptions.RequestException as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@api_blueprint.route('/set_url', methods=['POST'])
+@api_blueprint.route('/set_url', methods=['POST', 'OPTIONS'])
 def set_url():
     """
     Leitet die Anfrage an main_gui.py weiter, um die Twitch-URL zu setzen.
     """
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        return response
+
     data = request.json
     user_id = data.get('user_id')
     twitch_url = data.get('twitch_url')
@@ -79,11 +101,18 @@ def set_url():
     except requests.exceptions.RequestException as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@api_blueprint.route('/remove_viewer', methods=['POST'])
+@api_blueprint.route('/remove_viewer', methods=['POST', 'OPTIONS'])
 def remove_viewer():
     """
     Entfernt Viewer.
     """
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        return response
+
     data = request.json
     user_id = data.get("user_id")
     twitch_url = data.get("twitch_url")
@@ -107,3 +136,4 @@ def remove_viewer():
         return jsonify(response.json())
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
