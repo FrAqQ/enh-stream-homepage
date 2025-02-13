@@ -1,3 +1,5 @@
+
+import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,10 +18,28 @@ import { useLanguage } from "@/lib/LanguageContext";
 const Navbar = () => {
   const { user } = useUser();
   const { language } = useLanguage();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+      
+      setIsAdmin(profile?.is_admin || false);
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   const translations = {
     en: {
       dashboard: "Dashboard",
+      admin: "Admin Dashboard",
       pricing: "Pricing",
       login: "Login",
       register: "Register",
@@ -28,6 +48,7 @@ const Navbar = () => {
     },
     de: {
       dashboard: "Dashboard",
+      admin: "Admin Dashboard",
       pricing: "Preise",
       login: "Anmelden",
       register: "Registrieren",
@@ -49,6 +70,12 @@ const Navbar = () => {
           <Link to="/dashboard" className="text-foreground/80 hover:text-foreground">
             {t.dashboard}
           </Link>
+          
+          {isAdmin && (
+            <Link to="/admin" className="text-foreground/80 hover:text-foreground">
+              {t.admin}
+            </Link>
+          )}
           
           <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
             {t.pricing}

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT,
     plan TEXT DEFAULT 'Free',
     follower_plan TEXT DEFAULT 'None',
+    is_admin BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -16,6 +17,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Trigger can insert user profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
 
 -- Create policies
 CREATE POLICY "Users can view own profile" 
@@ -33,6 +35,11 @@ CREATE POLICY "Trigger can insert user profiles"
     FOR INSERT
     TO service_role
     WITH CHECK (true);
+
+CREATE POLICY "Admins can view all profiles"
+    ON public.profiles FOR SELECT
+    TO authenticated
+    USING (is_admin = true);
 
 -- Create a trigger to set updated_at on row update
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -84,3 +91,9 @@ INSERT INTO public.profiles (id, email, plan)
 SELECT id, email, 'Free'
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
+
+-- Set specific user as admin
+UPDATE public.profiles 
+SET is_admin = true 
+WHERE email = 'tino@strasser.exchange';
+
