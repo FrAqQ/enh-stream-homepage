@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { API_ENDPOINTS, Endpoint } from "@/config/apiEndpoints";
+import { API_ENDPOINTS, Endpoint, EndpointStatus } from "@/config/apiEndpoints";
 
 interface Profile {
   id: string;
@@ -48,30 +47,6 @@ interface ChatRequest {
   };
 }
 
-interface SystemMetrics {
-  cpu: number;
-  memory: {
-    total: number;
-    used: number;
-    free: number;
-    percent: number;
-  };
-}
-
-interface EndpointStatus {
-  isOnline: boolean;
-  lastChecked: Date;
-  apiStatus: boolean;
-  isSecure: boolean;
-  pingStatus: boolean;
-  systemMetrics: SystemMetrics | null;
-}
-
-interface EndpointWithStatus extends Endpoint {
-  host: string;
-  status: EndpointStatus;
-}
-
 const AVAILABLE_PLANS = [
   "Free",
   "Twitch Starter",
@@ -87,6 +62,28 @@ const FOLLOWER_PLANS = [
   "Pro Followers",
   "Ultimate Followers"
 ];
+
+interface EndpointStatus {
+  isOnline: boolean;
+  lastChecked: Date;
+  apiStatus: boolean;
+  isSecure: boolean;
+  pingStatus: boolean;
+  systemMetrics: {
+    cpu: number;
+    memory: {
+      total: number;
+      used: number;
+      free: number;
+      percent: number;
+    };
+  } | null;
+}
+
+interface EndpointWithStatus extends Endpoint {
+  host: string;
+  status: EndpointStatus;
+}
 
 const AdminDashboard = () => {
   const { user } = useUser();
@@ -107,8 +104,7 @@ const AdminDashboard = () => {
         lastChecked: new Date(),
         apiStatus: false,
         isSecure: false,
-        pingStatus: false,
-        systemMetrics: null  // Hier fehlte der systemMetrics-Wert
+        pingStatus: false
       }
     }))
   );
@@ -369,8 +365,7 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: false,
           isSecure: false,
-          pingStatus: false,
-          systemMetrics: null  // Hier fehlte der systemMetrics-Wert
+          pingStatus: false
         }
       };
       
