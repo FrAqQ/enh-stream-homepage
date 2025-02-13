@@ -20,8 +20,8 @@ DROP POLICY IF EXISTS "Trigger can insert user profiles" ON public.profiles;
 -- Create policies
 CREATE POLICY "Users can view own profile" 
     ON public.profiles FOR SELECT 
-    TO authenticated, anon
-    USING (true);
+    TO authenticated
+    USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile" 
     ON public.profiles FOR UPDATE 
@@ -31,7 +31,7 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Trigger can insert user profiles"
     ON public.profiles
     FOR INSERT
-    TO authenticated, anon
+    TO service_role
     WITH CHECK (true);
 
 -- Create a trigger to set updated_at on row update
@@ -51,23 +51,33 @@ CREATE OR REPLACE TRIGGER profiles_updated_at
 -- Create a function to handle new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    profile_exists boolean;
 BEGIN
-    INSERT INTO public.profiles (id, email, plan)
-    VALUES (NEW.id, NEW.email, 'Free');
+    SELECT EXISTS (
+        SELECT 1 FROM public.profiles WHERE id = NEW.id
+    ) INTO profile_exists;
+    
+    IF NOT profile_exists THEN
+        INSERT INTO public.profiles (id, email, plan)
+        VALUES (NEW.id, NEW.email, 'Free');
+    END IF;
+    
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create a trigger for new user signup
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_new_user();
 
 -- Grant necessary permissions
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON public.profiles TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT SELECT, UPDATE ON public.profiles TO authenticated;
+GRANT EXECUTE ON FUNCTION public.handle_new_user TO service_role;
 
 -- Backfill existing users
 INSERT INTO public.profiles (id, email, plan)
