@@ -34,6 +34,9 @@ interface ChatRequest {
   created_at: string;
   completed_at?: string;
   completed_by?: string;
+  profiles?: {
+    email: string;
+  };
 }
 
 const AdminDashboard = () => {
