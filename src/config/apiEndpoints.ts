@@ -35,3 +35,6 @@ export const getNextEndpoint = () => {
   currentEndpointIndex = (currentEndpointIndex + 1) % API_ENDPOINTS.length;
   return endpoint;
 };
+
+// Neue Funktion zum Überprüfen aller Endpoints
+export const getAllEndpoints = () => API_ENDPOINTS;

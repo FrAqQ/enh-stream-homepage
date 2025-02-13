@@ -377,14 +377,15 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
+        console.log(`Checking endpoint health for ${endpoint.host}...`);
+        
         const checkPing = async () => {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
             
-            const result = await fetch(`http://${endpoint.host}`, {
-              method: 'HEAD',
-              mode: 'no-cors',
+            const result = await fetch(`http://${endpoint.host}:5000/status`, {
+              method: 'GET',
               signal: controller.signal
             }).then(() => {
               clearTimeout(timeoutId);
@@ -395,9 +396,8 @@ const AdminDashboard = () => {
               const httpsController = new AbortController();
               const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
               
-              return fetch(`https://${endpoint.host}`, {
-                method: 'HEAD',
-                mode: 'no-cors',
+              return fetch(`https://${endpoint.host}:5000/status`, {
+                method: 'GET',
                 signal: httpsController.signal
               }).then(() => {
                 clearTimeout(httpsTimeoutId);
@@ -415,16 +415,32 @@ const AdminDashboard = () => {
         };
 
         const pingResult = await checkPing();
+        console.log(`Ping result for ${endpoint.host}:`, pingResult);
 
         const fetchSystemMetrics = async () => {
           try {
-            const response = await fetch(`http://${endpoint.host}/status`);
+            console.log(`Fetching system metrics for ${endpoint.host}...`);
+            const response = await fetch(`https://${endpoint.host}:5000/status`);
             if (response.ok) {
-              return await response.json();
+              const data = await response.json();
+              console.log(`System metrics for ${endpoint.host}:`, data);
+              return data;
             }
+            console.log(`Failed to fetch metrics for ${endpoint.host}`);
             return null;
           } catch (error) {
-            console.error('Error fetching system metrics:', error);
+            console.error(`Error fetching system metrics for ${endpoint.host}:`, error);
+            try {
+              // Fallback to HTTP if HTTPS fails
+              const response = await fetch(`http://${endpoint.host}:5000/status`);
+              if (response.ok) {
+                const data = await response.json();
+                console.log(`System metrics for ${endpoint.host} (HTTP):`, data);
+                return data;
+              }
+            } catch (httpError) {
+              console.error(`HTTP fallback failed for ${endpoint.host}:`, httpError);
+            }
             return null;
           }
         };
@@ -437,19 +453,25 @@ const AdminDashboard = () => {
         let isSecure = false;
 
         try {
-          await fetch(apiUrlHttps);
-          apiResult = true;
+          const response = await fetch(apiUrlHttps);
+          apiResult = response.status !== 404;
           isSecure = true;
         } catch (httpsError) {
           try {
-            await fetch(apiUrlHttp);
-            apiResult = true;
+            const response = await fetch(apiUrlHttp);
+            apiResult = response.status !== 404;
             isSecure = false;
           } catch (httpError) {
-            apiResult = true;
+            apiResult = false;
             isSecure = false;
           }
         }
+
+        console.log(`Status check complete for ${endpoint.host}:`, {
+          apiResult,
+          isSecure,
+          systemMetrics
+        });
 
         return {
           isOnline: pingResult || apiResult,
@@ -473,16 +495,34 @@ const AdminDashboard = () => {
     };
 
     const updateEndpointStatuses = async () => {
+      console.log('Updating endpoint statuses...');
+      const currentEndpoints = API_ENDPOINTS.map(host => ({
+        host,
+        status: {
+          isOnline: false,
+          lastChecked: new Date(),
+          apiStatus: false,
+          isSecure: false,
+          pingStatus: false,
+          systemMetrics: null
+        }
+      }));
+
       const updatedEndpoints = await Promise.all(
-        endpoints.map(async (endpoint) => ({
+        currentEndpoints.map(async (endpoint) => ({
           ...endpoint,
           status: await checkEndpointHealth(endpoint)
         }))
       );
+
+      console.log('Updated endpoints:', updatedEndpoints);
       setEndpoints(updatedEndpoints);
     };
 
+    // Initial update
     updateEndpointStatuses();
+    
+    // Update every 30 seconds
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
