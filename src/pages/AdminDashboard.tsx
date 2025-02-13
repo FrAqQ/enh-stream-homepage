@@ -394,7 +394,11 @@ const AdminDashboard = () => {
 
         const pingResult = await fetchWithTimeout(`https://${endpoint.host}`, { 
           mode: 'no-cors'
-        }).then(() => true).catch(() => false);
+        }).then(() => true).catch(() => 
+          fetchWithTimeout(`http://${endpoint.host}`, { 
+            mode: 'no-cors'
+          }).then(() => true).catch(() => false)
+        );
 
         const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
         const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
