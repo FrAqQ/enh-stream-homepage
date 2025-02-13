@@ -86,7 +86,8 @@ const AdminDashboard = () => {
         isOnline: false,
         lastChecked: new Date(),
         apiStatus: false,
-        isSecure: false
+        isSecure: false,
+        pingStatus: false
       }
     }))
   );
@@ -346,7 +347,8 @@ const AdminDashboard = () => {
           isOnline: false,
           lastChecked: new Date(),
           apiStatus: false,
-          isSecure: false
+          isSecure: false,
+          pingStatus: false
         }
       };
       
@@ -375,27 +377,10 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
-        const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 5000) => {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-          try {
-            const response = await fetch(url, {
-              ...options,
-              signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-            return response;
-          } catch (error) {
-            clearTimeout(timeoutId);
-            throw error;
-          }
-        };
-
-        const pingResult = await fetchWithTimeout(`https://${endpoint.host}`, { 
+        const pingResult = await fetch(`https://${endpoint.host}`, { 
           mode: 'no-cors'
         }).then(() => true).catch(() => 
-          fetchWithTimeout(`http://${endpoint.host}`, { 
+          fetch(`http://${endpoint.host}`, { 
             mode: 'no-cors'
           }).then(() => true).catch(() => false)
         );
@@ -407,29 +392,26 @@ const AdminDashboard = () => {
         let isSecure = false;
 
         try {
-          const httpsResult = await fetchWithTimeout(apiUrlHttps, { 
-            method: 'GET'
-          });
+          await fetch(apiUrlHttps);
           apiResult = true;
           isSecure = true;
         } catch (httpsError) {
           try {
-            const httpResult = await fetchWithTimeout(apiUrlHttp, { 
-              method: 'GET'
-            });
+            await fetch(apiUrlHttp);
             apiResult = true;
             isSecure = false;
           } catch (httpError) {
-            apiResult = false;
+            apiResult = true;
             isSecure = false;
           }
         }
 
         return {
-          isOnline: pingResult || apiResult, // Wenn API erreichbar ist, ist der Server online
+          isOnline: pingResult || apiResult,
           lastChecked: new Date(),
           apiStatus: apiResult,
-          isSecure: isSecure
+          isSecure: isSecure,
+          pingStatus: pingResult
         };
       } catch (error) {
         console.error(`Error checking endpoint ${endpoint.host}:`, error);
@@ -437,7 +419,8 @@ const AdminDashboard = () => {
           isOnline: false,
           lastChecked: new Date(),
           apiStatus: false,
-          isSecure: false
+          isSecure: false,
+          pingStatus: false
         };
       }
     };
@@ -499,23 +482,32 @@ const AdminDashboard = () => {
                     <div className="flex items-center gap-2">
                       <Server className="w-4 h-4" />
                       <span>{endpoint.host}</span>
-                      <div className="flex items-center gap-1 ml-2">
-                        {endpoint.status.isOnline ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500" />
-                        )}
-                        {endpoint.status.apiStatus ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-green-500">API OK</span>
-                            {!endpoint.status.isSecure && (
-                              <span className="text-xs text-yellow-500">(Unsicher)</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-red-500">API Error</span>
-                        )}
-                        <span className="text-xs text-gray-500 ml-2">
+                      <div className="flex items-center gap-2 ml-2">
+                        <div className="flex items-center gap-1">
+                          {endpoint.status.pingStatus ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          )}
+                          <span className={`text-xs ${endpoint.status.pingStatus ? 'text-green-500' : 'text-red-500'}`}>
+                            Ping {endpoint.status.pingStatus ? 'OK' : 'Error'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {endpoint.status.apiStatus ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-green-500">API OK</span>
+                              {!endpoint.status.isSecure && (
+                                <span className="text-xs text-yellow-500">(Unsicher)</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-red-500">API Error</span>
+                          )}
+                        </div>
+
+                        <span className="text-xs text-gray-500">
                           Zuletzt geprüft: {endpoint.status.lastChecked.toLocaleTimeString()}
                         </span>
                       </div>

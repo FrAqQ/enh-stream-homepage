@@ -4,6 +4,7 @@ export interface EndpointStatus {
   lastChecked: Date;
   apiStatus: boolean;
   isSecure: boolean;
+  pingStatus: boolean;
 }
 
 export interface Endpoint {
