@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,25 +23,36 @@ const Register = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin + '/login'
+        }
       });
 
       if (error) {
-        console.error("Registration error:", error);
+        console.error("Registration error details:", error);
         toast({
           title: "Registrierung fehlgeschlagen",
-          description: error.message,
+          description: `Fehler: ${error.message}`,
           variant: "destructive"
         });
         return;
       }
 
-      console.log("Registration successful:", data);
+      if (data?.user) {
+        console.log("Registration successful, user data:", data.user);
+        toast({
+          title: "Erfolg",
+          description: "Registrierung erfolgreich! Sie können sich jetzt einloggen.",
+        });
+        navigate("/login");
+      }
+    } catch (err) {
+      console.error("Unexpected error during registration:", err);
       toast({
-        title: "Erfolg",
-        description: "Registrierung erfolgreich! Sie können sich jetzt einloggen.",
+        title: "Unerwarteter Fehler",
+        description: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+        variant: "destructive"
       });
-      
-      navigate("/login");
     } finally {
       setIsLoading(false);
     }
