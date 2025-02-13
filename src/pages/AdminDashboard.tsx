@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { API_ENDPOINTS, Endpoint, EndpointStatus } from "@/config/apiEndpoints";
+import { API_ENDPOINTS, updateEndpoints } from "@/config/apiEndpoints";
 
 interface Profile {
   id: string;
@@ -348,11 +348,15 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: false,
           isSecure: false,
-          pingStatus: false
+          pingStatus: false,
+          systemMetrics: null
         }
       };
       
-      setEndpoints([...endpoints, newEndpointWithStatus]);
+      const updatedEndpoints = [...endpoints, newEndpointWithStatus];
+      setEndpoints(updatedEndpoints);
+      // Aktualisiere die API_ENDPOINTS
+      updateEndpoints(updatedEndpoints.map(e => e.host));
       setNewEndpoint('');
       toast.success('Endpunkt erfolgreich hinzugefügt');
     } catch (error) {
@@ -368,6 +372,8 @@ const AdminDashboard = () => {
         return;
       }
       setEndpoints(updatedEndpoints);
+      // Aktualisiere die API_ENDPOINTS
+      updateEndpoints(updatedEndpoints.map(e => e.host));
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
       toast.error('Fehler beim Entfernen des Endpunkts');
