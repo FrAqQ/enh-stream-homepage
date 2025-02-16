@@ -424,9 +424,27 @@ const AdminDashboard = () => {
 
         const fetchSystemMetrics = async () => {
           try {
-            const response = await fetch(`http://${endpoint.host}/status`);
-            if (response.ok) {
-              return await response.json();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+            const response = await fetch(`https://${endpoint.host}/status`, {
+              method: 'GET',
+              mode: 'no-cors',
+              signal: controller.signal
+            }).catch(async () => {
+              clearTimeout(timeoutId);
+              return fetch(`http://${endpoint.host}/status`, {
+                method: 'GET',
+                mode: 'no-cors',
+                signal: controller.signal
+              });
+            });
+
+            clearTimeout(timeoutId);
+            
+            if (response && response.ok) {
+              const data = await response.json();
+              return data;
             }
             return null;
           } catch (error) {
@@ -435,7 +453,7 @@ const AdminDashboard = () => {
           }
         };
 
-        const systemMetrics = await fetchSystemMetrics();
+        const systemMetrics = await fetchSystemMetrics().catch(() => null);
         
         return {
           ...endpoint,
