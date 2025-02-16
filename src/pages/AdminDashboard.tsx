@@ -79,18 +79,19 @@ const AdminDashboard = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
-  const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(
-    API_ENDPOINTS.map(host => ({
+  const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(() => {
+    return API_ENDPOINTS.map(host => ({
       host,
       status: {
         isOnline: false,
         lastChecked: new Date(),
         apiStatus: false,
         isSecure: false,
-        pingStatus: false
+        pingStatus: false,
+        systemMetrics: null
       }
-    }))
-  );
+    }));
+  });
   const [newEndpoint, setNewEndpoint] = useState('');
 
   useEffect(() => {
@@ -386,7 +387,7 @@ const AdminDashboard = () => {
         const checkPing = async () => {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
             
             const result = await fetch(`http://${endpoint.host}`, {
               method: 'HEAD',
@@ -397,7 +398,6 @@ const AdminDashboard = () => {
               return true;
             }).catch(async () => {
               clearTimeout(timeoutId);
-              // Wenn HTTP fehlschlägt, versuche HTTPS
               const httpsController = new AbortController();
               const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
               
@@ -436,54 +436,37 @@ const AdminDashboard = () => {
         };
 
         const systemMetrics = await fetchSystemMetrics();
-        const apiUrlHttps = `https://${endpoint.host}:5000/add_viewer`;
-        const apiUrlHttp = `http://${endpoint.host}:5000/add_viewer`;
         
-        let apiResult = false;
-        let isSecure = false;
-
-        try {
-          await fetch(apiUrlHttps);
-          apiResult = true;
-          isSecure = true;
-        } catch (httpsError) {
-          try {
-            await fetch(apiUrlHttp);
-            apiResult = true;
-            isSecure = false;
-          } catch (httpError) {
-            apiResult = true;
-            isSecure = false;
-          }
-        }
-
         return {
-          isOnline: pingResult || apiResult,
-          lastChecked: new Date(),
-          apiStatus: apiResult,
-          isSecure: isSecure,
-          pingStatus: pingResult,
-          systemMetrics
+          ...endpoint,
+          status: {
+            isOnline: pingResult,
+            lastChecked: new Date(),
+            apiStatus: pingResult,
+            isSecure: false,
+            pingStatus: pingResult,
+            systemMetrics
+          }
         };
       } catch (error) {
         console.error(`Error checking endpoint ${endpoint.host}:`, error);
         return {
-          isOnline: false,
-          lastChecked: new Date(),
-          apiStatus: false,
-          isSecure: false,
-          pingStatus: false,
-          systemMetrics: null
+          ...endpoint,
+          status: {
+            isOnline: false,
+            lastChecked: new Date(),
+            apiStatus: false,
+            isSecure: false,
+            pingStatus: false,
+            systemMetrics: null
+          }
         };
       }
     };
 
     const updateEndpointStatuses = async () => {
       const updatedEndpoints = await Promise.all(
-        endpoints.map(async (endpoint) => ({
-          ...endpoint,
-          status: await checkEndpointHealth(endpoint)
-        }))
+        endpoints.map(async endpoint => checkEndpointHealth(endpoint))
       );
       setEndpoints(updatedEndpoints);
     };
