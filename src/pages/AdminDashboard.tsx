@@ -221,7 +221,8 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: false,
           isSecure: false,
-          pingStatus: false
+          pingStatus: false,
+          systemMetrics: null
         }
       };
       
