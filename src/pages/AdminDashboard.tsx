@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -26,7 +25,7 @@ interface EndpointWithStatus {
     apiStatus: boolean;
     isSecure: boolean;
     pingStatus: boolean;
-    systemMetrics: any; // explizit als optional definiert
+    systemMetrics: any;
   };
 }
 
@@ -67,7 +66,7 @@ const AdminDashboard = () => {
         apiStatus: false,
         isSecure: false,
         pingStatus: false,
-        systemMetrics: null // Hinzugefügt: Initiale Definition von systemMetrics
+        systemMetrics: null
       }
     }))
   );
@@ -283,7 +282,7 @@ const AdminDashboard = () => {
             apiStatus: false,
             isSecure: false,
             pingStatus: false,
-            systemMetrics: null // Hinzugefügt: Konsistente Definition
+            systemMetrics: null
           }
         })));
       }
@@ -342,7 +341,7 @@ const AdminDashboard = () => {
             apiStatus: false,
             isSecure: false,
             pingStatus: false,
-            systemMetrics: null  // Hinzugefügt: systemMetrics auch im Fehlerfall
+            systemMetrics: null
           }
         };
       }
