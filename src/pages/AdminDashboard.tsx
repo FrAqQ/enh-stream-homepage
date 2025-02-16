@@ -311,7 +311,7 @@ const AdminDashboard = () => {
         let data = { 
           status: 'ok', 
           ping: 0,
-          metrics: undefined
+          metrics: null
         };
         
         try {
@@ -337,9 +337,12 @@ const AdminDashboard = () => {
         return {
           ...endpoint,
           status: {
-            ...endpoint.status,
             isOnline: false,
-            lastChecked: new Date()
+            lastChecked: new Date(),
+            apiStatus: false,
+            isSecure: false,
+            pingStatus: false,
+            systemMetrics: null  // Hinzugefügt: systemMetrics auch im Fehlerfall
           }
         };
       }
