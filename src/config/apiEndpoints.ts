@@ -22,11 +22,7 @@ export interface Endpoint {
   status: EndpointStatus;
 }
 
-let API_ENDPOINTS: string[] = [
-  "v220250171253310506.hotsrv.de",
-  "v2202501252999311567.powersrv.de",
-  "v2202502252999313946.bestsrv.de"
-];
+let API_ENDPOINTS: string[] = [];
 
 let currentEndpointIndex = 0;
 
@@ -53,6 +49,9 @@ export const updateEndpoints = async (newEndpoints: string[]) => {
 };
 
 export const getNextEndpoint = () => {
+  if (API_ENDPOINTS.length === 0) {
+    throw new Error('No endpoints configured');
+  }
   const endpoint = API_ENDPOINTS[currentEndpointIndex];
   currentEndpointIndex = (currentEndpointIndex + 1) % API_ENDPOINTS.length;
   console.log("Getting next endpoint:", endpoint, "Index:", currentEndpointIndex);
@@ -60,4 +59,3 @@ export const getNextEndpoint = () => {
 };
 
 export { API_ENDPOINTS };
-
