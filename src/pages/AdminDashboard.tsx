@@ -387,14 +387,13 @@ const AdminDashboard = () => {
         const checkPing = async () => {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             
             console.log(`Checking ping for ${endpoint.host}:5000...`);
             
-            // Zuerst HTTPS versuchen
             try {
               const response = await fetch(`https://${endpoint.host}:5000/status`, {
-                method: 'HEAD',
+                method: 'GET',
                 mode: 'no-cors',
                 signal: controller.signal,
                 credentials: 'omit'
@@ -404,26 +403,8 @@ const AdminDashboard = () => {
               return true;
             } catch (error) {
               clearTimeout(timeoutId);
-              console.log(`HTTPS ping failed for ${endpoint.host}:5000, trying HTTP...`);
-              
-              const httpController = new AbortController();
-              const httpTimeoutId = setTimeout(() => httpController.abort(), 2000);
-              
-              try {
-                await fetch(`http://${endpoint.host}:5000/status`, {
-                  method: 'HEAD',
-                  mode: 'no-cors',
-                  signal: httpController.signal,
-                  credentials: 'omit'
-                });
-                clearTimeout(httpTimeoutId);
-                console.log(`HTTP ping successful for ${endpoint.host}:5000`);
-                return true;
-              } catch (httpError) {
-                clearTimeout(httpTimeoutId);
-                console.log(`HTTP ping failed for ${endpoint.host}:5000`, httpError);
-                return false;
-              }
+              console.log(`HTTPS ping failed for ${endpoint.host}:5000`, error);
+              return false;
             }
           } catch (error) {
             console.error(`Error during ping check for ${endpoint.host}:5000:`, error);
@@ -442,7 +423,8 @@ const AdminDashboard = () => {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json'
-              }
+              },
+              credentials: 'omit'
             });
             if (metricsResponse.ok) {
               systemMetrics = await metricsResponse.json();
