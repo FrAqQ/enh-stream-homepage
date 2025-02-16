@@ -434,6 +434,24 @@ const AdminDashboard = () => {
         const pingResult = await checkPing();
         console.log(`Ping result for ${endpoint.host}:`, pingResult);
         
+        // Systemmetriken abrufen, wenn der Server erreichbar ist
+        let systemMetrics = null;
+        if (pingResult) {
+          try {
+            const metricsResponse = await fetch(`https://${endpoint.host}:5000/metrics`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            if (metricsResponse.ok) {
+              systemMetrics = await metricsResponse.json();
+            }
+          } catch (error) {
+            console.error(`Failed to fetch metrics for ${endpoint.host}:5000:`, error);
+          }
+        }
+        
         return {
           ...endpoint,
           status: {
@@ -442,7 +460,7 @@ const AdminDashboard = () => {
             apiStatus: pingResult,
             isSecure: true,
             pingStatus: pingResult,
-            systemMetrics: null
+            systemMetrics
           }
         };
       } catch (error) {

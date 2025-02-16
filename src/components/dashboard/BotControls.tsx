@@ -125,7 +125,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         twitch_url: streamUrl,
         viewer_count: Math.abs(viewerCount),
         api_host: currentHost,
-        retriesLeft
+        retriesLeft,
+        url: apiUrl
       });
       
       const response = await fetch(apiUrl, {
