@@ -389,75 +389,47 @@ const AdminDashboard = () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 2000);
             
-            const result = await fetch(`https://${endpoint.host}:5000`, {
+            console.log(`Checking ping for ${endpoint.host}:5000...`);
+            
+            const result = await fetch(`https://${endpoint.host}:5000/status`, {
               method: 'HEAD',
               mode: 'no-cors',
               signal: controller.signal
             }).then(() => {
               clearTimeout(timeoutId);
+              console.log(`HTTPS ping successful for ${endpoint.host}:5000`);
               return true;
             }).catch(async () => {
               clearTimeout(timeoutId);
+              console.log(`HTTPS ping failed for ${endpoint.host}:5000, trying HTTP...`);
+              
               const httpsController = new AbortController();
               const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
               
-              return fetch(`http://${endpoint.host}:5000`, {
+              return fetch(`http://${endpoint.host}:5000/status`, {
                 method: 'HEAD',
                 mode: 'no-cors',
                 signal: httpsController.signal
               }).then(() => {
                 clearTimeout(httpsTimeoutId);
+                console.log(`HTTP ping successful for ${endpoint.host}:5000`);
                 return true;
-              }).catch(() => {
+              }).catch((error) => {
                 clearTimeout(httpsTimeoutId);
+                console.log(`HTTP ping failed for ${endpoint.host}:5000`, error);
                 return false;
               });
             });
 
             return result;
-          } catch {
+          } catch (error) {
+            console.error(`Error during ping check for ${endpoint.host}:5000:`, error);
             return false;
           }
         };
 
         const pingResult = await checkPing();
-
-        const fetchSystemMetrics = async () => {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-            const response = await fetch(`https://${endpoint.host}:5000/status`, {
-              method: 'GET',
-              mode: 'no-cors',
-              signal: controller.signal
-            }).catch(async () => {
-              clearTimeout(timeoutId);
-              return fetch(`http://${endpoint.host}:5000/status`, {
-                method: 'GET',
-                mode: 'no-cors',
-                signal: controller.signal
-              });
-            });
-
-            clearTimeout(timeoutId);
-            
-            if (response && response.ok) {
-              const data = await response.json();
-              return data;
-            }
-            return null;
-          } catch (error) {
-            console.error('Error fetching system metrics:', error);
-            return null;
-          }
-        };
-
-        const systemMetrics = await fetchSystemMetrics().catch(() => null);
-        console.log(`Health check result for ${endpoint.host}:`, {
-          pingResult,
-          systemMetrics
-        });
+        console.log(`Ping result for ${endpoint.host}:`, pingResult);
         
         return {
           ...endpoint,
@@ -467,7 +439,7 @@ const AdminDashboard = () => {
             apiStatus: pingResult,
             isSecure: true,
             pingStatus: pingResult,
-            systemMetrics
+            systemMetrics: null
           }
         };
       } catch (error) {
@@ -496,6 +468,7 @@ const AdminDashboard = () => {
     };
 
     updateEndpointStatuses();
+    
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);

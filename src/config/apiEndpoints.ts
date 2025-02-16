@@ -22,21 +22,11 @@ export interface Endpoint {
   status: EndpointStatus;
 }
 
-// Initiale Endpunkte aus dem localStorage laden oder Standardwerte verwenden
+// Lösche alte Endpunkte aus dem localStorage beim Start
+localStorage.removeItem('apiEndpoints');
+
+// Initiale Endpunkte setzen
 const getInitialEndpoints = () => {
-  const storedEndpoints = localStorage.getItem('apiEndpoints');
-  if (storedEndpoints) {
-    try {
-      const endpoints = JSON.parse(storedEndpoints);
-      // Überprüfe, ob die gespeicherten Endpunkte gültig sind
-      if (Array.isArray(endpoints) && endpoints.length > 0) {
-        return endpoints;
-      }
-    } catch (error) {
-      console.error('Fehler beim Parsen der gespeicherten Endpunkte:', error);
-    }
-  }
-  // Standardwerte, wenn keine gültigen Endpunkte im localStorage sind
   return ["srv-bot-001.enh.app"];
 };
 
