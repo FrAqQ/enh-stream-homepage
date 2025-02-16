@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -27,6 +26,7 @@ interface EndpointWithStatus {
     apiStatus: boolean;
     isSecure: boolean;
     pingStatus: boolean;
+    systemMetrics: any; // explizit als optional definiert
   };
 }
 
@@ -57,7 +57,6 @@ const AdminDashboard = () => {
   const [newMessage, setNewMessage] = useState('');
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
   
-  // Initialisiere endpoints mit den gespeicherten Werten aus dem localStorage
   const savedEndpoints = JSON.parse(localStorage.getItem('apiEndpoints') || '[]');
   const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(
     savedEndpoints.map((host: string) => ({
@@ -271,7 +270,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Storage Event Listener für Änderungen im localStorage
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'apiEndpoints') {
@@ -293,7 +291,6 @@ const AdminDashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Endpunkt-Gesundheitsprüfung
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
       try {
@@ -309,11 +306,15 @@ const AdminDashboard = () => {
         
         console.log(`Health-Check Response für ${endpoint.host}:`, response.status);
         
-        // Auch wenn wir keine JSON-Antwort bekommen, behandeln wir den Endpunkt als online,
-        // solange wir eine Antwort vom Server erhalten
-        let data = { status: 'ok', ping: 0 };
+        let data = { 
+          status: 'ok', 
+          ping: 0,
+          metrics: undefined
+        };
+        
         try {
-          data = await response.json();
+          const responseData = await response.json();
+          data = { ...data, ...responseData };
         } catch (e) {
           console.log(`Keine JSON-Antwort von ${endpoint.host}, aber Server antwortet`);
         }
@@ -324,7 +325,7 @@ const AdminDashboard = () => {
             isOnline: true,
             lastChecked: new Date(),
             apiStatus: response.status === 200,
-            isSecure: true, // Wenn HTTPS verwendet wird
+            isSecure: true,
             pingStatus: true,
             systemMetrics: data.metrics
           }
