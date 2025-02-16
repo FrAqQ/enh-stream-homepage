@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [currentViewers, setCurrentViewers] = useState(0);
   const { toast } = useToast();
   const { user } = useUser();
-  const [hasShownCertWarning, setHasShownCertWarning] = useState(false);
   const [userPlan, setUserPlan] = useState<string>("Free");
   const { language } = useLanguage();
 
@@ -45,13 +45,11 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       cantRemoveViewers: `You cannot remove ${0} viewers when you only have ${0}`,
       viewerLimitReached: "Viewer limit reached",
       maxViewersAllowed: `Your plan allows a maximum of ${0} viewers`,
-      securityNotice: "Security Notice",
-      certificateWarning: "Please visit https://v220250171253310506.hotsrv.de:5000 directly in your browser, click 'Advanced' and accept the certificate before continuing.",
-      warning: "Warning",
       success: "Success",
       reachIncreased: "Reach successfully increased!",
       viewersRemoved: "Viewers successfully removed!",
       error: "Error",
+      warning: "Warning",
       cooldownActive: "Cooldown Active",
       cooldownMessage: "Please wait 5 seconds before increasing reach further."
     },
@@ -67,13 +65,11 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       cantRemoveViewers: `Sie können nicht ${0} Zuschauer entfernen, wenn Sie nur ${0} haben`,
       viewerLimitReached: "Zuschauerlimit erreicht",
       maxViewersAllowed: `Ihr Plan erlaubt maximal ${0} Zuschauer`,
-      securityNotice: "Sicherheitshinweis",
-      certificateWarning: "Bitte besuchen Sie https://v220250171253310506.hotsrv.de:5000 direkt in Ihrem Browser, klicken Sie auf 'Erweitert' und akzeptieren Sie das Zertifikat, bevor Sie fortfahren.",
-      warning: "Warnung",
       success: "Erfolgreich",
       reachIncreased: "Reichweite erfolgreich erhöht!",
       viewersRemoved: "Zuschauer erfolgreich entfernt!",
       error: "Fehler",
+      warning: "Warnung",
       cooldownActive: "Cooldown Aktiv",
       cooldownMessage: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen."
     }
@@ -187,16 +183,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
 
     try {
-      if (!hasShownCertWarning) {
-        toast({
-          title: t.securityNotice,
-          description: t.certificateWarning,
-          duration: 10000,
-          variant: "default",
-        });
-        setHasShownCertWarning(true);
-      }
-
       const success = await tryRequest(viewerCount);
       
       if (success) {
