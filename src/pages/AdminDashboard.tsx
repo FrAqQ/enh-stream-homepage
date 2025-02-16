@@ -329,7 +329,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleAddEndpoint = () => {
+  const handleAddEndpoint = async () => {
     if (!newEndpoint.trim()) {
       toast.error('Bitte geben Sie einen Endpunkt ein');
       return;
@@ -348,35 +348,34 @@ const AdminDashboard = () => {
           lastChecked: new Date(),
           apiStatus: false,
           isSecure: false,
-          pingStatus: false,
-          systemMetrics: null
+          pingStatus: false
         }
       };
       
       const updatedEndpoints = [...endpoints, newEndpointWithStatus];
+      await updateEndpoints(updatedEndpoints.map(e => e.host));
       setEndpoints(updatedEndpoints);
-      // Aktualisiere die API_ENDPOINTS
-      updateEndpoints(updatedEndpoints.map(e => e.host));
       setNewEndpoint('');
       toast.success('Endpunkt erfolgreich hinzugefügt');
     } catch (error) {
       toast.error('Fehler beim Hinzufügen des Endpunkts');
+      console.error('Error adding endpoint:', error);
     }
   };
 
-  const handleRemoveEndpoint = (host: string) => {
+  const handleRemoveEndpoint = async (host: string) => {
     try {
       const updatedEndpoints = endpoints.filter(e => e.host !== host);
       if (updatedEndpoints.length === 0) {
         toast.error('Es muss mindestens ein Endpunkt vorhanden sein');
         return;
       }
+      await updateEndpoints(updatedEndpoints.map(e => e.host));
       setEndpoints(updatedEndpoints);
-      // Aktualisiere die API_ENDPOINTS
-      updateEndpoints(updatedEndpoints.map(e => e.host));
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
       toast.error('Fehler beim Entfernen des Endpunkts');
+      console.error('Error removing endpoint:', error);
     }
   };
 
