@@ -134,6 +134,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         headers: {
           "Content-Type": "application/json",
         },
+        mode: 'cors',
+        credentials: 'omit',
         body: JSON.stringify({
           user_id: user?.id || "123",
           twitch_url: streamUrl,
@@ -209,7 +211,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         onAdd(viewerCount);
       } else {
         toast({
-          title: "Warnung",
+          title: t.warning,
           description: "Es gab ein Problem bei der Reichweitensteigerung.",
           variant: "destructive",
         });
@@ -221,22 +223,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         message: error instanceof Error ? error.message : String(error)
       });
       
-      let errorMessage = "Fehler bei der Reichweitensteigerung. ";
-      if (error instanceof Error) {
-        if (error.message.includes("NetworkError") || error.message.includes("Failed to fetch")) {
-          errorMessage = "Serververbindung fehlgeschlagen. Bitte:\n" +
-                        "1. Besuchen Sie die API-URL direkt\n" +
-                        "2. Klicken Sie auf 'Erweitert' und 'Risiko akzeptieren'\n" +
-                        "3. Kehren Sie hierher zurück und versuchen Sie es erneut\n" +
-                        "Bei anhaltenden Problemen kontaktieren Sie den Support.";
-        } else {
-          errorMessage += error.message;
-        }
-      }
-
       toast({
-        title: "Fehler",
-        description: errorMessage,
+        title: t.error,
+        description: "Fehler bei der Reichweitensteigerung.",
         variant: "destructive",
       });
     }
