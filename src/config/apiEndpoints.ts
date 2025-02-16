@@ -25,16 +25,31 @@ export interface Endpoint {
 let API_ENDPOINTS: string[] = [
   "v220250171253310506.hotsrv.de",
   "v2202501252999311567.powersrv.de",
-  "v2202502252999313946.bestsrv.de",
-  "srv-bot-001.enh.app",
-  "srv-bot-003.enh.app"
+  "v2202502252999313946.bestsrv.de"
 ];
 
 let currentEndpointIndex = 0;
 
-export const updateEndpoints = (newEndpoints: string[]) => {
-  API_ENDPOINTS = newEndpoints;
-  console.log("API endpoints updated:", API_ENDPOINTS);
+export const updateEndpoints = async (newEndpoints: string[]) => {
+  try {
+    const response = await fetch('/api/update-endpoints', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ endpoints: newEndpoints })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update endpoints file');
+    }
+
+    API_ENDPOINTS = newEndpoints;
+    console.log("API endpoints updated:", API_ENDPOINTS);
+  } catch (error) {
+    console.error("Error updating endpoints:", error);
+    throw error;
+  }
 };
 
 export const getNextEndpoint = () => {

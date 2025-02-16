@@ -1,8 +1,8 @@
-
 from flask import Blueprint, request, jsonify
 import requests
 import psutil
 from flask_cors import CORS
+import os
 
 # Blueprint für API-Routen erstellen
 api_blueprint = Blueprint('api', __name__)
@@ -137,3 +137,39 @@ def remove_viewer():
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@api_blueprint.route('/update-endpoints', methods=['POST'])
+def update_endpoints():
+    """
+    Aktualisiert die API-Endpunkte in der Konfigurationsdatei.
+    """
+    try:
+        data = request.json
+        endpoints = data.get('endpoints')
+        
+        if not endpoints:
+            return jsonify({'status': 'error', 'message': 'Keine Endpunkte angegeben'}), 400
+        
+        # Pfad zur apiEndpoints.ts-Datei
+        file_path = os.path.join(os.path.dirname(__file__), 'src', 'config', 'apiEndpoints.ts')
+        
+        # Lesen Sie den aktuellen Inhalt der Datei
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            
+        # Finden Sie den API_ENDPOINTS Array und ersetzen Sie ihn
+        import re
+        new_endpoints_str = '[\n  "' + '",\n  "'.join(endpoints) + '"\n]'
+        new_content = re.sub(
+            r'let API_ENDPOINTS: string\[\] = \[[\s\S]*?\];',
+            f'let API_ENDPOINTS: string[] = {new_endpoints_str};',
+            content
+        )
+        
+        # Schreiben Sie den neuen Inhalt zurück in die Datei
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(new_content)
+            
+        return jsonify({'status': 'success', 'message': 'Endpunkte erfolgreich aktualisiert'})
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
