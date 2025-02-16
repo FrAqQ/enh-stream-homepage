@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import requests
 import psutil
@@ -35,6 +36,48 @@ def get_status():
             }
         })
     except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@api_blueprint.route('/update-endpoints', methods=['POST'])
+def update_endpoints():
+    """
+    Aktualisiert die API-Endpunkte in der Konfigurationsdatei.
+    """
+    try:
+        data = request.json
+        endpoints = data.get('endpoints')
+        
+        if not endpoints:
+            return jsonify({'status': 'error', 'message': 'Keine Endpunkte angegeben'}), 400
+        
+        # Korrekter absoluter Pfad zur apiEndpoints.ts-Datei
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, 'src', 'config', 'apiEndpoints.ts')
+        
+        print(f"Versuche Datei zu aktualisieren: {file_path}")  # Debug-Ausgabe
+        
+        # Lesen Sie den aktuellen Inhalt der Datei
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            
+        # Finden Sie den API_ENDPOINTS Array und ersetzen Sie ihn
+        import re
+        new_endpoints_str = '[\n  "' + '",\n  "'.join(endpoints) + '"\n]'
+        new_content = re.sub(
+            r'let API_ENDPOINTS: string\[\] = \[[\s\S]*?\];',
+            f'let API_ENDPOINTS: string[] = {new_endpoints_str};',
+            content
+        )
+        
+        # Schreiben Sie den neuen Inhalt zurück in die Datei
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(new_content)
+            
+        print(f"Endpunkte erfolgreich aktualisiert: {endpoints}")  # Debug-Ausgabe
+        return jsonify({'status': 'success', 'message': 'Endpunkte erfolgreich aktualisiert'})
+        
+    except Exception as e:
+        print(f"Fehler beim Aktualisieren der Endpunkte: {str(e)}")  # Debug-Ausgabe
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @api_blueprint.route('/add_viewer', methods=['POST', 'OPTIONS'])
@@ -137,39 +180,3 @@ def remove_viewer():
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@api_blueprint.route('/update-endpoints', methods=['POST'])
-def update_endpoints():
-    """
-    Aktualisiert die API-Endpunkte in der Konfigurationsdatei.
-    """
-    try:
-        data = request.json
-        endpoints = data.get('endpoints')
-        
-        if not endpoints:
-            return jsonify({'status': 'error', 'message': 'Keine Endpunkte angegeben'}), 400
-        
-        # Pfad zur apiEndpoints.ts-Datei
-        file_path = os.path.join(os.path.dirname(__file__), 'src', 'config', 'apiEndpoints.ts')
-        
-        # Lesen Sie den aktuellen Inhalt der Datei
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            
-        # Finden Sie den API_ENDPOINTS Array und ersetzen Sie ihn
-        import re
-        new_endpoints_str = '[\n  "' + '",\n  "'.join(endpoints) + '"\n]'
-        new_content = re.sub(
-            r'let API_ENDPOINTS: string\[\] = \[[\s\S]*?\];',
-            f'let API_ENDPOINTS: string[] = {new_endpoints_str};',
-            content
-        )
-        
-        # Schreiben Sie den neuen Inhalt zurück in die Datei
-        with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(new_content)
-            
-        return jsonify({'status': 'success', 'message': 'Endpunkte erfolgreich aktualisiert'})
-        
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
