@@ -79,8 +79,10 @@ const AdminDashboard = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
+  
+  const savedEndpoints = JSON.parse(localStorage.getItem('apiEndpoints') || '[]');
   const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(
-    API_ENDPOINTS.map(host => ({
+    savedEndpoints.map((host: string) => ({
       host,
       status: {
         isOnline: false,
@@ -378,6 +380,27 @@ const AdminDashboard = () => {
       console.error('Error removing endpoint:', error);
     }
   };
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'apiEndpoints') {
+        const newEndpoints = JSON.parse(e.newValue || '[]');
+        setEndpoints(newEndpoints.map((host: string) => ({
+          host,
+          status: {
+            isOnline: false,
+            lastChecked: new Date(),
+            apiStatus: false,
+            isSecure: false,
+            pingStatus: false
+          }
+        })));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     const checkEndpointHealth = async (endpoint: EndpointWithStatus) => {
