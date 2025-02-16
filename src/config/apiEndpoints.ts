@@ -22,16 +22,26 @@ export interface Endpoint {
   status: EndpointStatus;
 }
 
-let API_ENDPOINTS: string[] = [
-  "v220250171253310506.hotsrv.de",
-  "v2202501252999311567.powersrv.de",
-  "v2202502252999313946.bestsrv.de"
-];
+// Initiale Endpunkte aus dem localStorage laden oder Standardwerte verwenden
+const getInitialEndpoints = () => {
+  const storedEndpoints = localStorage.getItem('apiEndpoints');
+  if (storedEndpoints) {
+    return JSON.parse(storedEndpoints);
+  }
+  return [
+    "v220250171253310506.hotsrv.de",
+    "v2202501252999311567.powersrv.de",
+    "v2202502252999313946.bestsrv.de"
+  ];
+};
+
+let API_ENDPOINTS: string[] = getInitialEndpoints();
 
 let currentEndpointIndex = 0;
 
 export const updateEndpoints = (newEndpoints: string[]) => {
   API_ENDPOINTS = newEndpoints;
+  localStorage.setItem('apiEndpoints', JSON.stringify(API_ENDPOINTS));
   console.log("API endpoints updated:", API_ENDPOINTS);
 };
 
@@ -43,3 +53,4 @@ export const getNextEndpoint = () => {
 };
 
 export { API_ENDPOINTS };
+
