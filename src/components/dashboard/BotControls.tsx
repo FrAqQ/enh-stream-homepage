@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -133,9 +132,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
         },
-        mode: "cors",
         body: JSON.stringify({
           user_id: user?.id || "123",
           twitch_url: streamUrl,
@@ -145,7 +142,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
       console.log("Response status:", response.status);
 
-      // Wenn Server überlastet ist (503) oder NetworkError auftritt und noch Versuche übrig sind
       if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
         console.log(`Server ${currentHost} nicht erreichbar, versuche nächsten Server...`);
         return tryRequest(viewerCount, retriesLeft - 1);
@@ -157,16 +153,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
       const data = await response.json();
       console.log("API Response data:", data);
-
-      if (data.message && (
-        data.message.toLowerCase().includes('fehler') || 
-        data.message.toLowerCase().includes('error') ||
-        data.message.toLowerCase().includes('konnte nicht gestartet')
-      )) {
-        console.error("Server reported an error:", data.message);
-        return false;
-      }
-
+      
       return true;
     } catch (error) {
       console.log("Fehler aufgetreten, versuche nächsten Server...", error);

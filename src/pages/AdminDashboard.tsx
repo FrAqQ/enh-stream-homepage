@@ -391,37 +391,40 @@ const AdminDashboard = () => {
             
             console.log(`Checking ping for ${endpoint.host}:5000...`);
             
-            const result = await fetch(`https://${endpoint.host}:5000/status`, {
-              method: 'HEAD',
-              mode: 'no-cors',
-              signal: controller.signal
-            }).then(() => {
+            // Zuerst HTTPS versuchen
+            try {
+              const response = await fetch(`https://${endpoint.host}:5000/status`, {
+                method: 'HEAD',
+                mode: 'no-cors',
+                signal: controller.signal,
+                credentials: 'omit'
+              });
               clearTimeout(timeoutId);
               console.log(`HTTPS ping successful for ${endpoint.host}:5000`);
               return true;
-            }).catch(async () => {
+            } catch (error) {
               clearTimeout(timeoutId);
               console.log(`HTTPS ping failed for ${endpoint.host}:5000, trying HTTP...`);
               
-              const httpsController = new AbortController();
-              const httpsTimeoutId = setTimeout(() => httpsController.abort(), 2000);
+              const httpController = new AbortController();
+              const httpTimeoutId = setTimeout(() => httpController.abort(), 2000);
               
-              return fetch(`http://${endpoint.host}:5000/status`, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                signal: httpsController.signal
-              }).then(() => {
-                clearTimeout(httpsTimeoutId);
+              try {
+                await fetch(`http://${endpoint.host}:5000/status`, {
+                  method: 'HEAD',
+                  mode: 'no-cors',
+                  signal: httpController.signal,
+                  credentials: 'omit'
+                });
+                clearTimeout(httpTimeoutId);
                 console.log(`HTTP ping successful for ${endpoint.host}:5000`);
                 return true;
-              }).catch((error) => {
-                clearTimeout(httpsTimeoutId);
-                console.log(`HTTP ping failed for ${endpoint.host}:5000`, error);
+              } catch (httpError) {
+                clearTimeout(httpTimeoutId);
+                console.log(`HTTP ping failed for ${endpoint.host}:5000`, httpError);
                 return false;
-              });
-            });
-
-            return result;
+              }
+            }
           } catch (error) {
             console.error(`Error during ping check for ${endpoint.host}:5000:`, error);
             return false;
@@ -468,7 +471,6 @@ const AdminDashboard = () => {
     };
 
     updateEndpointStatuses();
-    
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
