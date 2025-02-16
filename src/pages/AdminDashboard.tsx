@@ -1,12 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, RefreshCw } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_ENDPOINTS, updateEndpoints } from "@/config/apiEndpoints";
@@ -66,7 +66,8 @@ const AdminDashboard = () => {
         lastChecked: new Date(),
         apiStatus: false,
         isSecure: false,
-        pingStatus: false
+        pingStatus: false,
+        systemMetrics: null // Hinzugefügt: Initiale Definition von systemMetrics
       }
     }))
   );
@@ -281,7 +282,8 @@ const AdminDashboard = () => {
             lastChecked: new Date(),
             apiStatus: false,
             isSecure: false,
-            pingStatus: false
+            pingStatus: false,
+            systemMetrics: null // Hinzugefügt: Konsistente Definition
           }
         })));
       }
