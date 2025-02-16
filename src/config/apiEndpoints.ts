@@ -22,30 +22,16 @@ export interface Endpoint {
   status: EndpointStatus;
 }
 
-let API_ENDPOINTS: string[] = [];
+// Lade gespeicherte Endpunkte aus dem localStorage oder verwende leeres Array
+let API_ENDPOINTS: string[] = JSON.parse(localStorage.getItem('apiEndpoints') || '[]');
 
 let currentEndpointIndex = 0;
 
-export const updateEndpoints = async (newEndpoints: string[]) => {
-  try {
-    const response = await fetch('/api/update-endpoints', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ endpoints: newEndpoints })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update endpoints file');
-    }
-
-    API_ENDPOINTS = newEndpoints;
-    console.log("API endpoints updated:", API_ENDPOINTS);
-  } catch (error) {
-    console.error("Error updating endpoints:", error);
-    throw error;
-  }
+export const updateEndpoints = (newEndpoints: string[]) => {
+  API_ENDPOINTS = newEndpoints;
+  // Speichere die neuen Endpunkte im localStorage
+  localStorage.setItem('apiEndpoints', JSON.stringify(newEndpoints));
+  console.log("API endpoints updated:", API_ENDPOINTS);
 };
 
 export const getNextEndpoint = () => {

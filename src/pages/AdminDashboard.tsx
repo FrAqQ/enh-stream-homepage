@@ -329,7 +329,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleAddEndpoint = async () => {
+  const handleAddEndpoint = () => {
     if (!newEndpoint.trim()) {
       toast.error('Bitte geben Sie einen Endpunkt ein');
       return;
@@ -353,7 +353,7 @@ const AdminDashboard = () => {
       };
       
       const updatedEndpoints = [...endpoints, newEndpointWithStatus];
-      await updateEndpoints(updatedEndpoints.map(e => e.host));
+      updateEndpoints(updatedEndpoints.map(e => e.host));
       setEndpoints(updatedEndpoints);
       setNewEndpoint('');
       toast.success('Endpunkt erfolgreich hinzugefügt');
@@ -363,14 +363,14 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleRemoveEndpoint = async (host: string) => {
+  const handleRemoveEndpoint = (host: string) => {
     try {
       const updatedEndpoints = endpoints.filter(e => e.host !== host);
       if (updatedEndpoints.length === 0) {
         toast.error('Es muss mindestens ein Endpunkt vorhanden sein');
         return;
       }
-      await updateEndpoints(updatedEndpoints.map(e => e.host));
+      updateEndpoints(updatedEndpoints.map(e => e.host));
       setEndpoints(updatedEndpoints);
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
