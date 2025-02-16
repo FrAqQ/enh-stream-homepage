@@ -2,18 +2,9 @@
 from flask import Blueprint, request, jsonify
 import requests
 import psutil
-from flask_cors import CORS
-import os
 
 # Blueprint für API-Routen erstellen
 api_blueprint = Blueprint('api', __name__)
-CORS(api_blueprint, resources={
-    r"/*": {
-        "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Accept"]
-    }
-})
 
 @api_blueprint.route('/status', methods=['GET'])
 def get_status():
@@ -38,60 +29,11 @@ def get_status():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@api_blueprint.route('/update-endpoints', methods=['POST'])
-def update_endpoints():
-    """
-    Aktualisiert die API-Endpunkte in der Konfigurationsdatei.
-    """
-    try:
-        data = request.json
-        endpoints = data.get('endpoints')
-        
-        if not endpoints:
-            return jsonify({'status': 'error', 'message': 'Keine Endpunkte angegeben'}), 400
-        
-        # Korrekter absoluter Pfad zur apiEndpoints.ts-Datei
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, 'src', 'config', 'apiEndpoints.ts')
-        
-        print(f"Versuche Datei zu aktualisieren: {file_path}")  # Debug-Ausgabe
-        
-        # Lesen Sie den aktuellen Inhalt der Datei
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            
-        # Finden Sie den API_ENDPOINTS Array und ersetzen Sie ihn
-        import re
-        new_endpoints_str = '[\n  "' + '",\n  "'.join(endpoints) + '"\n]'
-        new_content = re.sub(
-            r'let API_ENDPOINTS: string\[\] = \[[\s\S]*?\];',
-            f'let API_ENDPOINTS: string[] = {new_endpoints_str};',
-            content
-        )
-        
-        # Schreiben Sie den neuen Inhalt zurück in die Datei
-        with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(new_content)
-            
-        print(f"Endpunkte erfolgreich aktualisiert: {endpoints}")  # Debug-Ausgabe
-        return jsonify({'status': 'success', 'message': 'Endpunkte erfolgreich aktualisiert'})
-        
-    except Exception as e:
-        print(f"Fehler beim Aktualisieren der Endpunkte: {str(e)}")  # Debug-Ausgabe
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@api_blueprint.route('/add_viewer', methods=['POST', 'OPTIONS'])
+@api_blueprint.route('/add_viewer', methods=['POST'])
 def add_viewer():
     """
     Leitet die Anfrage an main_gui.py weiter, um einen Viewer hinzuzufügen.
     """
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        return response
-
     data = request.json
     user_id = data.get('user_id')
     twitch_url = data.get('twitch_url')
@@ -113,18 +55,11 @@ def add_viewer():
     except requests.exceptions.RequestException as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@api_blueprint.route('/set_url', methods=['POST', 'OPTIONS'])
+@api_blueprint.route('/set_url', methods=['POST'])
 def set_url():
     """
     Leitet die Anfrage an main_gui.py weiter, um die Twitch-URL zu setzen.
     """
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        return response
-
     data = request.json
     user_id = data.get('user_id')
     twitch_url = data.get('twitch_url')
@@ -144,18 +79,11 @@ def set_url():
     except requests.exceptions.RequestException as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@api_blueprint.route('/remove_viewer', methods=['POST', 'OPTIONS'])
+@api_blueprint.route('/remove_viewer', methods=['POST'])
 def remove_viewer():
     """
     Entfernt Viewer.
     """
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        return response
-
     data = request.json
     user_id = data.get("user_id")
     twitch_url = data.get("twitch_url")
@@ -179,4 +107,3 @@ def remove_viewer():
         return jsonify(response.json())
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
