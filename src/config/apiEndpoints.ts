@@ -25,7 +25,9 @@ export interface Endpoint {
 let API_ENDPOINTS: string[] = [
   "v220250171253310506.hotsrv.de",
   "v2202501252999311567.powersrv.de",
-  "v2202502252999313946.bestsrv.de"
+  "v2202502252999313946.bestsrv.de",
+  "srv-bot-001.enh.app",
+  "srv-bot-003.enh.app"
 ];
 
 let currentEndpointIndex = 0;
@@ -43,3 +45,4 @@ export const getNextEndpoint = () => {
 };
 
 export { API_ENDPOINTS };
+
