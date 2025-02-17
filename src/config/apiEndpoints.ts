@@ -19,77 +19,36 @@ export interface EndpointStatus {
 
 export interface Endpoint {
   host: string;
-  url: string;
-  description: string;
   status: EndpointStatus;
 }
 
 // Hole gespeicherte Endpunkte aus dem localStorage oder verwende den Standardwert
-const getInitialEndpoints = (): Endpoint[] => {
+const getInitialEndpoints = (): string[] => {
   const savedEndpoints = localStorage.getItem('apiEndpoints');
   if (savedEndpoints) {
     try {
       const parsed = JSON.parse(savedEndpoints);
       if (Array.isArray(parsed)) {
-        // Stelle sicher, dass alle erforderlichen Felder vorhanden sind
-        return parsed.map(endpoint => ({
-          host: endpoint.host || "",
-          url: endpoint.url || "",
-          description: endpoint.description || "",
-          status: {
-            isOnline: endpoint.status?.isOnline || false,
-            lastChecked: new Date(endpoint.status?.lastChecked || new Date()),
-            apiStatus: endpoint.status?.apiStatus || false,
-            isSecure: endpoint.status?.isSecure || false,
-            pingStatus: endpoint.status?.pingStatus || false,
-            systemMetrics: endpoint.status?.systemMetrics || undefined
-          }
-        }));
+        // Entferne die Überprüfung auf length > 0
+        return parsed;
       }
     } catch (e) {
       console.error('Fehler beim Parsen der gespeicherten Endpunkte:', e);
     }
   }
-  return [{
-    host: "srv-bot-001.enh.app",
-    url: "https://srv-bot-001.enh.app",
-    description: "Hauptserver",
-    status: {
-      isOnline: true,
-      lastChecked: new Date(),
-      apiStatus: true,
-      isSecure: true,
-      pingStatus: true,
-      systemMetrics: undefined
-    }
-  }];
+  return ["srv-bot-001.enh.app"];
 };
 
-let API_ENDPOINTS: Endpoint[] = getInitialEndpoints();
+let API_ENDPOINTS: string[] = getInitialEndpoints();
 
 let currentEndpointIndex = 0;
 
-export const updateEndpoints = (newEndpoints: Endpoint[]) => {
+export const updateEndpoints = (newEndpoints: string[]) => {
   if (!Array.isArray(newEndpoints) || newEndpoints.length === 0) {
     console.error('Ungültige Endpunkte:', newEndpoints);
     return;
   }
-  // Stelle sicher, dass alle Endpunkte die erforderlichen Felder haben
-  const validatedEndpoints = newEndpoints.map(endpoint => ({
-    host: endpoint.host,
-    url: endpoint.url,
-    description: endpoint.description,
-    status: {
-      isOnline: endpoint.status?.isOnline || false,
-      lastChecked: new Date(endpoint.status?.lastChecked || new Date()),
-      apiStatus: endpoint.status?.apiStatus || false,
-      isSecure: endpoint.status?.isSecure || false,
-      pingStatus: endpoint.status?.pingStatus || false,
-      systemMetrics: endpoint.status?.systemMetrics
-    }
-  }));
-  
-  API_ENDPOINTS = validatedEndpoints;
+  API_ENDPOINTS = [...newEndpoints]; // Erstelle eine Kopie des Arrays
   localStorage.setItem('apiEndpoints', JSON.stringify(API_ENDPOINTS));
   console.log("API endpoints updated:", API_ENDPOINTS);
 };
