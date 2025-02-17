@@ -84,7 +84,6 @@ export const updateEndpoints = (newEndpoints: Endpoint[]) => {
     return;
   }
   
-  // Speichere die vollständigen Endpoint-Objekte
   API_ENDPOINTS = newEndpoints;
   localStorage.setItem('apiEndpoints', JSON.stringify(API_ENDPOINTS));
   console.log("API endpoints updated:", API_ENDPOINTS);

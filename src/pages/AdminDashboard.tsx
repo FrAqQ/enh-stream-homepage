@@ -85,8 +85,8 @@ const AdminDashboard = () => {
   const [newMessage, setNewMessage] = useState('');
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(() => {
-    return API_ENDPOINTS.map(host => ({
-      host,
+    return API_ENDPOINTS.map(endpoint => ({
+      host: endpoint.host,
       status: {
         isOnline: false,
         lastChecked: new Date(),
