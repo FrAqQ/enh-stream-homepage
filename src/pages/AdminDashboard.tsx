@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { MessageCircle, Plus, Minus, Server, CheckCircle, XCircle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -89,17 +88,11 @@ const AdminDashboard = () => {
         apiStatus: false,
         isSecure: false,
         pingStatus: false,
-        systemMetrics: {
-          cpu: 0,
-          memory: {
-            total: 0,
-            used: 0,
-            free: 0
-          }
-        }
+        systemMetrics: null
       }
     }));
   });
+  const [newEndpoint, setNewEndpoint] = useState('');
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -128,12 +121,14 @@ const AdminDashboard = () => {
 
     checkAdminStatus();
 
+    // Echtzeit-Updates für Online-Status
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
         checkAdminStatus();
       })
       .subscribe();
 
+    // Echtzeit-Updates für neue Nachrichten
     const messageChannel = supabase.channel('messages')
       .on(
         'postgres_changes',
@@ -150,6 +145,7 @@ const AdminDashboard = () => {
       )
       .subscribe();
 
+    // Echtzeit-Updates für Chat-Anfragen
     const chatRequestChannel = supabase.channel('chat-requests')
       .on(
         'postgres_changes',
@@ -303,6 +299,7 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
+      // Update local state
       setProfiles(profiles.map(profile => 
         profile.id === userId ? { ...profile, plan: newPlan } : profile
       ));
@@ -322,6 +319,7 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
+      // Update local state
       setProfiles(profiles.map(profile => 
         profile.id === userId ? { ...profile, follower_plan: newPlan } : profile
       ));
@@ -352,19 +350,13 @@ const AdminDashboard = () => {
           apiStatus: false,
           isSecure: false,
           pingStatus: false,
-          systemMetrics: {
-            cpu: 0,
-            memory: {
-              total: 0,
-              used: 0,
-              free: 0
-            }
-          }
+          systemMetrics: null
         }
       };
       
       const updatedEndpoints = [...endpoints, newEndpointWithStatus];
       setEndpoints(updatedEndpoints);
+      // Aktualisiere die API_ENDPOINTS
       updateEndpoints(updatedEndpoints.map(e => e.host));
       setNewEndpoint('');
       toast.success('Endpunkt erfolgreich hinzugefügt');
@@ -381,6 +373,7 @@ const AdminDashboard = () => {
         return;
       }
       setEndpoints(updatedEndpoints);
+      // Aktualisiere die API_ENDPOINTS
       updateEndpoints(updatedEndpoints.map(e => e.host));
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
@@ -422,6 +415,7 @@ const AdminDashboard = () => {
         const pingResult = await checkPing();
         console.log(`Ping result for ${endpoint.host}:`, pingResult);
         
+        // Systemmetriken abrufen, wenn der Server erreichbar ist
         let systemMetrics = null;
         if (pingResult) {
           try {
@@ -448,14 +442,7 @@ const AdminDashboard = () => {
             apiStatus: pingResult,
             isSecure: true,
             pingStatus: pingResult,
-            systemMetrics: systemMetrics || {
-              cpu: 0,
-              memory: {
-                total: 0,
-                used: 0,
-                free: 0
-              }
-            }
+            systemMetrics
           }
         };
       } catch (error) {
@@ -468,14 +455,7 @@ const AdminDashboard = () => {
             apiStatus: false,
             isSecure: false,
             pingStatus: false,
-            systemMetrics: {
-              cpu: 0,
-              memory: {
-                total: 0,
-                used: 0,
-                free: 0
-              }
-            }
+            systemMetrics: null
           }
         };
       }
@@ -511,7 +491,7 @@ const AdminDashboard = () => {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Server Performance Monitoring</CardTitle>
+            <CardTitle>Server Monitoring</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -537,60 +517,60 @@ const AdminDashboard = () => {
                       </div>
 
                       {endpoint.status.systemMetrics && (
-                        <>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">CPU Usage</span>
-                              <span className={`text-sm ${
-                                endpoint.status.systemMetrics.cpu > 80 
-                                  ? 'text-red-500' 
-                                  : endpoint.status.systemMetrics.cpu > 60 
-                                  ? 'text-yellow-500' 
-                                  : 'text-green-500'
-                              }`}>
-                                {endpoint.status.systemMetrics.cpu.toFixed(1)}%
-                              </span>
-                            </div>
-                            <Progress 
-                              value={endpoint.status.systemMetrics.cpu} 
-                              className={`h-2 ${
-                                endpoint.status.systemMetrics.cpu > 80 
-                                  ? 'bg-red-200' 
-                                  : endpoint.status.systemMetrics.cpu > 60 
-                                  ? 'bg-yellow-200' 
-                                  : 'bg-green-200'
-                              }`}
-                            />
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">CPU Usage</span>
+                            <span className={`text-sm ${
+                              endpoint.status.systemMetrics.cpu > 80 
+                                ? 'text-red-500' 
+                                : endpoint.status.systemMetrics.cpu > 60 
+                                ? 'text-yellow-500' 
+                                : 'text-green-500'
+                            }`}>
+                              {endpoint.status.systemMetrics.cpu.toFixed(1)}%
+                            </span>
                           </div>
+                          <Progress 
+                            value={endpoint.status.systemMetrics.cpu} 
+                            className={`h-2 ${
+                              endpoint.status.systemMetrics.cpu > 80 
+                                ? 'bg-red-200' 
+                                : endpoint.status.systemMetrics.cpu > 60 
+                                ? 'bg-yellow-200' 
+                                : 'bg-green-200'
+                            }`}
+                          />
+                        </div>
+                      )}
 
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">RAM Usage</span>
-                              <span className={`text-sm ${
-                                (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                                  ? 'text-red-500'
-                                  : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                                  ? 'text-yellow-500'
-                                  : 'text-green-500'
-                              }`}>
-                                {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                            <Progress 
-                              value={(endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100}
-                              className={`h-2 ${
-                                (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                                  ? 'bg-red-200'
-                                  : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                                  ? 'bg-yellow-200'
-                                  : 'bg-green-200'
-                              }`}
-                            />
-                            <div className="text-xs text-muted-foreground">
-                              {(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB
-                            </div>
+                      {endpoint.status.systemMetrics && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">RAM Usage</span>
+                            <span className={`text-sm ${
+                              (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
+                                ? 'text-red-500'
+                                : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
+                                ? 'text-yellow-500'
+                                : 'text-green-500'
+                            }`}>
+                              {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
+                            </span>
                           </div>
-                        </>
+                          <Progress 
+                            value={(endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100}
+                            className={`h-2 ${
+                              (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
+                                ? 'bg-red-200'
+                                : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
+                                ? 'bg-yellow-200'
+                                : 'bg-green-200'
+                            }`}
+                          />
+                          <div className="text-xs text-muted-foreground">
+                            {(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB
+                          </div>
+                        </div>
                       )}
 
                       <div className="text-xs text-muted-foreground mt-2">
