@@ -35,7 +35,6 @@ const getInitialEndpoints = (): string[] => {
     }
   }
   return [
-    "srv-bot-001.enh.app",
     "v2202501252999311567.powersrv.de",
     "v220250171253310506.hotsrv.de"
   ];
