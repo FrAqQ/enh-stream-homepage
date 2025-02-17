@@ -22,14 +22,12 @@ export interface Endpoint {
   status: EndpointStatus;
 }
 
-// Hole gespeicherte Endpunkte aus dem localStorage oder verwende den Standardwert
 const getInitialEndpoints = (): string[] => {
   const savedEndpoints = localStorage.getItem('apiEndpoints');
   if (savedEndpoints) {
     try {
       const parsed = JSON.parse(savedEndpoints);
       if (Array.isArray(parsed)) {
-        // Entferne die Überprüfung auf length > 0
         return parsed;
       }
     } catch (e) {
@@ -48,7 +46,7 @@ export const updateEndpoints = (newEndpoints: string[]) => {
     console.error('Ungültige Endpunkte:', newEndpoints);
     return;
   }
-  API_ENDPOINTS = [...newEndpoints]; // Erstelle eine Kopie des Arrays
+  API_ENDPOINTS = [...newEndpoints];
   localStorage.setItem('apiEndpoints', JSON.stringify(API_ENDPOINTS));
   console.log("API endpoints updated:", API_ENDPOINTS);
 };
