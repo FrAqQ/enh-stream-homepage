@@ -26,9 +26,12 @@ def add_viewer():
         return jsonify({"status": "error", "message": "Ungültige Eingabe."}), 400
 
     try:
+        print(f"Adding {viewer_count} viewers for URL: {twitch_url}")
         result = api_gui.spawn_viewers(viewer_count, twitch_url)
+        print(f"Result from spawn_viewers: {result}")
         return jsonify({"status": "success", "message": result})
     except Exception as e:
+        print(f"Error in add_viewer: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @api_blueprint.route('/remove_viewer', methods=['POST'])
@@ -42,8 +45,11 @@ def remove_viewer():
         return jsonify({"status": "error", "message": "Ungültige Eingabe."}), 400
 
     try:
+        print(f"Removing {viewer_count} viewers for URL: {twitch_url}")
         result = api_gui.remove_viewers(viewer_count, twitch_url)
+        print(f"Result from remove_viewers: {result}")
         return jsonify({"status": "success", "message": result})
     except Exception as e:
+        print(f"Error in remove_viewer: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
