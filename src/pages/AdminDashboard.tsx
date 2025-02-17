@@ -16,7 +16,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [newEndpoint, setNewEndpoint] = useState('');
   const [endpoints, setEndpoints] = useState<Endpoint[]>(() => {
-    return API_ENDPOINTS.map(host => ({
+    const initialEndpoints = API_ENDPOINTS.map(host => ({
       host,
       status: {
         isOnline: false,
@@ -34,6 +34,8 @@ const AdminDashboard = () => {
         }
       }
     }));
+    console.log('Initial endpoints:', initialEndpoints);
+    return initialEndpoints;
   });
 
   useEffect(() => {
@@ -68,6 +70,7 @@ const AdminDashboard = () => {
         };
 
         const pingResult = await checkPing();
+        console.log(`Ping result for ${endpoint.host}:`, pingResult);
         
         let systemMetrics = endpoint.status.systemMetrics;
         if (pingResult) {
@@ -81,13 +84,14 @@ const AdminDashboard = () => {
             });
             if (metricsResponse.ok) {
               systemMetrics = await metricsResponse.json();
+              console.log(`Metrics received for ${endpoint.host}:`, systemMetrics);
             }
           } catch (error) {
             console.error(`Failed to fetch metrics for ${endpoint.host}:5000:`, error);
           }
         }
         
-        return {
+        const updatedEndpoint = {
           ...endpoint,
           status: {
             isOnline: pingResult,
@@ -98,6 +102,8 @@ const AdminDashboard = () => {
             systemMetrics
           }
         };
+        console.log(`Updated endpoint ${endpoint.host}:`, updatedEndpoint);
+        return updatedEndpoint;
       } catch (error) {
         console.error(`Error checking endpoint ${endpoint.host}:`, error);
         return endpoint;
@@ -106,9 +112,11 @@ const AdminDashboard = () => {
 
     const updateEndpointStatuses = async () => {
       try {
+        console.log('Starting endpoint status update...');
         const updatedEndpoints = await Promise.all(
           endpoints.map(endpoint => checkEndpointHealth(endpoint))
         );
+        console.log('All endpoints updated:', updatedEndpoints);
         setEndpoints(updatedEndpoints);
       } catch (error) {
         console.error('Error updating endpoint statuses:', error);
@@ -123,20 +131,27 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('No user found');
+        return;
+      }
 
+      console.log('Checking admin status for user:', user.id);
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_admin')
         .eq('id', user.id)
         .single();
 
+      console.log('Admin status:', profile?.is_admin);
       setIsAdmin(profile?.is_admin || false);
       setLoading(false);
     };
 
     checkAdminStatus();
   }, [user]);
+
+  console.log('Current render state:', { loading, isAdmin, endpoints });
 
   const handleAddEndpoint = () => {
     if (!newEndpoint.trim()) {
@@ -199,6 +214,7 @@ const AdminDashboard = () => {
   }
 
   if (!isAdmin) {
+    console.log('User is not admin, redirecting...');
     return <Navigate to="/dashboard" replace />;
   }
 
