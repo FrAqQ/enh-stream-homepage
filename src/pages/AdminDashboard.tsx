@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -7,16 +6,9 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Cpu, HardDrive, MessageCircle, Plus, Minus, Server } from "lucide-react";
+import { Cpu, HardDrive, Plus, Minus, Server } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { API_ENDPOINTS, Endpoint, EndpointStatus, updateEndpoints } from "@/config/apiEndpoints";
+import { API_ENDPOINTS, Endpoint, updateEndpoints } from "@/config/apiEndpoints";
 
 const AdminDashboard = () => {
   const { user } = useUser();
@@ -237,42 +229,46 @@ const AdminDashboard = () => {
                   </div>
                   
                   {/* CPU Usage */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <Cpu className="w-4 h-4" />
-                        <span className="text-sm">CPU</span>
+                  {endpoint.status.systemMetrics && (
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <Cpu className="w-4 h-4" />
+                          <span className="text-sm">CPU</span>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {endpoint.status.systemMetrics.cpu.toFixed(1)}%
+                        </span>
                       </div>
-                      <span className="text-sm font-medium">
-                        {endpoint.status.systemMetrics.cpu.toFixed(1)}%
-                      </span>
+                      <Progress 
+                        value={endpoint.status.systemMetrics.cpu} 
+                        className="h-2"
+                      />
                     </div>
-                    <Progress 
-                      value={endpoint.status.systemMetrics.cpu} 
-                      className="h-2"
-                    />
-                  </div>
+                  )}
 
                   {/* RAM Usage */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <HardDrive className="w-4 h-4" />
-                        <span className="text-sm">RAM</span>
+                  {endpoint.status.systemMetrics && endpoint.status.systemMetrics.memory && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <HardDrive className="w-4 h-4" />
+                          <span className="text-sm">RAM</span>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
+                        </span>
                       </div>
-                      <span className="text-sm font-medium">
-                        {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                      </span>
+                      <Progress 
+                        value={(endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-500">
+                        {(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / 
+                        {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB
+                      </div>
                     </div>
-                    <Progress 
-                      value={(endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100} 
-                      className="h-2"
-                    />
-                    <div className="text-xs text-gray-500">
-                      {(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / 
-                      {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB
-                    </div>
-                  </div>
+                  )}
 
                   <div className="mt-4 text-xs text-gray-500">
                     Zuletzt aktualisiert: {new Date(endpoint.status.lastChecked).toLocaleTimeString()}
