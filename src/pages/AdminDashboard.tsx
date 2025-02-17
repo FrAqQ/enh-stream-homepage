@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -214,13 +215,13 @@ const AdminDashboard = () => {
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
       
       <div className="grid gap-6">
-        {/* Neue Monitoring Card */}
+        {/* Monitoring Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Live Server Monitoring</CardTitle>
+            <CardTitle>Server Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {endpoints.map((endpoint) => (
                 <div key={endpoint.host} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-4">
@@ -243,11 +244,11 @@ const AdminDashboard = () => {
                         <span className="text-sm">CPU</span>
                       </div>
                       <span className="text-sm font-medium">
-                        {endpoint.status.systemMetrics?.cpu.toFixed(1)}%
+                        {endpoint.status.systemMetrics.cpu.toFixed(1)}%
                       </span>
                     </div>
                     <Progress 
-                      value={endpoint.status.systemMetrics?.cpu} 
+                      value={endpoint.status.systemMetrics.cpu} 
                       className="h-2"
                     />
                   </div>
@@ -260,16 +261,16 @@ const AdminDashboard = () => {
                         <span className="text-sm">RAM</span>
                       </div>
                       <span className="text-sm font-medium">
-                        {((endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics?.memory.total) * 100).toFixed(1)}%
+                        {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
                       </span>
                     </div>
                     <Progress 
-                      value={(endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics?.memory.total) * 100} 
+                      value={(endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100} 
                       className="h-2"
                     />
                     <div className="text-xs text-gray-500">
-                      {(endpoint.status.systemMetrics?.memory.used / 1024).toFixed(1)} GB / 
-                      {(endpoint.status.systemMetrics?.memory.total / 1024).toFixed(1)} GB
+                      {(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / 
+                      {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB
                     </div>
                   </div>
 
@@ -282,7 +283,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Original API Endpoints Card */}
+        {/* API Endpoints Management Card */}
         <Card>
           <CardHeader>
             <CardTitle>API Endpunkte</CardTitle>
