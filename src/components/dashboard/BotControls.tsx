@@ -109,11 +109,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
 
-  const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length, endpoint?: string): Promise<boolean> => {
+  const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
     try {
-      const apiEndpoint = endpoint || (viewerCount > 0 ? 'add_viewer' : 
-        (viewerCount === -5 ? 'remove_viewers' : 
-        (viewerCount === -999999 ? 'remove_all' : 'remove_viewer')));
+      const apiEndpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
       
       const currentHost = getNextEndpoint();
       const apiUrl = `https://${currentHost}:5000/${apiEndpoint}`;
@@ -145,7 +143,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
       if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
         console.log(`Server ${currentHost} nicht erreichbar, versuche nächsten Server...`);
-        return tryRequest(viewerCount, retriesLeft - 1, endpoint);
+        return tryRequest(viewerCount, retriesLeft - 1);
       }
       
       if (!response.ok) {
@@ -159,7 +157,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     } catch (error) {
       console.log("Fehler aufgetreten, versuche nächsten Server...", error);
       if (retriesLeft > 1) {
-        return tryRequest(viewerCount, retriesLeft - 1, endpoint);
+        return tryRequest(viewerCount, retriesLeft - 1);
       }
       throw error;
     }
@@ -329,10 +327,26 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               -5 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
-              onClick={() => handleButtonClick(-999999)} 
+              onClick={() => handleButtonClick(-20)} 
               variant="outline" 
               className="text-red-500 hover:text-red-600"
-              disabled={isButtonDisabled(-999999)}
+              disabled={isButtonDisabled(-20)}
+            >
+              -20 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(-50)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-50)}
+            >
+              -50 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(-99999)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-99999)}
             >
               {language === 'de' ? 'Alle entfernen' : 'Remove all'}
             </Button>
