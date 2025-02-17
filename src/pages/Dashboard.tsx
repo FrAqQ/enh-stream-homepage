@@ -232,18 +232,23 @@ const Dashboard = () => {
             status: profile.subscription_status
           });
           
-          if (profile.plan !== userPlan) {
-            setUserPlan(profile.plan || "Free");
+          // Nur wenn sich der Plan tatsächlich geändert hat
+          const newPlan = profile.plan || "Free";
+          if (newPlan !== userPlan) {
+            console.log("Plan changed from", userPlan, "to", newPlan);
+            setUserPlan(newPlan);
             setSubscriptionStatus('active');
             toast({
               title: "Plan Updated",
-              description: `Your plan has been updated to ${profile.plan}`,
+              description: `Your plan has been updated to ${newPlan}`,
             });
           }
         } else {
           console.log("No active subscription found, setting to Free plan");
-          setUserPlan("Free");
-          setSubscriptionStatus('inactive');
+          if (userPlan !== "Free") {
+            setUserPlan("Free");
+            setSubscriptionStatus('inactive');
+          }
         }
       } catch (err) {
         console.error("Unexpected error in subscription check:", err);
