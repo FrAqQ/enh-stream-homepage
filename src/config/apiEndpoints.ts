@@ -34,7 +34,11 @@ const getInitialEndpoints = (): string[] => {
       console.error('Fehler beim Parsen der gespeicherten Endpunkte:', e);
     }
   }
-  return ["srv-bot-001.enh.app"];
+  return [
+    "srv-bot-001.enh.app",
+    "v2202501252999311567.powersrv.de",
+    "v220250171253310506.hotsrv.de"
+  ];
 };
 
 let API_ENDPOINTS: string[] = getInitialEndpoints();
