@@ -225,23 +225,11 @@ const Dashboard = () => {
 
         console.log("Raw profile data:", profile);
 
-        const isActive = profile?.subscription_status === 'active';
-        const periodEnd = profile?.current_period_end;
-        const isExpired = periodEnd ? new Date(periodEnd) < new Date() : true;
-
-        console.log("Subscription check:", {
-          isActive,
-          periodEnd,
-          isExpired,
-          currentStatus: profile?.subscription_status,
-          currentPlan: profile?.plan
-        });
-
-        if (isActive && !isExpired) {
+        // Wenn subscription_status aktiv ist, verwenden wir den Plan aus der Datenbank
+        if (profile?.subscription_status === 'active') {
           console.log("Active subscription found:", {
             plan: profile.plan,
-            status: profile.subscription_status,
-            periodEnd: profile.current_period_end
+            status: profile.subscription_status
           });
           
           if (profile.plan !== userPlan) {
@@ -253,11 +241,7 @@ const Dashboard = () => {
             });
           }
         } else {
-          console.log("No active subscription or expired:", {
-            currentStatus: profile?.subscription_status,
-            currentPlan: profile?.plan,
-            periodEnd: profile?.current_period_end
-          });
+          console.log("No active subscription found, setting to Free plan");
           setUserPlan("Free");
           setSubscriptionStatus('inactive');
         }
