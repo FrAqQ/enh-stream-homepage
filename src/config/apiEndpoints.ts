@@ -31,7 +31,20 @@ const getInitialEndpoints = (): Endpoint[] => {
     try {
       const parsed = JSON.parse(savedEndpoints);
       if (Array.isArray(parsed)) {
-        return parsed;
+        // Stelle sicher, dass alle erforderlichen Felder vorhanden sind
+        return parsed.map(endpoint => ({
+          host: endpoint.host || "",
+          url: endpoint.url || "",
+          description: endpoint.description || "",
+          status: {
+            isOnline: endpoint.status?.isOnline || false,
+            lastChecked: new Date(endpoint.status?.lastChecked || new Date()),
+            apiStatus: endpoint.status?.apiStatus || false,
+            isSecure: endpoint.status?.isSecure || false,
+            pingStatus: endpoint.status?.pingStatus || false,
+            systemMetrics: endpoint.status?.systemMetrics || undefined
+          }
+        }));
       }
     } catch (e) {
       console.error('Fehler beim Parsen der gespeicherten Endpunkte:', e);
@@ -46,7 +59,8 @@ const getInitialEndpoints = (): Endpoint[] => {
       lastChecked: new Date(),
       apiStatus: true,
       isSecure: true,
-      pingStatus: true
+      pingStatus: true,
+      systemMetrics: undefined
     }
   }];
 };
@@ -60,7 +74,22 @@ export const updateEndpoints = (newEndpoints: Endpoint[]) => {
     console.error('Ungültige Endpunkte:', newEndpoints);
     return;
   }
-  API_ENDPOINTS = [...newEndpoints];
+  // Stelle sicher, dass alle Endpunkte die erforderlichen Felder haben
+  const validatedEndpoints = newEndpoints.map(endpoint => ({
+    host: endpoint.host,
+    url: endpoint.url,
+    description: endpoint.description,
+    status: {
+      isOnline: endpoint.status?.isOnline || false,
+      lastChecked: new Date(endpoint.status?.lastChecked || new Date()),
+      apiStatus: endpoint.status?.apiStatus || false,
+      isSecure: endpoint.status?.isSecure || false,
+      pingStatus: endpoint.status?.pingStatus || false,
+      systemMetrics: endpoint.status?.systemMetrics
+    }
+  }));
+  
+  API_ENDPOINTS = validatedEndpoints;
   localStorage.setItem('apiEndpoints', JSON.stringify(API_ENDPOINTS));
   console.log("API endpoints updated:", API_ENDPOINTS);
 };
