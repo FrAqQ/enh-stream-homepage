@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -20,8 +19,12 @@ const AdminDashboard = () => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>(() => {
     localStorage.removeItem('apiEndpoints');
     
-    // Initialisiere nur mit v220250171253310506.hotsrv.de
-    const initialEndpoints = ["v220250171253310506.hotsrv.de"].map(host => ({
+    // Initialisiere mit allen drei Servern
+    const initialEndpoints = [
+      "v220250171253310506.hotsrv.de",
+      "v2202501252999311567.powersrv.de",
+      "v2202502252999313946.bestsrv.de"
+    ].map(host => ({
       host,
       status: {
         isOnline: false,
@@ -56,13 +59,12 @@ const AdminDashboard = () => {
             try {
               const response = await fetch(`https://${endpoint.host}:5000/status`, {
                 method: 'GET',
-                mode: 'no-cors',
                 signal: controller.signal,
                 credentials: 'omit'
               });
               clearTimeout(timeoutId);
               console.log(`HTTPS ping successful for ${endpoint.host}:5000`);
-              return true;
+              return response.ok;
             } catch (error) {
               clearTimeout(timeoutId);
               console.log(`HTTPS ping failed for ${endpoint.host}:5000`, error);
@@ -137,7 +139,7 @@ const AdminDashboard = () => {
     updateEndpointStatuses();
 
     return () => clearInterval(intervalId);
-  }, []); // Entferne endpoints aus den Dependencies
+  }, []); // Keep empty dependencies to avoid re-running unnecessarily
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -221,7 +223,8 @@ const AdminDashboard = () => {
     localStorage.removeItem('apiEndpoints');
     const defaultEndpoints = [
       "v220250171253310506.hotsrv.de",
-      "v2202501252999311567.powersrv.de"
+      "v2202501252999311567.powersrv.de",
+      "v2202502252999313946.bestsrv.de"
     ].map(host => ({
       host,
       status: {
@@ -245,32 +248,6 @@ const AdminDashboard = () => {
     toast.success('Endpunkte wurden zurückgesetzt');
   };
 
-  // Einmalig den zweiten Server hinzufügen
-  useEffect(() => {
-    if (!loading && isAdmin && !initializationDone.current && !endpoints.some(e => e.host === "v2202501252999311567.powersrv.de")) {
-      initializationDone.current = true;
-      const powersrvEndpoint: Endpoint = {
-        host: "v2202501252999311567.powersrv.de",
-        status: {
-          isOnline: false,
-          lastChecked: new Date(),
-          apiStatus: false,
-          isSecure: false,
-          pingStatus: false,
-          systemMetrics: {
-            cpu: 0,
-            memory: {
-              total: 0,
-              used: 0,
-              free: 0
-            }
-          }
-        }
-      };
-      setEndpoints(prev => [...prev, powersrvEndpoint]);
-    }
-  }, [loading, isAdmin]);
-
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
   }
@@ -285,7 +262,6 @@ const AdminDashboard = () => {
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
       
       <div className="grid gap-6">
-        {/* Monitoring Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Server Status</CardTitle>
