@@ -29,8 +29,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [newEndpoint, setNewEndpoint] = useState('');
   const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(() => {
-    return API_ENDPOINTS.map(host => ({
-      host: typeof host === 'string' ? host : host.host,
+    return (API_ENDPOINTS as string[]).map(host => ({
+      host: host,
       status: {
         isOnline: false,
         lastChecked: new Date(),
