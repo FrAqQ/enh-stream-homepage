@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -29,7 +28,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [newEndpoint, setNewEndpoint] = useState('');
   const [endpoints, setEndpoints] = useState<EndpointWithStatus[]>(() => {
-    return API_ENDPOINTS.map(host => ({
+    return (API_ENDPOINTS as string[]).map(host => ({
       host,
       status: {
         isOnline: false,
@@ -81,7 +80,6 @@ const AdminDashboard = () => {
         };
 
         const pingResult = await checkPing();
-        console.log(`Ping result for ${endpoint.host}:`, pingResult);
         
         let systemMetrics = null;
         if (pingResult) {
@@ -119,10 +117,14 @@ const AdminDashboard = () => {
     };
 
     const updateEndpointStatuses = async () => {
-      const updatedEndpoints = await Promise.all(
-        endpoints.map(endpoint => checkEndpointHealth(endpoint))
-      );
-      setEndpoints(updatedEndpoints);
+      try {
+        const updatedEndpoints = await Promise.all(
+          endpoints.map(endpoint => checkEndpointHealth(endpoint))
+        );
+        setEndpoints(updatedEndpoints);
+      } catch (error) {
+        console.error('Error updating endpoint statuses:', error);
+      }
     };
 
     updateEndpointStatuses();
@@ -229,7 +231,7 @@ const AdminDashboard = () => {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Server className="w-4 h-4" />
-                      {endpoint.host}
+                      <span>{endpoint.host}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -342,64 +344,6 @@ const AdminDashboard = () => {
                     <div className="flex items-center gap-2">
                       <Server className="w-4 h-4" />
                       <span>{endpoint.host}</span>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="flex items-center gap-1">
-                          {endpoint.status.apiStatus ? (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-red-500" />
-                          )}
-                          <span className={`text-xs ${endpoint.status.apiStatus ? 'text-green-500' : 'text-red-500'}`}>
-                            Ping {endpoint.status.apiStatus ? 'OK' : 'Error'}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          {endpoint.status.apiStatus ? (
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs text-green-500">API OK</span>
-                              {!endpoint.status.isSecure && (
-                                <span className="text-xs text-yellow-500">(Unsicher)</span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-red-500">API Error</span>
-                          )}
-                        </div>
-
-                        {endpoint.status.systemMetrics && (
-                          <div className="flex items-center gap-4 ml-4">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-medium">CPU:</span>
-                              <span className={`text-xs ${
-                                endpoint.status.systemMetrics.cpu > 80 
-                                  ? 'text-red-500' 
-                                  : endpoint.status.systemMetrics.cpu > 60 
-                                  ? 'text-yellow-500' 
-                                  : 'text-green-500'
-                              }`}>
-                                {endpoint.status.systemMetrics.cpu.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-medium">RAM:</span>
-                              <span className={`text-xs ${
-                                (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                                  ? 'text-red-500'
-                                  : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                                  ? 'text-yellow-500'
-                                  : 'text-green-500'
-                              }`}>
-                                {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        <span className="text-xs text-muted-foreground ml-2">
-                          Zuletzt geprüft: {new Date(endpoint.status.lastChecked).toLocaleTimeString()}
-                        </span>
-                      </div>
                     </div>
                     <Button
                       variant="destructive"
