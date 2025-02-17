@@ -25,7 +25,9 @@ const Dashboard = () => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
-  const [lastUpdatedPlan, setLastUpdatedPlan] = useState<string | null>(null);
+  const [lastUpdatedPlan, setLastUpdatedPlan] = useState<string | null>(() => {
+    return localStorage.getItem('lastUpdatedPlan') || null;
+  });
 
   const saveStreamStats = async (viewers: number, chatters: number) => {
     try {
@@ -235,6 +237,7 @@ const Dashboard = () => {
             setUserPlan(newPlan);
             setSubscriptionStatus('active');
             setLastUpdatedPlan(newPlan);
+            localStorage.setItem('lastUpdatedPlan', newPlan);
             toast({
               title: "Plan Updated",
               description: `Your plan has been updated to ${newPlan}`,
@@ -246,6 +249,7 @@ const Dashboard = () => {
             setUserPlan("Free");
             setSubscriptionStatus('inactive');
             setLastUpdatedPlan("Free");
+            localStorage.setItem('lastUpdatedPlan', "Free");
           }
         }
       } catch (err) {
