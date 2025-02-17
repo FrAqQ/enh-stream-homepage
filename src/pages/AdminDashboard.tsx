@@ -7,7 +7,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Cpu, Memory, MessageCircle, Plus, Minus, Server, CheckCircle, XCircle } from "lucide-react";
+import { Cpu, HardDrive, MessageCircle, Plus, Minus, Server, CheckCircle, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -280,7 +280,7 @@ const AdminDashboard = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <Memory className="w-4 h-4" />
+                              <HardDrive className="w-4 h-4" />
                               <span className="text-sm font-medium">RAM</span>
                             </div>
                             <span className={`text-sm ${
