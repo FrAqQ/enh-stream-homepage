@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -215,103 +214,84 @@ const AdminDashboard = () => {
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
       
       <div className="grid gap-6">
-        {/* Server Monitoring Card */}
+        {/* Neue Server Metrics Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Server Monitoring</CardTitle>
+            <CardTitle>Server Metriken</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {endpoints.map((endpoint) => (
-                <Card key={endpoint.host} className="bg-secondary/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Server className="w-4 h-4" />
-                      {endpoint.host}
+                <Card key={endpoint.host} className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Server className="w-4 h-4" />
+                          <span className="text-sm font-medium">{endpoint.host}</span>
+                        </div>
+                        {endpoint.status.apiStatus ? (
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500">Online</span>
+                        ) : (
+                          <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-500">Offline</span>
+                        )}
+                      </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Status Indicator */}
-                      <div className="flex items-center gap-2">
-                        {endpoint.status.apiStatus ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className={`text-sm ${endpoint.status.apiStatus ? 'text-green-500' : 'text-red-500'}`}>
-                          {endpoint.status.apiStatus ? 'Online' : 'Offline'}
+                  <CardContent className="space-y-4">
+                    {/* CPU Metrik */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <Cpu className="w-4 h-4 text-muted-foreground" />
+                          <span>CPU</span>
+                        </div>
+                        <span className={
+                          endpoint.status.systemMetrics?.cpu && endpoint.status.systemMetrics.cpu > 80
+                            ? 'text-red-500'
+                            : endpoint.status.systemMetrics?.cpu && endpoint.status.systemMetrics.cpu > 60
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                        }>
+                          {endpoint.status.systemMetrics?.cpu.toFixed(1)}%
                         </span>
                       </div>
+                      <Progress 
+                        value={endpoint.status.systemMetrics?.cpu} 
+                        className="h-2"
+                      />
+                    </div>
 
-                      {/* CPU Usage */}
-                      {endpoint.status.systemMetrics && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <Cpu className="w-4 h-4" />
-                              <span className="text-sm font-medium">CPU</span>
-                            </div>
-                            <span className={`text-sm ${
-                              endpoint.status.systemMetrics.cpu > 80 
-                                ? 'text-red-500' 
-                                : endpoint.status.systemMetrics.cpu > 60 
-                                ? 'text-yellow-500' 
-                                : 'text-green-500'
-                            }`}>
-                              {endpoint.status.systemMetrics.cpu.toFixed(1)}%
-                            </span>
-                          </div>
-                          <Progress 
-                            value={endpoint.status.systemMetrics.cpu} 
-                            className={`h-2 ${
-                              endpoint.status.systemMetrics.cpu > 80 
-                                ? 'bg-red-200' 
-                                : endpoint.status.systemMetrics.cpu > 60 
-                                ? 'bg-yellow-200' 
-                                : 'bg-green-200'
-                            }`}
-                          />
+                    {/* RAM Metrik */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <HardDrive className="w-4 h-4 text-muted-foreground" />
+                          <span>RAM</span>
                         </div>
-                      )}
-
-                      {/* RAM Usage */}
-                      {endpoint.status.systemMetrics && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <HardDrive className="w-4 h-4" />
-                              <span className="text-sm font-medium">RAM</span>
-                            </div>
-                            <span className={`text-sm ${
-                              (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                                ? 'text-red-500'
-                                : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                                ? 'text-yellow-500'
-                                : 'text-green-500'
-                            }`}>
-                              {((endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <Progress 
-                            value={(endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100}
-                            className={`h-2 ${
-                              (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                                ? 'bg-red-200'
-                                : (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                                ? 'bg-yellow-200'
-                                : 'bg-green-200'
-                            }`}
-                          />
-                          <div className="text-xs text-muted-foreground">
-                            {(endpoint.status.systemMetrics.memory.used / 1024).toFixed(1)} GB / {(endpoint.status.systemMetrics.memory.total / 1024).toFixed(1)} GB
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="text-xs text-muted-foreground mt-2">
-                        Zuletzt aktualisiert: {new Date(endpoint.status.lastChecked).toLocaleTimeString()}
+                        <span className={
+                          endpoint.status.systemMetrics?.memory && 
+                          (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
+                            ? 'text-red-500'
+                            : (endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                        }>
+                          {((endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
+                        </span>
                       </div>
+                      <Progress 
+                        value={(endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics.memory.total) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-muted-foreground">
+                        {(endpoint.status.systemMetrics?.memory.used / 1024).toFixed(1)} GB / 
+                        {(endpoint.status.systemMetrics?.memory.total / 1024).toFixed(1)} GB
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground pt-2 border-t">
+                      Aktualisiert: {new Date(endpoint.status.lastChecked).toLocaleTimeString()}
                     </div>
                   </CardContent>
                 </Card>
