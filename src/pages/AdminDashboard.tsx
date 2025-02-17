@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [newEndpoint, setNewEndpoint] = useState('');
+  const initializationDone = useRef(false);
   const [endpoints, setEndpoints] = useState<Endpoint[]>(() => {
     localStorage.removeItem('apiEndpoints');
     
@@ -95,7 +96,7 @@ const AdminDashboard = () => {
           }
         }
         
-        const updatedEndpoint = {
+        return {
           ...endpoint,
           status: {
             isOnline: pingResult,
@@ -106,8 +107,6 @@ const AdminDashboard = () => {
             systemMetrics
           }
         };
-        console.log(`Updated endpoint ${endpoint.host}:`, updatedEndpoint);
-        return updatedEndpoint;
       } catch (error) {
         console.error(`Error checking endpoint ${endpoint.host}:`, error);
         return endpoint;
@@ -131,7 +130,7 @@ const AdminDashboard = () => {
     const intervalId = setInterval(updateEndpointStatuses, 30000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [endpoints]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -154,8 +153,6 @@ const AdminDashboard = () => {
 
     checkAdminStatus();
   }, [user]);
-
-  console.log('Current render state:', { loading, isAdmin, endpoints });
 
   const handleAddEndpoint = () => {
     if (!newEndpoint.trim()) {
@@ -241,6 +238,32 @@ const AdminDashboard = () => {
     toast.success('Endpunkte wurden zurückgesetzt');
   };
 
+  // Einmalig den zweiten Server hinzufügen
+  useEffect(() => {
+    if (!loading && isAdmin && !initializationDone.current && !endpoints.some(e => e.host === "v2202501252999311567.powersrv.de")) {
+      initializationDone.current = true;
+      const powersrvEndpoint: Endpoint = {
+        host: "v2202501252999311567.powersrv.de",
+        status: {
+          isOnline: false,
+          lastChecked: new Date(),
+          apiStatus: false,
+          isSecure: false,
+          pingStatus: false,
+          systemMetrics: {
+            cpu: 0,
+            memory: {
+              total: 0,
+              used: 0,
+              free: 0
+            }
+          }
+        }
+      };
+      setEndpoints(prev => [...prev, powersrvEndpoint]);
+    }
+  }, [loading, isAdmin]);
+
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
   }
@@ -249,16 +272,6 @@ const AdminDashboard = () => {
     console.log('User is not admin, redirecting...');
     return <Navigate to="/dashboard" replace />;
   }
-
-  // Automatisch den Server hinzufügen nach dem ersten Render
-  useEffect(() => {
-    if (!loading && isAdmin && !endpoints.some(e => e.host === "v2202501252999311567.powersrv.de")) {
-      setNewEndpoint("v2202501252999311567.powersrv.de");
-      setTimeout(() => {
-        handleAddEndpoint();
-      }, 100);
-    }
-  }, [loading, isAdmin]);
 
   return (
     <div className="container mx-auto px-4 pt-20">
