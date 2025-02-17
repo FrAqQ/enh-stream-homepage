@@ -296,6 +296,20 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
             >
               +5 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
+            <Button 
+              onClick={() => handleButtonClick(20)} 
+              variant="outline"
+              disabled={isButtonDisabled(20)}
+            >
+              +20 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(50)} 
+              variant="outline"
+              disabled={isButtonDisabled(50)}
+            >
+              +50 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button 
