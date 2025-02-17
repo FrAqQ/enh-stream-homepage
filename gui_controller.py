@@ -55,9 +55,9 @@ class APIGUI(GUI):
             # Setze zuerst die URL
             self.set_twitch_url(twitch_url)
             
-            # Rufe die close_func (statt close_one_func) count-mal auf
+            # Rufe die close_func direkt vom Manager auf
             for _ in range(count):
-                self.tab_main.close_func()
+                self.manager.close_browser()
             
             return f"Erfolgreich {count} Viewer von {twitch_url} entfernt"
         except Exception as e:
