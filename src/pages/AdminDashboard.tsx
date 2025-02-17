@@ -6,7 +6,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Cpu, HardDrive, MessageCircle, Plus, Minus, Server, CheckCircle, XCircle } from "lucide-react";
+import { Cpu, HardDrive, MessageCircle, Plus, Minus, Server } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -214,93 +214,75 @@ const AdminDashboard = () => {
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
       
       <div className="grid gap-6">
-        {/* Neue Server Metrics Card */}
+        {/* Neue Monitoring Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Server Metriken</CardTitle>
+            <CardTitle>Live Server Monitoring</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {endpoints.map((endpoint) => (
-                <Card key={endpoint.host} className="border border-border">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Server className="w-4 h-4" />
-                          <span className="text-sm font-medium">{endpoint.host}</span>
-                        </div>
-                        {endpoint.status.apiStatus ? (
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500">Online</span>
-                        ) : (
-                          <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-500">Offline</span>
-                        )}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* CPU Metrik */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <Cpu className="w-4 h-4 text-muted-foreground" />
-                          <span>CPU</span>
-                        </div>
-                        <span className={
-                          endpoint.status.systemMetrics?.cpu && endpoint.status.systemMetrics.cpu > 80
-                            ? 'text-red-500'
-                            : endpoint.status.systemMetrics?.cpu && endpoint.status.systemMetrics.cpu > 60
-                            ? 'text-yellow-500'
-                            : 'text-green-500'
-                        }>
-                          {endpoint.status.systemMetrics?.cpu.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress 
-                        value={endpoint.status.systemMetrics?.cpu} 
-                        className="h-2"
-                      />
+                <div key={endpoint.host} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Server className="w-5 h-5" />
+                      <span className="font-medium">{endpoint.host}</span>
                     </div>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      endpoint.status.isOnline ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {endpoint.status.isOnline ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
+                  
+                  {/* CPU Usage */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <Cpu className="w-4 h-4" />
+                        <span className="text-sm">CPU</span>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {endpoint.status.systemMetrics?.cpu.toFixed(1)}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={endpoint.status.systemMetrics?.cpu} 
+                      className="h-2"
+                    />
+                  </div>
 
-                    {/* RAM Metrik */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <HardDrive className="w-4 h-4 text-muted-foreground" />
-                          <span>RAM</span>
-                        </div>
-                        <span className={
-                          endpoint.status.systemMetrics?.memory && 
-                          (endpoint.status.systemMetrics.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 80
-                            ? 'text-red-500'
-                            : (endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics.memory.total) * 100 > 60
-                            ? 'text-yellow-500'
-                            : 'text-green-500'
-                        }>
-                          {((endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics.memory.total) * 100).toFixed(1)}%
-                        </span>
+                  {/* RAM Usage */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <HardDrive className="w-4 h-4" />
+                        <span className="text-sm">RAM</span>
                       </div>
-                      <Progress 
-                        value={(endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics.memory.total) * 100} 
-                        className="h-2"
-                      />
-                      <div className="text-xs text-muted-foreground">
-                        {(endpoint.status.systemMetrics?.memory.used / 1024).toFixed(1)} GB / 
-                        {(endpoint.status.systemMetrics?.memory.total / 1024).toFixed(1)} GB
-                      </div>
+                      <span className="text-sm font-medium">
+                        {((endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics?.memory.total) * 100).toFixed(1)}%
+                      </span>
                     </div>
+                    <Progress 
+                      value={(endpoint.status.systemMetrics?.memory.used / endpoint.status.systemMetrics?.memory.total) * 100} 
+                      className="h-2"
+                    />
+                    <div className="text-xs text-gray-500">
+                      {(endpoint.status.systemMetrics?.memory.used / 1024).toFixed(1)} GB / 
+                      {(endpoint.status.systemMetrics?.memory.total / 1024).toFixed(1)} GB
+                    </div>
+                  </div>
 
-                    <div className="text-xs text-muted-foreground pt-2 border-t">
-                      Aktualisiert: {new Date(endpoint.status.lastChecked).toLocaleTimeString()}
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="mt-4 text-xs text-gray-500">
+                    Zuletzt aktualisiert: {new Date(endpoint.status.lastChecked).toLocaleTimeString()}
+                  </div>
+                </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* API Endpoints Management Card */}
+        {/* Original API Endpoints Card */}
         <Card>
           <CardHeader>
             <CardTitle>API Endpunkte</CardTitle>
