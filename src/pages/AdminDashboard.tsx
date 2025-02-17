@@ -6,7 +6,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Cpu, HardDrive, Plus, Minus, Server } from "lucide-react";
+import { Cpu, HardDrive, Plus, Minus, Server, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { API_ENDPOINTS, Endpoint, updateEndpoints } from "@/config/apiEndpoints";
 
@@ -16,6 +16,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [newEndpoint, setNewEndpoint] = useState('');
   const [endpoints, setEndpoints] = useState<Endpoint[]>(() => {
+    localStorage.removeItem('apiEndpoints');
+    
     const initialEndpoints = API_ENDPOINTS.map(host => ({
       host,
       status: {
@@ -209,6 +211,34 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResetEndpoints = () => {
+    localStorage.removeItem('apiEndpoints');
+    const defaultEndpoints = [
+      "v2202501252999311567.powersrv.de",
+      "v220250171253310506.hotsrv.de"
+    ].map(host => ({
+      host,
+      status: {
+        isOnline: false,
+        lastChecked: new Date(),
+        apiStatus: false,
+        isSecure: false,
+        pingStatus: false,
+        systemMetrics: {
+          cpu: 0,
+          memory: {
+            total: 0,
+            used: 0,
+            free: 0
+          }
+        }
+      }
+    }));
+    setEndpoints(defaultEndpoints);
+    updateEndpoints(defaultEndpoints.map(e => e.host));
+    toast.success('Endpunkte wurden zurückgesetzt');
+  };
+
   if (loading) {
     return <div className="container mx-auto px-4 pt-20">Loading...</div>;
   }
@@ -225,8 +255,17 @@ const AdminDashboard = () => {
       <div className="grid gap-6">
         {/* Monitoring Card */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Server Status</CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleResetEndpoints}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Zurücksetzen
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
