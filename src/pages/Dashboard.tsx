@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
+  const [lastUpdatedPlan, setLastUpdatedPlan] = useState<string | null>(null);
 
   const saveStreamStats = async (viewers: number, chatters: number) => {
     try {
@@ -79,7 +80,6 @@ const Dashboard = () => {
         stream_url: streamUrl
       });
 
-      // Get the first recorded viewer count for this URL
       const { data: firstRecord, error: firstRecordError } = await supabase
         .from('stream_stats')
         .select('viewer_count')
@@ -99,7 +99,6 @@ const Dashboard = () => {
         return;
       }
 
-      // Get average of recent viewer counts (last month)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -195,7 +194,6 @@ const Dashboard = () => {
       console.log("Setting up stats tracking for URL:", streamUrl);
       fetchAndSaveStats();
       
-      // Update every 10 minutes instead of 10 seconds
       const interval = setInterval(fetchAndSaveStats, 600000);
       
       return () => clearInterval(interval);
@@ -225,19 +223,18 @@ const Dashboard = () => {
 
         console.log("Raw profile data:", profile);
 
-        // Wenn subscription_status aktiv ist, verwenden wir den Plan aus der Datenbank
         if (profile?.subscription_status === 'active') {
           console.log("Active subscription found:", {
             plan: profile.plan,
             status: profile.subscription_status
           });
           
-          // Nur wenn sich der Plan tatsächlich geändert hat
           const newPlan = profile.plan || "Free";
-          if (newPlan !== userPlan) {
-            console.log("Plan changed from", userPlan, "to", newPlan);
+          if (newPlan !== lastUpdatedPlan) {
+            console.log("Plan changed from", lastUpdatedPlan, "to", newPlan);
             setUserPlan(newPlan);
             setSubscriptionStatus('active');
+            setLastUpdatedPlan(newPlan);
             toast({
               title: "Plan Updated",
               description: `Your plan has been updated to ${newPlan}`,
@@ -245,9 +242,10 @@ const Dashboard = () => {
           }
         } else {
           console.log("No active subscription found, setting to Free plan");
-          if (userPlan !== "Free") {
+          if (lastUpdatedPlan !== "Free") {
             setUserPlan("Free");
             setSubscriptionStatus('inactive');
+            setLastUpdatedPlan("Free");
           }
         }
       } catch (err) {
@@ -263,7 +261,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchUserPlan();
-    const interval = setInterval(fetchUserPlan, 5000); // Check every 5 seconds
+    const interval = setInterval(fetchUserPlan, 5000);
     return () => clearInterval(interval);
   }, [user, toast]);
 
