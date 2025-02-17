@@ -28,7 +28,8 @@ const getInitialEndpoints = (): string[] => {
   if (savedEndpoints) {
     try {
       const parsed = JSON.parse(savedEndpoints);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
+        // Entferne die Überprüfung auf length > 0
         return parsed;
       }
     } catch (e) {
