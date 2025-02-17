@@ -120,17 +120,24 @@ const AdminDashboard = () => {
           endpoints.map(endpoint => checkEndpointHealth(endpoint))
         );
         console.log('All endpoints updated:', updatedEndpoints);
-        setEndpoints(updatedEndpoints);
+        setEndpoints(prevEndpoints => {
+          // Nur aktualisieren, wenn sich die Hosts nicht geändert haben
+          if (prevEndpoints.length === updatedEndpoints.length && 
+              prevEndpoints.every(ep => updatedEndpoints.some(uep => uep.host === ep.host))) {
+            return updatedEndpoints;
+          }
+          return prevEndpoints;
+        });
       } catch (error) {
         console.error('Error updating endpoint statuses:', error);
       }
     };
 
-    updateEndpointStatuses();
     const intervalId = setInterval(updateEndpointStatuses, 30000);
+    updateEndpointStatuses();
 
     return () => clearInterval(intervalId);
-  }, [endpoints]);
+  }, []); // Entferne endpoints aus den Dependencies
 
   useEffect(() => {
     const checkAdminStatus = async () => {
