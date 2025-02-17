@@ -53,10 +53,6 @@ interface EndpointWithStatus extends Endpoint {
   status: EndpointStatus;
 }
 
-interface NewEndpoint {
-  host: string;
-}
-
 const AVAILABLE_PLANS = [
   "Free",
   "Twitch Starter",
@@ -104,7 +100,6 @@ const AdminDashboard = () => {
       }
     }));
   });
-  const [newEndpoint, setNewEndpoint] = useState<NewEndpoint>({ host: '' });
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -338,19 +333,19 @@ const AdminDashboard = () => {
   };
 
   const handleAddEndpoint = () => {
-    if (!newEndpoint.host.trim()) {
+    if (!newEndpoint.trim()) {
       toast.error('Bitte geben Sie einen Endpunkt ein');
       return;
     }
 
-    if (endpoints.some(e => e.host === newEndpoint.host.trim())) {
+    if (endpoints.some(e => e.host === newEndpoint.trim())) {
       toast.error('Dieser Endpunkt existiert bereits');
       return;
     }
 
     try {
       const newEndpointWithStatus: EndpointWithStatus = {
-        host: newEndpoint.host.trim(),
+        host: newEndpoint.trim(),
         status: {
           isOnline: false,
           lastChecked: new Date(),
@@ -370,8 +365,8 @@ const AdminDashboard = () => {
       
       const updatedEndpoints = [...endpoints, newEndpointWithStatus];
       setEndpoints(updatedEndpoints);
-      updateEndpoints(updatedEndpoints);
-      setNewEndpoint({ host: '' });
+      updateEndpoints(updatedEndpoints.map(e => e.host));
+      setNewEndpoint('');
       toast.success('Endpunkt erfolgreich hinzugefügt');
     } catch (error) {
       toast.error('Fehler beim Hinzufügen des Endpunkts');
@@ -386,7 +381,7 @@ const AdminDashboard = () => {
         return;
       }
       setEndpoints(updatedEndpoints);
-      updateEndpoints(updatedEndpoints);
+      updateEndpoints(updatedEndpoints.map(e => e.host));
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
       toast.error('Fehler beim Entfernen des Endpunkts');
@@ -619,8 +614,8 @@ const AdminDashboard = () => {
                 <Input
                   type="text"
                   placeholder="Neuer Endpunkt (z.B. example.server.de)"
-                  value={newEndpoint.host}
-                  onChange={(e) => setNewEndpoint({ host: e.target.value })}
+                  value={newEndpoint}
+                  onChange={(e) => setNewEndpoint(e.target.value)}
                 />
                 <Button onClick={handleAddEndpoint}>
                   <Plus className="w-4 h-4 mr-2" />
