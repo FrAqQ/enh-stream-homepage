@@ -23,32 +23,69 @@ export interface Endpoint {
 }
 
 // Hole gespeicherte Endpunkte aus dem localStorage oder verwende den Standardwert
-const getInitialEndpoints = (): string[] => {
+const getInitialEndpoints = (): Endpoint[] => {
   const savedEndpoints = localStorage.getItem('apiEndpoints');
   if (savedEndpoints) {
     try {
       const parsed = JSON.parse(savedEndpoints);
       if (Array.isArray(parsed)) {
-        // Entferne die Überprüfung auf length > 0
-        return parsed;
+        // Konvertiere die gespeicherten Daten zurück in das richtige Format
+        return parsed.map(endpoint => ({
+          host: endpoint.host,
+          status: {
+            isOnline: endpoint.status?.isOnline || false,
+            lastChecked: new Date(endpoint.status?.lastChecked || new Date()),
+            apiStatus: endpoint.status?.apiStatus || false,
+            isSecure: endpoint.status?.isSecure || false,
+            pingStatus: endpoint.status?.pingStatus || false,
+            systemMetrics: endpoint.status?.systemMetrics || {
+              cpu: 0,
+              memory: {
+                total: 0,
+                used: 0,
+                free: 0
+              }
+            }
+          }
+        }));
       }
     } catch (e) {
       console.error('Fehler beim Parsen der gespeicherten Endpunkte:', e);
     }
   }
-  return ["srv-bot-001.enh.app"];
+  // Standardwert, wenn keine Endpunkte gespeichert sind
+  return [{
+    host: "srv-bot-001.enh.app",
+    status: {
+      isOnline: false,
+      lastChecked: new Date(),
+      apiStatus: false,
+      isSecure: false,
+      pingStatus: false,
+      systemMetrics: {
+        cpu: 0,
+        memory: {
+          total: 0,
+          used: 0,
+          free: 0
+        }
+      }
+    }
+  }];
 };
 
-let API_ENDPOINTS: string[] = getInitialEndpoints();
+let API_ENDPOINTS: Endpoint[] = getInitialEndpoints();
 
 let currentEndpointIndex = 0;
 
-export const updateEndpoints = (newEndpoints: string[]) => {
+export const updateEndpoints = (newEndpoints: Endpoint[]) => {
   if (!Array.isArray(newEndpoints) || newEndpoints.length === 0) {
     console.error('Ungültige Endpunkte:', newEndpoints);
     return;
   }
-  API_ENDPOINTS = [...newEndpoints]; // Erstelle eine Kopie des Arrays
+  
+  // Speichere die vollständigen Endpoint-Objekte
+  API_ENDPOINTS = newEndpoints;
   localStorage.setItem('apiEndpoints', JSON.stringify(API_ENDPOINTS));
   console.log("API endpoints updated:", API_ENDPOINTS);
 };

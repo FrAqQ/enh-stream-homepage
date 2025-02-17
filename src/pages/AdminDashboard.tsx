@@ -370,7 +370,7 @@ const AdminDashboard = () => {
       
       const updatedEndpoints = [...endpoints, newEndpointWithStatus];
       setEndpoints(updatedEndpoints);
-      updateEndpoints(updatedEndpoints.map(e => e.host));
+      updateEndpoints(updatedEndpoints);
       setNewEndpoint({ host: '' });
       toast.success('Endpunkt erfolgreich hinzugefügt');
     } catch (error) {
@@ -386,7 +386,7 @@ const AdminDashboard = () => {
         return;
       }
       setEndpoints(updatedEndpoints);
-      updateEndpoints(updatedEndpoints.map(e => e.host));
+      updateEndpoints(updatedEndpoints);
       toast.success('Endpunkt erfolgreich entfernt');
     } catch (error) {
       toast.error('Fehler beim Entfernen des Endpunkts');
