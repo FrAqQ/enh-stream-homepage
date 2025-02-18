@@ -119,13 +119,60 @@ const Dashboard = () => {
       try {
         const count = await getChatterCount(streamUrl);
         setChatterCount(count);
+
+        if (user?.id) {
+          const { data, error } = await supabase
+            .from('chatter_counts')
+            .upsert({
+              user_id: user.id,
+              chatter_count: count,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id'
+            });
+
+          if (error) {
+            console.error("Error updating chatter count:", error);
+          }
+        }
+
         return count;
       } catch (error) {
         console.error("Error updating chatter count:", error);
       }
     }
     return 0;
-  }, [streamUrl]);
+  }, [streamUrl, user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      const fetchInitialChatterCount = async () => {
+        const { data, error } = await supabase
+          .from('chatter_counts')
+          .select('chatter_count')
+          .eq('user_id', user.id);
+
+        if (!error && data && data.length > 0) {
+          setChatterCount(data[0].chatter_count);
+        } else {
+          const { error: insertError } = await supabase
+            .from('chatter_counts')
+            .insert([
+              {
+                user_id: user.id,
+                chatter_count: 0
+              }
+            ]);
+          
+          if (insertError) {
+            console.error("Error creating initial chatter count:", insertError);
+          }
+        }
+      };
+
+      fetchInitialChatterCount();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (streamUrl) {
