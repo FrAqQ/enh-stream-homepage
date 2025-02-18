@@ -1,3 +1,4 @@
+
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -10,6 +11,7 @@ import { ProgressCard } from "@/components/dashboard/ProgressCard"
 import { useToast } from "@/hooks/use-toast"
 import { getViewerCount } from "@/services/viewerScraper"
 import { getChatterCount } from "@/services/chatterScraper"
+import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -320,6 +322,7 @@ const Dashboard = () => {
           value={viewerCount}
           change={`${viewerGrowth}% from first stream`}
           icon={Users}
+          limit={PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS]}
         />
         <StatsCard
           title="Chat Messages"
@@ -327,6 +330,7 @@ const Dashboard = () => {
           subtitle="Last 10 minutes"
           change="Calculating..."
           icon={MessageSquare}
+          limit={PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS]}
         />
         <StatsCard
           title="Growth Rate"
