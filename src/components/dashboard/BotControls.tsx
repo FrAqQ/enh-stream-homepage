@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
 import { AlertCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
-import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
+import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
 import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
@@ -108,7 +108,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     return () => clearInterval(interval);
   }, [user]);
 
-  const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+  const getLimit = () => {
+    if (type === "viewer") {
+      return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+    } else {
+      return PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+    }
+  };
+
+  const limit = getLimit();
 
   const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
     try {
@@ -174,10 +182,10 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       return;
     }
 
-    if (viewerCount > 0 && currentViewers + viewerCount > viewerLimit) {
+    if (viewerCount > 0 && currentViewers + viewerCount > limit) {
       toast({
         title: t.viewerLimitReached,
-        description: t.maxViewersAllowed.replace("${0}", viewerLimit.toString()),
+        description: t.maxViewersAllowed.replace("${0}", limit.toString()),
         variant: "destructive",
       });
       return;
@@ -304,7 +312,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (count < 0) {
       return isOnCooldown || !streamUrl || Math.abs(count) > currentViewers;
     }
-    return isOnCooldown || !streamUrl || currentViewers + count > viewerLimit;
+    return isOnCooldown || !streamUrl || currentViewers + count > limit;
   };
 
   return (
@@ -331,9 +339,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
-              <span>{currentViewers}/{viewerLimit}</span>
+              <span>{currentViewers}/{limit}</span>
             </div>
-            <Progress value={(currentViewers / viewerLimit) * 100} />
+            <Progress value={(currentViewers / limit) * 100} />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button 
