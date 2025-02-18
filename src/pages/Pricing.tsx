@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
@@ -8,7 +9,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 
 const Pricing = () => {
   const { user } = useUser();
-  const [currentPlan, setCurrentPlan] = useState("Free");
+  const [currentPlan, setCurrentPlan] = useState("Enhance Stream Free");
   const [currentFollowerPlan, setCurrentFollowerPlan] = useState("None");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
   const [isYearly, setIsYearly] = useState(false);
@@ -23,7 +24,7 @@ const Pricing = () => {
       save: "Save",
       viewerPlans: "Viewer & Chatter Plans",
       followerPlans: "Follower Plans",
-      free: "Test Plan",
+      free: "Free",
       starter: "Starter",
       basic: "Basic",
       professional: "Professional",
@@ -46,7 +47,7 @@ const Pricing = () => {
       save: "Sparen",
       viewerPlans: "Zuschauer & Chatter Pläne",
       followerPlans: "Follower Pläne",
-      free: "Testplan",
+      free: "Free",
       starter: "Starter",
       basic: "Basic",
       professional: "Professional",
@@ -78,7 +79,7 @@ const Pricing = () => {
 
           if (error) {
             console.error('Error fetching user plan:', error);
-            setCurrentPlan("Free");
+            setCurrentPlan("Enhance Stream Free");
             setCurrentFollowerPlan("None");
             setSubscriptionStatus("inactive");
             return;
@@ -86,18 +87,18 @@ const Pricing = () => {
 
           if (profile?.subscription_status === 'active') {
             console.log("Active subscription found:", profile.plan);
-            setCurrentPlan(profile.plan || "Free");
+            setCurrentPlan(profile.plan || "Enhance Stream Free");
             setCurrentFollowerPlan(profile.follower_plan || "None");
             setSubscriptionStatus('active');
           } else {
             console.log("No active subscription found, setting to Free plan");
-            setCurrentPlan("Free");
+            setCurrentPlan("Enhance Stream Free");
             setCurrentFollowerPlan("None");
             setSubscriptionStatus('inactive');
           }
         } catch (error) {
           console.error('Error:', error);
-          setCurrentPlan("Free");
+          setCurrentPlan("Enhance Stream Free");
           setCurrentFollowerPlan("None");
           setSubscriptionStatus("inactive");
         }
