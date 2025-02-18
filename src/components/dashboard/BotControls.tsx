@@ -9,6 +9,7 @@ import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
 import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
+import { serverManager } from "@/services/serverManager"
 import {
   Tooltip,
   TooltipContent,
@@ -183,24 +184,86 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
 
     try {
-      const success = await tryRequest(viewerCount);
-      
-      if (success) {
+      if (viewerCount > 0) {
+        const bestServer = serverManager.getBestServerForViewers(API_ENDPOINTS, viewerCount);
+        
+        if (!bestServer) {
+          toast({
+            title: "Error",
+            description: "Keine Server mit ausreichender Kapazität verfügbar",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const apiUrl = `https://${bestServer}:5000/add_viewer`;
+        
+        console.log(`Sende Request an Server mit Details:`, {
+          user_id: user?.id,
+          twitch_url: streamUrl,
+          viewer_count: viewerCount,
+          server: bestServer
+        });
+
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: 'cors',
+          credentials: 'omit',
+          body: JSON.stringify({
+            user_id: user?.id,
+            twitch_url: streamUrl,
+            viewer_count: viewerCount
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        serverManager.reserveCapacity(bestServer, viewerCount);
+        
         const newViewerCount = currentViewers + viewerCount;
         setCurrentViewers(newViewerCount);
 
         toast({
           title: t.success,
-          description: viewerCount > 0 ? t.reachIncreased : t.viewersRemoved,
+          description: t.reachIncreased,
         });
         
         onAdd(viewerCount);
       } else {
-        toast({
-          title: t.warning,
-          description: "Es gab ein Problem bei der Reichweitensteigerung.",
-          variant: "destructive",
+        const apiUrl = `https://${API_ENDPOINTS[0]}:5000/remove_viewer`;
+        
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: 'cors',
+          credentials: 'omit',
+          body: JSON.stringify({
+            user_id: user?.id,
+            twitch_url: streamUrl,
+            viewer_count: Math.abs(viewerCount)
+          })
         });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const newViewerCount = currentViewers + viewerCount;
+        setCurrentViewers(newViewerCount);
+
+        toast({
+          title: t.success,
+          description: t.viewersRemoved,
+        });
+        
+        onAdd(viewerCount);
       }
     } catch (error) {
       console.error("Detailed error information:", {

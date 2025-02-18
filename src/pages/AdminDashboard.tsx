@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Cpu, HardDrive, Plus, Minus, Server, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { API_ENDPOINTS, Endpoint, updateEndpoints } from "@/config/apiEndpoints";
+import { serverManager } from "@/services/serverManager";
 
 const AdminDashboard = () => {
   const { user } = useUser();
@@ -92,6 +93,15 @@ const AdminDashboard = () => {
             if (metricsResponse.ok) {
               systemMetrics = await metricsResponse.json();
               console.log(`Metrics received for ${endpoint.host}:`, systemMetrics);
+              
+              // Aktualisiere den ServerManager mit den neuesten Metriken
+              if (systemMetrics.memory) {
+                serverManager.updateServerMetrics(
+                  endpoint.host,
+                  systemMetrics.memory.total / 1024, // Konvertiere zu GB
+                  systemMetrics.memory.used / 1024    // Konvertiere zu GB
+                );
+              }
             }
           } catch (error) {
             console.error(`Failed to fetch metrics for ${endpoint.host}:5000:`, error);
