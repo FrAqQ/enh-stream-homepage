@@ -9,9 +9,18 @@ interface StatsCardProps {
   icon: LucideIcon
   subtitle?: string
   limit?: number
+  showLimit?: boolean
 }
 
-export function StatsCard({ title, value, change, icon: Icon, subtitle, limit }: StatsCardProps) {
+export function StatsCard({ 
+  title, 
+  value, 
+  change, 
+  icon: Icon, 
+  subtitle, 
+  limit, 
+  showLimit = false 
+}: StatsCardProps) {
   return (
     <Card className="glass-morphism">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -23,7 +32,7 @@ export function StatsCard({ title, value, change, icon: Icon, subtitle, limit }:
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">
-          {value}{limit !== undefined && `/${limit}`}
+          {value}{showLimit && limit !== undefined && `/${limit}`}
         </div>
         {change && <p className="text-xs text-muted-foreground">{change}</p>}
       </CardContent>
