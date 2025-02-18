@@ -10,7 +10,7 @@ interface ServerMetrics {
   reservations: ServerReservation[];
 }
 
-const VIEWER_RAM_USAGE = 0.53; // GB pro Viewer
+const VIEWER_RAM_USAGE = 0.6; // GB pro Viewer (erhöht von 0,53 GB)
 const RESERVATION_TIMEOUT = 5 * 60 * 1000; // 5 Minuten in Millisekunden
 
 class ServerManager {
