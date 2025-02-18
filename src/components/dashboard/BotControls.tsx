@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,7 @@ interface BotControlsProps {
 
 export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
   const [isOnCooldown, setIsOnCooldown] = useState(false);
-  const [currentViewers, setCurrentViewers] = useState(0);
+  const [currentCount, setCurrentCount] = useState(0);
   const { toast } = useToast();
   const { user } = useUser();
   const [userPlan, setUserPlan] = useState<string>("Free");
@@ -80,7 +81,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   useEffect(() => {
     const fetchUserPlan = async () => {
       if (user?.id) {
-        console.log("Fetching current user plan...");
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('plan, subscription_status')
@@ -94,10 +94,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         }
 
         if (profile?.subscription_status === 'active') {
-          console.log("Active subscription found with plan:", profile?.plan);
           setUserPlan(profile?.plan || "Free");
         } else {
-          console.log("No active subscription found, setting to Free plan");
           setUserPlan("Free");
         }
       }
@@ -109,22 +107,25 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   }, [user]);
 
   useEffect(() => {
-    const fetchViewerCount = async () => {
+    const fetchCurrentCount = async () => {
       if (user?.id) {
+        const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
+        const countField = type === 'viewer' ? 'viewer_count' : 'chatter_count';
+        
         const { data, error } = await supabase
-          .from('viewer_counts')
-          .select('viewer_count')
+          .from(tableName)
+          .select(countField)
           .eq('user_id', user.id)
           .single();
 
         if (!error && data) {
-          setCurrentViewers(data.viewer_count);
+          setCurrentCount(data[countField]);
         }
       }
     };
 
-    fetchViewerCount();
-  }, [user]);
+    fetchCurrentCount();
+  }, [user, type]);
 
   const getLimit = () => {
     if (type === "viewer") {
@@ -136,38 +137,42 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const limit = getLimit();
 
-  const updateViewerCount = async (newCount: number) => {
+  const updateCount = async (newCount: number) => {
     if (!user?.id) return;
 
+    const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
+    const countField = type === 'viewer' ? 'viewer_count' : 'chatter_count';
+
     const { error } = await supabase
-      .from('viewer_counts')
+      .from(tableName)
       .upsert({
         user_id: user.id,
-        viewer_count: newCount,
+        [countField]: newCount,
         updated_at: new Date().toISOString()
       });
 
     if (error) {
-      console.error('Error updating viewer count:', error);
+      console.error(`Error updating ${type} count:`, error);
       toast({
         title: "Error",
-        description: "Failed to update viewer count",
+        description: `Failed to update ${type} count`,
         variant: "destructive",
       });
     }
   };
 
-  const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
+  const tryRequest = async (count: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
     try {
-      const apiEndpoint = viewerCount > 0 ? 'add_viewer' : 'remove_viewer';
+      const actionType = type === 'viewer' ? 'viewer' : 'chatter';
+      const apiEndpoint = count > 0 ? `add_${actionType}` : `remove_${actionType}`;
       
       const currentHost = getNextEndpoint();
       const apiUrl = `https://${currentHost}:5000/${apiEndpoint}`;
       
-      console.log(`Versuche Request an Server mit Details:`, {
+      console.log(`Attempting request to server with details:`, {
         user_id: user?.id,
         twitch_url: streamUrl,
-        viewer_count: Math.abs(viewerCount),
+        count: Math.abs(count),
         api_host: currentHost,
         retriesLeft,
         url: apiUrl
@@ -183,15 +188,12 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         body: JSON.stringify({
           user_id: user?.id || "123",
           twitch_url: streamUrl,
-          viewer_count: Math.abs(viewerCount)
+          [`${type}_count`]: Math.abs(count)
         })
       });
 
-      console.log("Response status:", response.status);
-
       if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
-        console.log(`Server ${currentHost} nicht erreichbar, versuche nächsten Server...`);
-        return tryRequest(viewerCount, retriesLeft - 1);
+        return tryRequest(count, retriesLeft - 1);
       }
       
       if (!response.ok) {
@@ -203,25 +205,27 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       
       return true;
     } catch (error) {
-      console.log("Fehler aufgetreten, versuche nächsten Server...", error);
+      console.log("Error occurred, trying next server...", error);
       if (retriesLeft > 1) {
-        return tryRequest(viewerCount, retriesLeft - 1);
+        return tryRequest(count, retriesLeft - 1);
       }
       throw error;
     }
   };
 
-  const modifyViewers = async (viewerCount: number) => {
-    if (viewerCount < 0 && Math.abs(viewerCount) > currentViewers) {
+  const modifyCount = async (changeAmount: number) => {
+    if (changeAmount < 0 && Math.abs(changeAmount) > currentCount) {
       toast({
         title: t.notEnoughViewers,
-        description: t.cantRemoveViewers.replace("${0}", Math.abs(viewerCount).toString()).replace("${0}", currentViewers.toString()),
+        description: t.cantRemoveViewers
+          .replace("${0}", Math.abs(changeAmount).toString())
+          .replace("${0}", currentCount.toString()),
         variant: "destructive",
       });
       return;
     }
 
-    if (viewerCount > 0 && currentViewers + viewerCount > limit) {
+    if (changeAmount > 0 && currentCount + changeAmount > limit) {
       toast({
         title: t.viewerLimitReached,
         description: t.maxViewersAllowed.replace("${0}", limit.toString()),
@@ -231,28 +235,18 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
 
     try {
-      if (viewerCount > 0) {
-        const success = await tryRequest(viewerCount);
-        if (success) {
-          const newViewerCount = currentViewers + viewerCount;
-          setCurrentViewers(newViewerCount);
-          await updateViewerCount(newViewerCount);
-          onAdd(viewerCount);
-        }
-      } else {
-        const success = await tryRequest(viewerCount);
-        if (success) {
-          const newViewerCount = currentViewers + viewerCount;
-          setCurrentViewers(newViewerCount);
-          await updateViewerCount(newViewerCount);
-          onAdd(viewerCount);
-        }
+      const success = await tryRequest(changeAmount);
+      if (success) {
+        const newCount = currentCount + changeAmount;
+        setCurrentCount(newCount);
+        await updateCount(newCount);
+        onAdd(changeAmount);
       }
     } catch (error) {
-      console.error("Error modifying viewers:", error);
+      console.error(`Error modifying ${type} count:`, error);
       toast({
         title: "Error",
-        description: "Failed to modify viewer count",
+        description: `Failed to modify ${type} count`,
         variant: "destructive",
       });
     }
@@ -268,9 +262,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       return;
     }
 
-    if (type === "viewer") {
-      await modifyViewers(count);
-    }
+    await modifyCount(count);
     
     setIsOnCooldown(true);
     setTimeout(() => {
@@ -280,9 +272,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const isButtonDisabled = (count: number) => {
     if (count < 0) {
-      return isOnCooldown || !streamUrl || Math.abs(count) > currentViewers;
+      return isOnCooldown || !streamUrl || Math.abs(count) > currentCount;
     }
-    return isOnCooldown || !streamUrl || currentViewers + count > limit;
+    return isOnCooldown || !streamUrl || currentCount + count > limit;
   };
 
   return (
@@ -309,9 +301,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
-              <span>{currentViewers}/{limit}</span>
+              <span>{currentCount}/{limit}</span>
             </div>
-            <Progress value={(currentViewers / limit) * 100} />
+            <Progress value={(currentCount / limit) * 100} />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button 
