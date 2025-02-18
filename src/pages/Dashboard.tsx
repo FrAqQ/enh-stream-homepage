@@ -253,6 +253,29 @@ const Dashboard = () => {
     }
   };
 
+  const calculateStreamHealth = () => {
+    if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
+    
+    const targetChatterCount = viewerCount * 0.65;
+    const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
+    
+    let status = "Needs improvement";
+    if (healthPercentage >= 100) {
+      status = "Excellent condition";
+    } else if (healthPercentage >= 75) {
+      status = "Good condition";
+    } else if (healthPercentage >= 50) {
+      status = "Fair condition";
+    }
+
+    return {
+      percentage: Math.round(healthPercentage),
+      status
+    };
+  };
+
+  const streamHealth = calculateStreamHealth();
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://embed.twitch.tv/embed/v1.js";
@@ -322,8 +345,8 @@ const Dashboard = () => {
         />
         <StatsCard
           title="Stream Health"
-          value="98%"
-          change="Excellent condition"
+          value={`${streamHealth.percentage}%`}
+          change={streamHealth.status}
           icon={Activity}
         />
       </div>
