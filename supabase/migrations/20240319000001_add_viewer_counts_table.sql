@@ -1,3 +1,4 @@
+
 -- Drop the table if it exists (to handle potential recreation)
 DROP TABLE IF EXISTS viewer_counts;
 

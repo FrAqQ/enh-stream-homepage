@@ -108,6 +108,24 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     return () => clearInterval(interval);
   }, [user]);
 
+  useEffect(() => {
+    const fetchViewerCount = async () => {
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from('viewer_counts')
+          .select('viewer_count')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data) {
+          setCurrentViewers(data.viewer_count);
+        }
+      }
+    };
+
+    fetchViewerCount();
+  }, [user]);
+
   const getLimit = () => {
     if (type === "viewer") {
       return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
@@ -117,6 +135,27 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   };
 
   const limit = getLimit();
+
+  const updateViewerCount = async (newCount: number) => {
+    if (!user?.id) return;
+
+    const { error } = await supabase
+      .from('viewer_counts')
+      .upsert({
+        user_id: user.id,
+        viewer_count: newCount,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Error updating viewer count:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update viewer count",
+        variant: "destructive",
+      });
+    }
+  };
 
   const tryRequest = async (viewerCount: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
     try {
@@ -193,96 +232,27 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
     try {
       if (viewerCount > 0) {
-        const bestServer = serverManager.getBestServerForViewers(API_ENDPOINTS, viewerCount);
-        
-        if (!bestServer) {
-          toast({
-            title: "Error",
-            description: "Keine Server mit ausreichender Kapazität verfügbar",
-            variant: "destructive",
-          });
-          return;
+        const success = await tryRequest(viewerCount);
+        if (success) {
+          const newViewerCount = currentViewers + viewerCount;
+          setCurrentViewers(newViewerCount);
+          await updateViewerCount(newViewerCount);
+          onAdd(viewerCount);
         }
-
-        const apiUrl = `https://${bestServer}:5000/add_viewer`;
-        
-        console.log(`Sende Request an Server mit Details:`, {
-          user_id: user?.id,
-          twitch_url: streamUrl,
-          viewer_count: viewerCount,
-          server: bestServer
-        });
-
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          mode: 'cors',
-          credentials: 'omit',
-          body: JSON.stringify({
-            user_id: user?.id,
-            twitch_url: streamUrl,
-            viewer_count: viewerCount
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        serverManager.reserveCapacity(bestServer, viewerCount);
-        
-        const newViewerCount = currentViewers + viewerCount;
-        setCurrentViewers(newViewerCount);
-
-        toast({
-          title: t.success,
-          description: t.reachIncreased,
-        });
-        
-        onAdd(viewerCount);
       } else {
-        const apiUrl = `https://${API_ENDPOINTS[0]}:5000/remove_viewer`;
-        
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          mode: 'cors',
-          credentials: 'omit',
-          body: JSON.stringify({
-            user_id: user?.id,
-            twitch_url: streamUrl,
-            viewer_count: Math.abs(viewerCount)
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const success = await tryRequest(viewerCount);
+        if (success) {
+          const newViewerCount = currentViewers + viewerCount;
+          setCurrentViewers(newViewerCount);
+          await updateViewerCount(newViewerCount);
+          onAdd(viewerCount);
         }
-
-        const newViewerCount = currentViewers + viewerCount;
-        setCurrentViewers(newViewerCount);
-
-        toast({
-          title: t.success,
-          description: t.viewersRemoved,
-        });
-        
-        onAdd(viewerCount);
       }
     } catch (error) {
-      console.error("Detailed error information:", {
-        error,
-        type: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error)
-      });
-      
+      console.error("Error modifying viewers:", error);
       toast({
-        title: t.error,
-        description: "Fehler bei der Reichweitensteigerung.",
+        title: "Error",
+        description: "Failed to modify viewer count",
         variant: "destructive",
       });
     }
