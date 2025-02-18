@@ -6,7 +6,7 @@ export const PLAN_VIEWER_LIMITS = {
   Professional: 200,
   Expert: 300,
   Ultimate: 1000,
-  "Stream Expert": 1000,
+  "Stream Expert": 300,
   "Enhance Stream Free": 10,
   "Enhance Stream Starter": 25,
   "Enhance Stream Basic": 50,
