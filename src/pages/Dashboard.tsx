@@ -1,4 +1,3 @@
-
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -414,13 +413,15 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <BotControls
           title="Viewer Controls"
-          onAdd={addViewers}
+          onAdd={(count) => setViewerCount(prev => prev + count)}
+          onRemove={(count) => setViewerCount(prev => prev - count)}
           type="viewer"
           streamUrl={streamUrl}
         />
         <BotControls
           title="Chatter Controls"
-          onAdd={addChatters}
+          onAdd={(count) => setChatterCount(prev => prev + count)}
+          onRemove={(count) => setChatterCount(prev => prev - count)}
           type="chatter"
           streamUrl={streamUrl}
         />

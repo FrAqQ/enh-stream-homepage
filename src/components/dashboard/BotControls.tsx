@@ -8,11 +8,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 interface BotControlsProps {
   title: string
   onAdd: (count: number) => void
+  onRemove: (count: number) => void
   type: "viewer" | "chatter"
   streamUrl: string
 }
 
-export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
+export function BotControls({ title, onAdd, onRemove, type, streamUrl }: BotControlsProps) {
   const [count, setCount] = useState(1)
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -90,7 +91,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      onAdd(-count) // Dies ist der Fehler - wir verwenden onAdd auch fürs Entfernen
+      onRemove(count)
       toast({
         title: "Success",
         description: `${type === "viewer" ? "Viewers" : "Chatters"} wurden entfernt`,
