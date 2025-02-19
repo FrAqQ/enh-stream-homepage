@@ -1,3 +1,4 @@
+
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -303,7 +304,7 @@ const Dashboard = () => {
   const calculateStreamHealth = () => {
     if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
     
-    const targetChatterCount = viewerCount * 0.65;
+    const targetChatterCount = viewerCount * 0.45; // Geändert von 0.65 auf 0.45
     const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
     
     let status = "Needs improvement";
