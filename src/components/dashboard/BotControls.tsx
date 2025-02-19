@@ -11,19 +11,9 @@ interface BotControlsProps {
   onRemove: (count: number) => void  // Hinzugefügt
   type: "viewer" | "chatter"
   streamUrl: string
-  maxCount?: number
-  currentCount?: number
 }
 
-export function BotControls({ 
-  title, 
-  onAdd, 
-  onRemove, 
-  type, 
-  streamUrl,
-  maxCount,
-  currentCount = 0
-}: BotControlsProps) {
+export function BotControls({ title, onAdd, onRemove, type, streamUrl }: BotControlsProps) {
   const [count, setCount] = useState(1)
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -33,15 +23,6 @@ export function BotControls({
       toast({
         title: "Error",
         description: "Please set a stream URL first",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (maxCount && currentCount + count > maxCount) {
-      toast({
-        title: "Error",
-        description: `Cannot add more ${type}s. Maximum limit of ${maxCount} would be exceeded.`,
         variant: "destructive"
       })
       return
@@ -130,14 +111,7 @@ export function BotControls({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          {title}
-          {maxCount && (
-            <span className="text-sm font-normal text-muted-foreground ml-2">
-              ({currentCount}/{maxCount})
-            </span>
-          )}
-        </CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
@@ -150,7 +124,7 @@ export function BotControls({
           />
           <Button 
             onClick={handleAdd}
-            disabled={isLoading || (maxCount ? currentCount >= maxCount : false)}
+            disabled={isLoading}
           >
             Add
           </Button>
