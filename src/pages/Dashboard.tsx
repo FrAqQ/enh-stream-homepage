@@ -1,4 +1,3 @@
-
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -304,7 +303,7 @@ const Dashboard = () => {
   const calculateStreamHealth = () => {
     if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
     
-    const targetChatterCount = viewerCount * 0.45; // Geändert von 0.65 auf 0.45
+    const targetChatterCount = viewerCount * 0.45;
     const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
     
     let status = "Needs improvement";
@@ -350,8 +349,18 @@ const Dashboard = () => {
     setViewerCount(prev => prev + count);
   };
 
+  const removeViewers = (count: number) => {
+    setViewerCount(prev => Math.max(0, prev - count));
+  };
+
   const addChatters = (count: number) => {
     setChatterCount(prev => prev + count);
+    setViewerCount(prev => prev + count);
+  };
+
+  const removeChatters = (count: number) => {
+    setChatterCount(prev => Math.max(0, prev - count));
+    setViewerCount(prev => Math.max(0, prev - count));
   };
 
   return (
@@ -415,12 +424,14 @@ const Dashboard = () => {
         <BotControls
           title="Viewer Controls"
           onAdd={addViewers}
+          onRemove={removeViewers}
           type="viewer"
           streamUrl={streamUrl}
         />
         <BotControls
           title="Chatter Controls"
           onAdd={addChatters}
+          onRemove={removeChatters}
           type="chatter"
           streamUrl={streamUrl}
         />
