@@ -10,8 +10,9 @@ interface ServerMetrics {
   reservations: ServerReservation[];
 }
 
-const VIEWER_RAM_USAGE = 0.6; // GB pro Viewer (erhöht von 0,53 GB)
+const VIEWER_RAM_USAGE = 0.6; // GB pro Viewer
 const RESERVATION_TIMEOUT = 5 * 60 * 1000; // 5 Minuten in Millisekunden
+const MAX_RAM_USAGE_PERCENTAGE = 95; // Maximale RAM-Auslastung in Prozent
 
 class ServerManager {
   private serverMetrics: Map<string, ServerMetrics> = new Map();
@@ -45,13 +46,34 @@ class ServerManager {
     return metrics.usedRam + reservedRam;
   }
 
+  private isServerOverloaded(host: string): boolean {
+    const metrics = this.serverMetrics.get(host);
+    if (!metrics) return true; // Wenn keine Metriken verfügbar sind, betrachten wir den Server als überlastet
+
+    const effectiveRamUsage = this.calculateEffectiveRamUsage(metrics);
+    const usagePercentage = (effectiveRamUsage / metrics.totalRam) * 100;
+
+    return usagePercentage >= MAX_RAM_USAGE_PERCENTAGE;
+  }
+
   canHandleViewers(host: string, viewerCount: number): boolean {
+    // Prüfe zuerst, ob der Server überlastet ist
+    if (this.isServerOverloaded(host)) {
+      return false;
+    }
+
     const metrics = this.serverMetrics.get(host);
     if (!metrics) return false;
 
     const ramNeeded = viewerCount * VIEWER_RAM_USAGE;
     const effectiveRamUsage = this.calculateEffectiveRamUsage(metrics);
     const availableRam = metrics.totalRam - effectiveRamUsage;
+
+    // Prüfe, ob nach Hinzufügen der neuen Viewer die RAM-Auslastung unter 95% bleibt
+    const futureRamUsage = ((effectiveRamUsage + ramNeeded) / metrics.totalRam) * 100;
+    if (futureRamUsage >= MAX_RAM_USAGE_PERCENTAGE) {
+      return false;
+    }
 
     return availableRam >= ramNeeded;
   }
@@ -74,6 +96,11 @@ class ServerManager {
     let maxAvailableRam = -1;
 
     for (const host of hosts) {
+      // Überspringe überlastete Server
+      if (this.isServerOverloaded(host)) {
+        continue;
+      }
+
       const metrics = this.serverMetrics.get(host);
       if (!metrics) continue;
 
