@@ -1,9 +1,22 @@
 
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useState } from "react"
-import { useToast } from "@/hooks/use-toast"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { useUser } from "@/lib/useUser"
+import { AlertCircle } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
+import { supabase } from "@/lib/supabaseClient"
+import { useLanguage } from "@/lib/LanguageContext"
+import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
+import { serverManager } from "@/services/serverManager"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface BotControlsProps {
   title: string
@@ -13,129 +26,366 @@ interface BotControlsProps {
 }
 
 export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
-  const [count, setCount] = useState(1)
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [currentCount, setCurrentCount] = useState(0);
+  const { toast } = useToast();
+  const { user } = useUser();
+  const [userPlan, setUserPlan] = useState<string>("Free");
+  const { language } = useLanguage();
 
-  const handleAdd = async () => {
-    if (!streamUrl) {
+  const translations = {
+    en: {
+      tooltipMessage: "Please enter a stream URL first",
+      currentViewers: "Current Viewers",
+      currentChatters: "Current Chatters",
+      viewer: "Viewer",
+      viewers: "Viewers",
+      chatter: "Chatter",
+      chatters: "Chatters",
+      notEnoughViewers: "Not enough viewers",
+      cantRemoveViewers: `You cannot remove ${0} viewers when you only have ${0}`,
+      viewerLimitReached: "Viewer limit reached",
+      maxViewersAllowed: `Your plan allows a maximum of ${0} viewers`,
+      success: "Success",
+      reachIncreased: "Reach successfully increased!",
+      viewersRemoved: "Viewers successfully removed!",
+      error: "Error",
+      warning: "Warning",
+      cooldownActive: "Cooldown Active",
+      cooldownMessage: "Please wait 5 seconds before increasing reach further."
+    },
+    de: {
+      tooltipMessage: "Bitte geben Sie zuerst eine Stream-URL ein",
+      currentViewers: "Aktuelle Zuschauer",
+      currentChatters: "Aktuelle Chatter",
+      viewer: "Zuschauer",
+      viewers: "Zuschauer",
+      chatter: "Chatter",
+      chatters: "Chatter",
+      notEnoughViewers: "Nicht genügend Zuschauer",
+      cantRemoveViewers: `Sie können nicht ${0} Zuschauer entfernen, wenn Sie nur ${0} haben`,
+      viewerLimitReached: "Zuschauerlimit erreicht",
+      maxViewersAllowed: `Ihr Plan erlaubt maximal ${0} Zuschauer`,
+      success: "Erfolgreich",
+      reachIncreased: "Reichweite erfolgreich erhöht!",
+      viewersRemoved: "Zuschauer erfolgreich entfernt!",
+      error: "Fehler",
+      warning: "Warnung",
+      cooldownActive: "Cooldown Aktiv",
+      cooldownMessage: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen."
+    }
+  };
+
+  const t = translations[language];
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (user?.id) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('plan, subscription_status')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user plan:', error);
+          setUserPlan("Free");
+          return;
+        }
+
+        if (profile?.subscription_status === 'active') {
+          setUserPlan(profile?.plan || "Free");
+        } else {
+          setUserPlan("Free");
+        }
+      }
+    };
+
+    fetchUserPlan();
+    const interval = setInterval(fetchUserPlan, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    const fetchCurrentCount = async () => {
+      if (user?.id) {
+        const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
+        const countField = type === 'viewer' ? 'viewer_count' : 'chatter_count';
+        
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(countField)
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data) {
+          setCurrentCount(data[countField]);
+        }
+      }
+    };
+
+    fetchCurrentCount();
+  }, [user, type]);
+
+  const getLimit = () => {
+    if (type === "viewer") {
+      return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+    } else {
+      return PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+    }
+  };
+
+  const limit = getLimit();
+
+  const updateCount = async (newCount: number) => {
+    if (!user?.id) return;
+
+    const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
+    const countField = type === 'viewer' ? 'viewer_count' : 'chatter_count';
+
+    const { error } = await supabase
+      .from(tableName)
+      .upsert({
+        user_id: user.id,
+        [countField]: newCount,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error(`Error updating ${type} count:`, error);
       toast({
         title: "Error",
-        description: "Please set a stream URL first",
-        variant: "destructive"
-      })
-      return
+        description: `Failed to update ${type} count`,
+        variant: "destructive",
+      });
     }
+  };
 
-    setIsLoading(true)
+  const tryRequest = async (count: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
     try {
-      const endpoint = type === "viewer" ? "/add_viewer" : "/add_chatter"
-      const response = await fetch(`https://v2202502252999313946.bestsrv.de:5000${endpoint}`, {
-        method: 'POST',
+      const actionType = type === 'viewer' ? 'viewer' : 'chatter';
+      const apiEndpoint = count > 0 ? `add_${actionType}` : `remove_${actionType}`;
+      
+      const currentHost = getNextEndpoint();
+      const apiUrl = `https://${currentHost}:5000/${apiEndpoint}`;
+      
+      console.log(`Attempting request to server with details:`, {
+        user_id: user?.id,
+        twitch_url: streamUrl,
+        count: Math.abs(count),
+        api_host: currentHost,
+        retriesLeft,
+        url: apiUrl
+      });
+      
+      const response = await fetch(apiUrl, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
+        mode: 'cors',
+        credentials: 'omit',
         body: JSON.stringify({
+          user_id: user?.id || "123",
           twitch_url: streamUrl,
-          viewer_count: count
+          [`${type}_count`]: Math.abs(count)
         })
-      })
+      });
 
+      if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
+        return tryRequest(count, retriesLeft - 1);
+      }
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      onAdd(count)
-      toast({
-        title: "Success",
-        description: `${type === "viewer" ? "Viewers" : "Chatters"} wurden hinzugefügt`,
-      })
+      const data = await response.json();
+      console.log("API Response data:", data);
+      
+      return true;
     } catch (error) {
-      console.error('Error:', error)
-      toast({
-        title: "Error",
-        description: `Failed to add ${type}s`,
-        variant: "destructive"
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleRemove = async () => {
-    if (!streamUrl) {
-      toast({
-        title: "Error",
-        description: "Please set a stream URL first",
-        variant: "destructive"
-      })
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const endpoint = type === "viewer" ? "/remove_viewer" : "/remove_chatter"
-      const response = await fetch(`https://v2202502252999313946.bestsrv.de:5000${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          twitch_url: streamUrl,
-          viewer_count: count
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      console.log("Error occurred, trying next server...", error);
+      if (retriesLeft > 1) {
+        return tryRequest(count, retriesLeft - 1);
       }
+      throw error;
+    }
+  };
 
-      onAdd(-count) // Dies ist der Fehler - wir verwenden onAdd auch fürs Entfernen
+  const modifyCount = async (changeAmount: number) => {
+    if (changeAmount < 0 && Math.abs(changeAmount) > currentCount) {
       toast({
-        title: "Success",
-        description: `${type === "viewer" ? "Viewers" : "Chatters"} wurden entfernt`,
-      })
+        title: t.notEnoughViewers,
+        description: t.cantRemoveViewers
+          .replace("${0}", Math.abs(changeAmount).toString())
+          .replace("${0}", currentCount.toString()),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (changeAmount > 0 && currentCount + changeAmount > limit) {
+      toast({
+        title: t.viewerLimitReached,
+        description: t.maxViewersAllowed.replace("${0}", limit.toString()),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const success = await tryRequest(changeAmount);
+      if (success) {
+        const newCount = currentCount + changeAmount;
+        setCurrentCount(newCount);
+        await updateCount(newCount);
+        onAdd(changeAmount);
+      }
     } catch (error) {
-      console.error('Error:', error)
+      console.error(`Error modifying ${type} count:`, error);
       toast({
         title: "Error",
-        description: `Failed to remove ${type}s`,
-        variant: "destructive"
-      })
-    } finally {
-      setIsLoading(false)
+        description: `Failed to modify ${type} count`,
+        variant: "destructive",
+      });
     }
-  }
+  };
+
+  const handleButtonClick = async (count: number) => {
+    if (isOnCooldown) {
+      toast({
+        title: t.cooldownActive,
+        description: t.cooldownMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await modifyCount(count);
+    
+    setIsOnCooldown(true);
+    setTimeout(() => {
+      setIsOnCooldown(false);
+    }, 5000);
+  };
+
+  const isButtonDisabled = (count: number) => {
+    if (count < 0) {
+      return isOnCooldown || !streamUrl || Math.abs(count) > currentCount;
+    }
+    return isOnCooldown || !streamUrl || currentCount + count > limit;
+  };
 
   return (
-    <Card>
+    <Card className="glass-morphism">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
+          {title}
+          {!streamUrl && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <AlertCircle className="h-5 w-5 text-yellow-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t.tooltipMessage}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <Input
-            type="number"
-            min="1"
-            value={count}
-            onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-24"
-          />
-          <Button 
-            onClick={handleAdd}
-            disabled={isLoading}
-          >
-            Add
-          </Button>
-          <Button 
-            onClick={handleRemove}
-            disabled={isLoading}
-            variant="destructive"
-          >
-            Remove
-          </Button>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
+              <span>{currentCount}/{limit}</span>
+            </div>
+            <Progress value={(currentCount / limit) * 100} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={() => handleButtonClick(1)} 
+              variant="outline"
+              disabled={isButtonDisabled(1)}
+            >
+              +1 {type === "viewer" ? t.viewer : t.chatter}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(3)} 
+              variant="outline"
+              disabled={isButtonDisabled(3)}
+            >
+              +3 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(5)} 
+              variant="outline"
+              disabled={isButtonDisabled(5)}
+            >
+              +5 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(20)} 
+              variant="outline"
+              disabled={isButtonDisabled(20)}
+            >
+              +20 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(50)} 
+              variant="outline"
+              disabled={isButtonDisabled(50)}
+            >
+              +50 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={() => handleButtonClick(-1)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-1)}
+            >
+              -1 {type === "viewer" ? t.viewer : t.chatter}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(-5)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-5)}
+            >
+              -5 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(-20)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-20)}
+            >
+              -20 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(-50)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-50)}
+            >
+              -50 {type === "viewer" ? t.viewers : t.chatters}
+            </Button>
+            <Button 
+              onClick={() => handleButtonClick(-99999)} 
+              variant="outline" 
+              className="text-red-500 hover:text-red-600"
+              disabled={isButtonDisabled(-99999)}
+            >
+              {language === 'de' ? 'Alle entfernen' : 'Remove all'}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
