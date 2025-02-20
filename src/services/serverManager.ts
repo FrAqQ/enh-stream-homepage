@@ -10,9 +10,8 @@ interface ServerMetrics {
   reservations: ServerReservation[];
 }
 
-const VIEWER_RAM_USAGE = 0.6; // GB pro Viewer
+const VIEWER_RAM_USAGE = 0.6; // GB pro Viewer (erhöht von 0,53 GB)
 const RESERVATION_TIMEOUT = 5 * 60 * 1000; // 5 Minuten in Millisekunden
-const RAM_USAGE_LIMIT = 95; // 95% RAM-Auslastungsgrenze
 
 class ServerManager {
   private serverMetrics: Map<string, ServerMetrics> = new Map();
@@ -46,21 +45,9 @@ class ServerManager {
     return metrics.usedRam + reservedRam;
   }
 
-  private calculateRamUsagePercentage(metrics: ServerMetrics): number {
-    const effectiveRamUsage = this.calculateEffectiveRamUsage(metrics);
-    return (effectiveRamUsage / metrics.totalRam) * 100;
-  }
-
   canHandleViewers(host: string, viewerCount: number): boolean {
     const metrics = this.serverMetrics.get(host);
     if (!metrics) return false;
-
-    // Prüfe zuerst die RAM-Auslastung
-    const ramUsagePercentage = this.calculateRamUsagePercentage(metrics);
-    if (ramUsagePercentage >= RAM_USAGE_LIMIT) {
-      console.log(`Server ${host} hat ${ramUsagePercentage.toFixed(1)}% RAM-Auslastung - zu hoch für neue Viewer`);
-      return false;
-    }
 
     const ramNeeded = viewerCount * VIEWER_RAM_USAGE;
     const effectiveRamUsage = this.calculateEffectiveRamUsage(metrics);
@@ -89,13 +76,6 @@ class ServerManager {
     for (const host of hosts) {
       const metrics = this.serverMetrics.get(host);
       if (!metrics) continue;
-
-      // Prüfe RAM-Auslastung
-      const ramUsagePercentage = this.calculateRamUsagePercentage(metrics);
-      if (ramUsagePercentage >= RAM_USAGE_LIMIT) {
-        console.log(`Server ${host} wird übersprungen - RAM-Auslastung zu hoch (${ramUsagePercentage.toFixed(1)}%)`);
-        continue;
-      }
 
       const effectiveRamUsage = this.calculateEffectiveRamUsage(metrics);
       const availableRam = metrics.totalRam - effectiveRamUsage;
