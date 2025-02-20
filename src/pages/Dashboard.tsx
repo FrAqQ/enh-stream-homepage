@@ -303,7 +303,7 @@ const Dashboard = () => {
   const calculateStreamHealth = () => {
     if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
     
-    const targetChatterCount = viewerCount * 0.45;
+    const targetChatterCount = viewerCount * 0.45; // Geändert von 0.65 auf 0.45
     const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
     
     let status = "Needs improvement";
@@ -349,18 +349,8 @@ const Dashboard = () => {
     setViewerCount(prev => prev + count);
   };
 
-  const removeViewers = (count: number) => {
-    setViewerCount(prev => Math.max(0, prev - count));
-  };
-
   const addChatters = (count: number) => {
     setChatterCount(prev => prev + count);
-    setViewerCount(prev => prev + count);
-  };
-
-  const removeChatters = (count: number) => {
-    setChatterCount(prev => Math.max(0, prev - count));
-    setViewerCount(prev => Math.max(0, prev - count));
   };
 
   return (
@@ -423,17 +413,21 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <BotControls
           title="Viewer Controls"
-          onAdd={addViewers}
-          onRemove={removeViewers}
+          onAdd={(count) => setViewerCount(prev => prev + count)}
+          onRemove={(count) => setViewerCount(prev => prev - count)}
           type="viewer"
           streamUrl={streamUrl}
+          maxCount={PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS]}
+          currentCount={viewerCount}
         />
         <BotControls
           title="Chatter Controls"
-          onAdd={addChatters}
-          onRemove={removeChatters}
+          onAdd={(count) => setChatterCount(prev => prev + count)}
+          onRemove={(count) => setChatterCount(prev => prev - count)}
           type="chatter"
           streamUrl={streamUrl}
+          maxCount={PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS]}
+          currentCount={chatterCount}
         />
       </div>
 

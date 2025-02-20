@@ -8,11 +8,22 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 interface BotControlsProps {
   title: string
   onAdd: (count: number) => void
+  onRemove: (count: number) => void
   type: "viewer" | "chatter"
   streamUrl: string
+  maxCount?: number // Optional maximum count based on plan
+  currentCount?: number // Optional current count
 }
 
-export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps) {
+export function BotControls({ 
+  title, 
+  onAdd, 
+  onRemove, 
+  type, 
+  streamUrl, 
+  maxCount,
+  currentCount = 0
+}: BotControlsProps) {
   const [count, setCount] = useState(1)
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -22,6 +33,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       toast({
         title: "Error",
         description: "Please set a stream URL first",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (maxCount && currentCount + count > maxCount) {
+      toast({
+        title: "Error",
+        description: `Cannot add more ${type}s. Maximum limit of ${maxCount} would be exceeded.`,
         variant: "destructive"
       })
       return
@@ -90,7 +110,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      onAdd(-count) // Dies ist der Fehler - wir verwenden onAdd auch fürs Entfernen
+      onRemove(count)
       toast({
         title: "Success",
         description: `${type === "viewer" ? "Viewers" : "Chatters"} wurden entfernt`,
@@ -110,7 +130,14 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>
+          {title}
+          {maxCount && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              ({currentCount}/{maxCount})
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
@@ -123,7 +150,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           />
           <Button 
             onClick={handleAdd}
-            disabled={isLoading}
+            disabled={isLoading || (maxCount ? currentCount >= maxCount : false)}
           >
             Add
           </Button>
