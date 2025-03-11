@@ -19,6 +19,7 @@ export const useUser = () => {
           await supabase.auth.signOut();
           setUser(null);
         } else {
+          console.log("Session data:", session);
           setUser(session?.user ?? null);
         }
       } catch (error) {
@@ -35,6 +36,7 @@ export const useUser = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event, session?.user?.id);
       if (event === 'SIGNED_OUT') {
         setUser(null);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
