@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -86,6 +87,7 @@ export const useUser = () => {
     };
   }, []);
 
+  // Ensuring consistent function signatures with required parameters
   const getViewerLimit = (plan?: string, userData?: UserProfileData | null) => {
     const userPlan = plan || userData?.plan || profileData?.plan || 'Free';
     return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
