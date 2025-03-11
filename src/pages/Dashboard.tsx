@@ -1,4 +1,3 @@
-
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -304,7 +303,7 @@ const Dashboard = () => {
   const calculateStreamHealth = () => {
     if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
     
-    const targetChatterCount = viewerCount * 0.45; // Geändert von 0.65 auf 0.45
+    const targetChatterCount = viewerCount * 0.45;
     const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
     
     let status = "Needs improvement";
@@ -347,10 +346,32 @@ const Dashboard = () => {
   };
 
   const addViewers = (count: number) => {
+    const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+    
+    if (viewerCount + count > viewerLimit) {
+      toast({
+        title: "Plan Limit Reached",
+        description: `Your ${userPlan} plan allows a maximum of ${viewerLimit} viewers`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setViewerCount(prev => prev + count);
   };
 
   const addChatters = (count: number) => {
+    const chatterLimit = PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+    
+    if (chatterCount + count > chatterLimit) {
+      toast({
+        title: "Plan Limit Reached",
+        description: `Your ${userPlan} plan allows a maximum of ${chatterLimit} chatters`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setChatterCount(prev => prev + count);
   };
 
