@@ -22,8 +22,8 @@ const Dashboard = () => {
   const [twitchChannel, setTwitchChannel] = useState("");
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
-  const viewerLimit = getViewerLimit();
-  const chatterLimit = getChatterLimit();
+  const viewerLimit = getViewerLimit(profileData?.plan, profileData);
+  const chatterLimit = getChatterLimit(profileData?.plan, profileData);
 
   const handleSaveUrl = () => {
     try {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -100,9 +101,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const getLimit = () => {
     if (type === "viewer") {
-      return getViewerLimit();
+      return getViewerLimit(profileData?.plan, profileData);
     } else {
-      return getChatterLimit();
+      return getChatterLimit(profileData?.plan, profileData);
     }
   };
 
