@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,8 +28,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [currentCount, setCurrentCount] = useState(0);
   const { toast } = useToast();
-  const { user } = useUser();
-  const [userPlan, setUserPlan] = useState<string>("Free");
+  const { user, profileData, getViewerLimit, getChatterLimit } = useUser();
   const { language } = useLanguage();
 
   const translations = {
@@ -79,34 +77,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const t = translations[language];
 
   useEffect(() => {
-    const fetchUserPlan = async () => {
-      if (user?.id) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('plan, subscription_status')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user plan:', error);
-          setUserPlan("Free");
-          return;
-        }
-
-        if (profile?.subscription_status === 'active') {
-          setUserPlan(profile?.plan || "Free");
-        } else {
-          setUserPlan("Free");
-        }
-      }
-    };
-
-    fetchUserPlan();
-    const interval = setInterval(fetchUserPlan, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
-
-  useEffect(() => {
     const fetchCurrentCount = async () => {
       if (user?.id) {
         const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
@@ -125,13 +95,15 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     };
 
     fetchCurrentCount();
+    const interval = setInterval(fetchCurrentCount, 30000);
+    return () => clearInterval(interval);
   }, [user, type]);
 
   const getLimit = () => {
     if (type === "viewer") {
-      return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+      return getViewerLimit();
     } else {
-      return PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+      return getChatterLimit();
     }
   };
 
@@ -165,6 +137,18 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     try {
       const actionType = type === 'viewer' ? 'viewer' : 'chatter';
       const apiEndpoint = count > 0 ? `add_${actionType}` : `remove_${actionType}`;
+      
+      if (type === 'viewer' && count > 0) {
+        const canHandle = await serverManager.canHandleViewers();
+        if (!canHandle) {
+          toast({
+            title: "Server Overloaded",
+            description: "Servers are experiencing high load. Please try again later.",
+            variant: "destructive",
+          });
+          return false;
+        }
+      }
       
       const currentHost = getNextEndpoint();
       const apiUrl = `https://${currentHost}:5000/${apiEndpoint}`;
