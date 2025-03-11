@@ -271,7 +271,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                   <AlertCircle className="h-5 w-5 text-yellow-500" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t.tooltipMessage}</p>
+                  <p>{language === 'en' ? 'Please enter a stream URL first' : 'Bitte geben Sie zuerst eine Stream-URL ein'}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -282,7 +282,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
+              <span>{type === "viewer" ? (language === 'en' ? 'Current Viewers' : 'Aktuelle Zuschauer') : (language === 'en' ? 'Current Chatters' : 'Aktuelle Chatter')}</span>
               <span>{currentCount}/{limit}</span>
             </div>
             <Progress value={(currentCount / limit) * 100} />
@@ -293,35 +293,35 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               variant="outline"
               disabled={isButtonDisabled(1)}
             >
-              +1 {type === "viewer" ? t.viewer : t.chatter}
+              +1 {type === "viewer" ? (language === 'en' ? 'viewer' : 'Zuschauer') : (language === 'en' ? 'chatter' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(3)} 
               variant="outline"
               disabled={isButtonDisabled(3)}
             >
-              +3 {type === "viewer" ? t.viewers : t.chatters}
+              +3 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(5)} 
               variant="outline"
               disabled={isButtonDisabled(5)}
             >
-              +5 {type === "viewer" ? t.viewers : t.chatters}
+              +5 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(20)} 
               variant="outline"
               disabled={isButtonDisabled(20)}
             >
-              +20 {type === "viewer" ? t.viewers : t.chatters}
+              +20 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(50)} 
               variant="outline"
               disabled={isButtonDisabled(50)}
             >
-              +50 {type === "viewer" ? t.viewers : t.chatters}
+              +50 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -331,7 +331,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-1)}
             >
-              -1 {type === "viewer" ? t.viewer : t.chatter}
+              -1 {type === "viewer" ? (language === 'en' ? 'viewer' : 'Zuschauer') : (language === 'en' ? 'chatter' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-5)} 
@@ -339,7 +339,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-5)}
             >
-              -5 {type === "viewer" ? t.viewers : t.chatters}
+              -5 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-20)} 
@@ -347,7 +347,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-20)}
             >
-              -20 {type === "viewer" ? t.viewers : t.chatters}
+              -20 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-50)} 
@@ -355,7 +355,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-50)}
             >
-              -50 {type === "viewer" ? t.viewers : t.chatters}
+              -50 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-99999)} 
