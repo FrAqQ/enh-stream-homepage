@@ -5,7 +5,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
 import { AlertCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
-import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
 import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
@@ -101,9 +100,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const getLimit = () => {
     if (type === "viewer") {
-      return getViewerLimit();
+      return getViewerLimit(profileData?.plan || "Enhance Stream Free", profileData);
     } else {
-      return getChatterLimit();
+      return getChatterLimit(profileData?.plan || "Enhance Stream Free", profileData);
     }
   };
 
