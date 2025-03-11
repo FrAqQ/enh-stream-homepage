@@ -9,7 +9,14 @@ import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
-import { API_ENDPOINTS } from "@/config/apiEndpoints"
+import { 
+  API_ENDPOINTS, 
+  addViewerAllocation,
+  getServersWithViewers, 
+  getViewerAllocationsForUser,
+  removeViewerAllocation,
+  removeAllViewerAllocations
+} from "@/config/apiEndpoints"
 import { serverManager } from "@/services/serverManager"
 import {
   Tooltip,
@@ -170,18 +177,38 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     return serverManager.getBestServerForViewers(API_ENDPOINTS, Math.abs(count));
   };
 
+  const distributeViewerRemoval = (userId: string, streamUrl: string, totalToRemove: number): {[serverHost: string]: number} => {
+    const allocations = getViewerAllocationsForUser(userId, streamUrl);
+    const serverDistribution: {[serverHost: string]: number} = {};
+    let remainingToRemove = totalToRemove;
+    
+    // Sortiere Server nach Anzahl der Viewer (absteigend)
+    const serversSorted = Object.keys(allocations).sort((a, b) => allocations[b] - allocations[a]);
+    
+    for (const server of serversSorted) {
+      if (remainingToRemove <= 0) break;
+      
+      const viewersOnServer = allocations[server];
+      if (viewersOnServer <= 0) continue;
+      
+      const toRemoveFromServer = Math.min(remainingToRemove, viewersOnServer);
+      serverDistribution[server] = toRemoveFromServer;
+      remainingToRemove -= toRemoveFromServer;
+    }
+    
+    console.log(`Viewer removal distribution for ${totalToRemove} viewers:`, serverDistribution);
+    return serverDistribution;
+  };
+
   const tryRequest = async (count: number): Promise<boolean> => {
     try {
       const actionType = type === 'viewer' ? 'viewer' : 'chatter';
       const apiEndpoint = count > 0 ? `add_${actionType}` : `remove_${actionType}`;
       
-      // Bei Entfernung von Viewern ist die Serverauslastung egal, nehmen wir den ersten verfügbaren
-      let serverHost;
-      if (count < 0) {
-        serverHost = API_ENDPOINTS[0]; // Für Entfernung nutzen wir einfach den ersten Server
-      } else {
-        // Für Hinzufügen suchen wir den besten Server basierend auf Auslastung
-        serverHost = findBestServer(count);
+      // Bei positiven Counts (Hinzufügen von Viewern)
+      if (count > 0) {
+        // Find the best server
+        const serverHost = findBestServer(count);
         
         if (!serverHost) {
           console.error("Kein geeigneter Server gefunden, alle Server sind ausgelastet.");
@@ -195,40 +222,150 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
         // Reserviere Kapazität für diesen Server
         serverManager.reserveCapacity(serverHost, Math.abs(count));
-      }
-      
-      const apiUrl = `https://${serverHost}:5000/${apiEndpoint}`;
-      
-      console.log(`Sende Anfrage an Server mit Details:`, {
-        user_id: user?.id,
-        twitch_url: streamUrl,
-        count: Math.abs(count),
-        api_host: serverHost,
-        url: apiUrl
-      });
-      
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: 'cors',
-        credentials: 'omit',
-        body: JSON.stringify({
-          user_id: user?.id || "123",
+        
+        const apiUrl = `https://${serverHost}:5000/${apiEndpoint}`;
+        
+        console.log(`Sende Anfrage zum Hinzufügen an Server mit Details:`, {
+          user_id: user?.id,
           twitch_url: streamUrl,
-          [`${type}_count`]: Math.abs(count)
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+          count: Math.abs(count),
+          api_host: serverHost,
+          url: apiUrl
+        });
+        
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: 'cors',
+          credentials: 'omit',
+          body: JSON.stringify({
+            user_id: user?.id || "123",
+            twitch_url: streamUrl,
+            [`${type}_count`]: Math.abs(count)
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-      const data = await response.json();
-      console.log("API Response data:", data);
-      
-      return true;
+        const data = await response.json();
+        console.log("API Response data:", data);
+        
+        // Erfolgreicher Request: Allokation speichern
+        if (user?.id) {
+          addViewerAllocation(user.id, streamUrl, serverHost, Math.abs(count));
+        }
+        
+        return true;
+      } 
+      // Bei negativen Counts (Entfernen von Viewern)
+      else {
+        const absTotalToRemove = Math.abs(count);
+        
+        // Wenn der spezielle "Remove All" Wert verwendet wird
+        if (absTotalToRemove === 99999) {
+          const serversWithViewers = getServersWithViewers(user?.id || "123", streamUrl);
+          
+          if (serversWithViewers.length === 0) {
+            console.log("Keine Server mit Viewern gefunden.");
+            return true; // Nichts zu entfernen
+          }
+          
+          // Für jeden Server mit Viewern einen Remove-Request senden
+          for (const serverHost of serversWithViewers) {
+            const allocations = getViewerAllocationsForUser(user?.id || "123", streamUrl);
+            const viewersOnServer = allocations[serverHost] || 0;
+            
+            if (viewersOnServer > 0) {
+              const apiUrl = `https://${serverHost}:5000/${apiEndpoint}`;
+              
+              console.log(`Sende Anfrage zum Entfernen aller Viewer vom Server ${serverHost}:`, {
+                user_id: user?.id,
+                twitch_url: streamUrl,
+                count: viewersOnServer,
+                url: apiUrl
+              });
+              
+              const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                mode: 'cors',
+                credentials: 'omit',
+                body: JSON.stringify({
+                  user_id: user?.id || "123",
+                  twitch_url: streamUrl,
+                  [`${type}_count`]: viewersOnServer
+                })
+              });
+              
+              if (!response.ok) {
+                console.error(`Fehler beim Entfernen aller Viewer von Server ${serverHost}`);
+              } else {
+                if (user?.id) {
+                  removeViewerAllocation(user.id, streamUrl, serverHost, viewersOnServer);
+                }
+              }
+            }
+          }
+          
+          if (user?.id) {
+            removeAllViewerAllocations(user.id, streamUrl);
+          }
+          
+          return true;
+        } 
+        // Normale Entfernung einer bestimmten Anzahl
+        else {
+          const removalDistribution = distributeViewerRemoval(
+            user?.id || "123",
+            streamUrl,
+            absTotalToRemove
+          );
+          
+          // Für jeden Server in der Verteilung einen separaten Request senden
+          for (const [serverHost, countToRemove] of Object.entries(removalDistribution)) {
+            if (countToRemove <= 0) continue;
+            
+            const apiUrl = `https://${serverHost}:5000/${apiEndpoint}`;
+            
+            console.log(`Sende Anfrage zum Entfernen von ${countToRemove} Viewern vom Server ${serverHost}:`, {
+              user_id: user?.id,
+              twitch_url: streamUrl,
+              count: countToRemove,
+              url: apiUrl
+            });
+            
+            const response = await fetch(apiUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              mode: 'cors',
+              credentials: 'omit',
+              body: JSON.stringify({
+                user_id: user?.id || "123",
+                twitch_url: streamUrl,
+                [`${type}_count`]: countToRemove
+              })
+            });
+            
+            if (!response.ok) {
+              console.error(`Fehler beim Entfernen von ${countToRemove} Viewern von Server ${serverHost}`);
+            } else {
+              if (user?.id) {
+                removeViewerAllocation(user.id, streamUrl, serverHost, countToRemove);
+              }
+            }
+          }
+          
+          return true;
+        }
+      }
     } catch (error) {
       console.error("Fehler bei der Serveranfrage:", error);
       toast({
