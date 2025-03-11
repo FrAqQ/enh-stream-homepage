@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
-import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
+import { API_ENDPOINTS } from "@/config/apiEndpoints"
 import { serverManager } from "@/services/serverManager"
 import {
   Tooltip,
@@ -52,7 +52,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       error: "Error",
       warning: "Warning",
       cooldownActive: "Cooldown Active",
-      cooldownMessage: "Please wait 5 seconds before increasing reach further."
+      cooldownMessage: "Please wait 5 seconds before increasing reach further.",
+      serverBusy: "All servers are currently busy",
+      tryAgainLater: "Please try again later when server resources are available."
     },
     de: {
       tooltipMessage: "Bitte geben Sie zuerst eine Stream-URL ein",
@@ -72,7 +74,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       error: "Fehler",
       warning: "Warnung",
       cooldownActive: "Cooldown Aktiv",
-      cooldownMessage: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen."
+      cooldownMessage: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen.",
+      serverBusy: "Alle Server sind derzeit ausgelastet",
+      tryAgainLater: "Bitte versuchen Sie es später erneut, wenn Serverressourcen verfügbar sind."
     }
   };
 
@@ -161,20 +165,45 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
   };
 
-  const tryRequest = async (count: number, retriesLeft = API_ENDPOINTS.length): Promise<boolean> => {
+  const findBestServer = (count: number): string | null => {
+    // Verwende den serverManager, um den besten Server für die Anzahl der Viewer zu finden
+    return serverManager.getBestServerForViewers(API_ENDPOINTS, Math.abs(count));
+  };
+
+  const tryRequest = async (count: number): Promise<boolean> => {
     try {
       const actionType = type === 'viewer' ? 'viewer' : 'chatter';
       const apiEndpoint = count > 0 ? `add_${actionType}` : `remove_${actionType}`;
       
-      const currentHost = getNextEndpoint();
-      const apiUrl = `https://${currentHost}:5000/${apiEndpoint}`;
+      // Bei Entfernung von Viewern ist die Serverauslastung egal, nehmen wir den ersten verfügbaren
+      let serverHost;
+      if (count < 0) {
+        serverHost = API_ENDPOINTS[0]; // Für Entfernung nutzen wir einfach den ersten Server
+      } else {
+        // Für Hinzufügen suchen wir den besten Server basierend auf Auslastung
+        serverHost = findBestServer(count);
+        
+        if (!serverHost) {
+          console.error("Kein geeigneter Server gefunden, alle Server sind ausgelastet.");
+          toast({
+            title: t.serverBusy,
+            description: t.tryAgainLater,
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        // Reserviere Kapazität für diesen Server
+        serverManager.reserveCapacity(serverHost, Math.abs(count));
+      }
       
-      console.log(`Attempting request to server with details:`, {
+      const apiUrl = `https://${serverHost}:5000/${apiEndpoint}`;
+      
+      console.log(`Sende Anfrage an Server mit Details:`, {
         user_id: user?.id,
         twitch_url: streamUrl,
         count: Math.abs(count),
-        api_host: currentHost,
-        retriesLeft,
+        api_host: serverHost,
         url: apiUrl
       });
       
@@ -191,10 +220,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           [`${type}_count`]: Math.abs(count)
         })
       });
-
-      if ((response.status === 503 || !response.ok) && retriesLeft > 1) {
-        return tryRequest(count, retriesLeft - 1);
-      }
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -205,11 +230,13 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       
       return true;
     } catch (error) {
-      console.log("Error occurred, trying next server...", error);
-      if (retriesLeft > 1) {
-        return tryRequest(count, retriesLeft - 1);
-      }
-      throw error;
+      console.error("Fehler bei der Serveranfrage:", error);
+      toast({
+        title: t.error,
+        description: String(error),
+        variant: "destructive",
+      });
+      return false;
     }
   };
 

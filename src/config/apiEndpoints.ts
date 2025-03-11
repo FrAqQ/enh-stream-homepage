@@ -43,8 +43,6 @@ const getInitialEndpoints = (): string[] => {
 
 let API_ENDPOINTS: string[] = getInitialEndpoints();
 
-let currentEndpointIndex = 0;
-
 export const updateEndpoints = (newEndpoints: string[]) => {
   if (!Array.isArray(newEndpoints) || newEndpoints.length === 0) {
     console.error('Ungültige Endpunkte:', newEndpoints);
@@ -56,10 +54,9 @@ export const updateEndpoints = (newEndpoints: string[]) => {
 };
 
 export const getNextEndpoint = () => {
-  const endpoint = API_ENDPOINTS[currentEndpointIndex];
-  currentEndpointIndex = (currentEndpointIndex + 1) % API_ENDPOINTS.length;
-  console.log("Getting next endpoint:", endpoint, "Index:", currentEndpointIndex);
-  return endpoint;
+  // Diese Funktion wird zwar noch zurückgegeben, jedoch nicht mehr für die Round-Robin-Auswahl verwendet
+  // Sie bleibt für Kompatibilitätszwecke erhalten
+  return API_ENDPOINTS[0];
 };
 
 export { API_ENDPOINTS };
