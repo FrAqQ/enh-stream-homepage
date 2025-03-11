@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -5,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
 import { AlertCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
+import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
 import { getNextEndpoint, API_ENDPOINTS } from "@/config/apiEndpoints"
@@ -27,7 +29,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [currentCount, setCurrentCount] = useState(0);
   const { toast } = useToast();
-  const { user, profileData, getViewerLimit, getChatterLimit } = useUser();
+  const { user } = useUser();
+  const [userPlan, setUserPlan] = useState<string>("Free");
   const { language } = useLanguage();
 
   const translations = {
@@ -76,6 +79,34 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const t = translations[language];
 
   useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (user?.id) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('plan, subscription_status')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user plan:', error);
+          setUserPlan("Free");
+          return;
+        }
+
+        if (profile?.subscription_status === 'active') {
+          setUserPlan(profile?.plan || "Free");
+        } else {
+          setUserPlan("Free");
+        }
+      }
+    };
+
+    fetchUserPlan();
+    const interval = setInterval(fetchUserPlan, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
     const fetchCurrentCount = async () => {
       if (user?.id) {
         const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
@@ -94,15 +125,14 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     };
 
     fetchCurrentCount();
-    const interval = setInterval(fetchCurrentCount, 30000);
-    return () => clearInterval(interval);
   }, [user, type]);
 
   const getLimit = () => {
     if (type === "viewer") {
-      return getViewerLimit(profileData?.plan, profileData);
+      return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+    } else {
+      return PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
     }
-    return getChatterLimit(profileData?.plan, profileData);
   };
 
   const limit = getLimit();
@@ -135,18 +165,6 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     try {
       const actionType = type === 'viewer' ? 'viewer' : 'chatter';
       const apiEndpoint = count > 0 ? `add_${actionType}` : `remove_${actionType}`;
-      
-      if (type === 'viewer' && count > 0) {
-        const canHandle = await serverManager.canHandleViewers();
-        if (!canHandle) {
-          toast({
-            title: "Server Overloaded",
-            description: "Servers are experiencing high load. Please try again later.",
-            variant: "destructive",
-          });
-          return false;
-        }
-      }
       
       const currentHost = getNextEndpoint();
       const apiUrl = `https://${currentHost}:5000/${apiEndpoint}`;
@@ -271,7 +289,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                   <AlertCircle className="h-5 w-5 text-yellow-500" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{language === 'en' ? 'Please enter a stream URL first' : 'Bitte geben Sie zuerst eine Stream-URL ein'}</p>
+                  <p>{t.tooltipMessage}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -282,7 +300,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>{type === "viewer" ? (language === 'en' ? 'Current Viewers' : 'Aktuelle Zuschauer') : (language === 'en' ? 'Current Chatters' : 'Aktuelle Chatter')}</span>
+              <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
               <span>{currentCount}/{limit}</span>
             </div>
             <Progress value={(currentCount / limit) * 100} />
@@ -293,35 +311,35 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               variant="outline"
               disabled={isButtonDisabled(1)}
             >
-              +1 {type === "viewer" ? (language === 'en' ? 'viewer' : 'Zuschauer') : (language === 'en' ? 'chatter' : 'Chatter')}
+              +1 {type === "viewer" ? t.viewer : t.chatter}
             </Button>
             <Button 
               onClick={() => handleButtonClick(3)} 
               variant="outline"
               disabled={isButtonDisabled(3)}
             >
-              +3 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              +3 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(5)} 
               variant="outline"
               disabled={isButtonDisabled(5)}
             >
-              +5 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              +5 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(20)} 
               variant="outline"
               disabled={isButtonDisabled(20)}
             >
-              +20 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              +20 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(50)} 
               variant="outline"
               disabled={isButtonDisabled(50)}
             >
-              +50 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              +50 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -331,7 +349,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-1)}
             >
-              -1 {type === "viewer" ? (language === 'en' ? 'viewer' : 'Zuschauer') : (language === 'en' ? 'chatter' : 'Chatter')}
+              -1 {type === "viewer" ? t.viewer : t.chatter}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-5)} 
@@ -339,7 +357,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-5)}
             >
-              -5 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              -5 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-20)} 
@@ -347,7 +365,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-20)}
             >
-              -20 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              -20 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-50)} 
@@ -355,7 +373,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
               className="text-red-500 hover:text-red-600"
               disabled={isButtonDisabled(-50)}
             >
-              -50 {type === "viewer" ? (language === 'en' ? 'viewers' : 'Zuschauer') : (language === 'en' ? 'chatters' : 'Chatter')}
+              -50 {type === "viewer" ? t.viewers : t.chatters}
             </Button>
             <Button 
               onClick={() => handleButtonClick(-99999)} 

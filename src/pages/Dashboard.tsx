@@ -1,3 +1,4 @@
+
 import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -10,20 +11,75 @@ import { ProgressCard } from "@/components/dashboard/ProgressCard"
 import { useToast } from "@/hooks/use-toast"
 import { getViewerCount } from "@/services/viewerScraper"
 import { getChatterCount } from "@/services/chatterScraper"
+import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 
 const Dashboard = () => {
-  const { user, profileData, getViewerLimit, getChatterLimit } = useUser();
+  const { user } = useUser();
   const { toast } = useToast();
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [chatterCount, setChatterCount] = useState(0);
   const [viewerGrowth, setViewerGrowth] = useState("0");
   const [followerProgress, setFollowerProgress] = useState(0);
+  const [followerPlan, setFollowerPlan] = useState<any>(null);
   const [twitchChannel, setTwitchChannel] = useState("");
+  const [embed, setEmbed] = useState<any>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [userPlan, setUserPlan] = useState("Free");
+  const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
-  const viewerLimit = getViewerLimit(profileData?.plan, profileData);
-  const chatterLimit = getChatterLimit(profileData?.plan, profileData);
+  const fetchUserPlan = async () => {
+    if (user?.id) {
+      try {
+        console.log("Starting plan fetch for user:", user.id);
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('plan, subscription_status')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch subscription status",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("Raw profile data:", profile);
+
+        if (profile) {
+          console.log("Profile found:", {
+            plan: profile.plan,
+            status: profile.subscription_status
+          });
+          
+          setUserPlan(profile.plan || "Free");
+          setSubscriptionStatus(profile.subscription_status || "inactive");
+        } else {
+          console.log("No profile found, setting to Free plan");
+          setUserPlan("Free");
+          setSubscriptionStatus("inactive");
+        }
+      } catch (err) {
+        console.error("Unexpected error in subscription check:", err);
+        toast({
+          title: "Error",
+          description: "Failed to verify subscription status",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchUserPlan();
+    const interval = setInterval(fetchUserPlan, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleSaveUrl = () => {
     try {
@@ -248,7 +304,7 @@ const Dashboard = () => {
   const calculateStreamHealth = () => {
     if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
     
-    const targetChatterCount = viewerCount * 0.45;
+    const targetChatterCount = viewerCount * 0.45; // Geändert von 0.65 auf 0.45
     const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
     
     let status = "Needs improvement";
@@ -285,9 +341,9 @@ const Dashboard = () => {
   const userData = {
     username: user?.email?.split('@')[0] || "DemoUser",
     email: user?.email || "demo@example.com",
-    plan: profileData?.plan || "Enhance Stream Free",
-    followerPlan: profileData?.follower_plan || "None",
-    subscriptionStatus: profileData?.subscription_status || "inactive"
+    plan: userPlan,
+    followerPlan: "None",
+    subscriptionStatus
   };
 
   const addViewers = (count: number) => {
@@ -304,8 +360,8 @@ const Dashboard = () => {
         <h1 className="text-4xl font-bold text-gradient">Dashboard</h1>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Current Plan:</span>
-          <span className="font-semibold text-primary">{userData.plan}</span>
-          {userData.subscriptionStatus === 'active' && (
+          <span className="font-semibold text-primary">{userPlan}</span>
+          {subscriptionStatus === 'active' && (
             <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
               Active
             </span>
@@ -319,7 +375,7 @@ const Dashboard = () => {
           value={viewerCount}
           change={`${viewerGrowth}% from first stream`}
           icon={Users}
-          limit={viewerLimit}
+          limit={PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS]}
         />
         <StatsCard
           title="Chat Messages"
@@ -327,7 +383,7 @@ const Dashboard = () => {
           subtitle="Last 10 minutes"
           change="Calculating..."
           icon={MessageSquare}
-          limit={chatterLimit}
+          limit={PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS]}
         />
         <StatsCard
           title="Growth Rate"
