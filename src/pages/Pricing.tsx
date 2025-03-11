@@ -135,8 +135,8 @@ const Pricing = () => {
           <PricingCard 
             title={t.free}
             price={0} 
-            viewers={10} 
-            chatters={4}
+            viewers={4} 
+            chatters={1}
             isFree
             platform="Enhance Stream"
             currentPlan={currentPlan}
