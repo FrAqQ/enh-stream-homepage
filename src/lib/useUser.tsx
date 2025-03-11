@@ -37,14 +37,12 @@ export const useUser = () => {
   };
 
   useEffect(() => {
-    // Get initial session
     const initUser = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session error:', error);
-          // If there's an error with the session, clear it
           await supabase.auth.signOut();
           setUser(null);
           setProfileData(null);
@@ -58,7 +56,6 @@ export const useUser = () => {
         }
       } catch (error) {
         console.error('Error getting session:', error);
-        // On error, clear the session
         await supabase.auth.signOut();
         setUser(null);
         setProfileData(null);
@@ -69,7 +66,6 @@ export const useUser = () => {
 
     initUser();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
