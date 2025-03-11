@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -91,18 +90,14 @@ export const useUser = () => {
     };
   }, []);
 
-  const getViewerLimit = () => {
-    if (!profileData) return PLAN_VIEWER_LIMITS.Free;
-    
-    const plan = profileData.plan || 'Free';
-    return PLAN_VIEWER_LIMITS[plan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+  const getViewerLimit = (plan?: string, userData?: UserProfileData | null) => {
+    const userPlan = plan || userData?.plan || profileData?.plan || 'Free';
+    return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
   };
 
-  const getChatterLimit = () => {
-    if (!profileData) return PLAN_CHATTER_LIMITS.Free;
-    
-    const plan = profileData.plan || 'Free';
-    return PLAN_CHATTER_LIMITS[plan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+  const getChatterLimit = (plan?: string, userData?: UserProfileData | null) => {
+    const userPlan = plan || userData?.plan || profileData?.plan || 'Free';
+    return PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
   };
 
   return { 

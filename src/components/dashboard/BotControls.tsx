@@ -100,9 +100,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
   const getLimit = () => {
     if (type === "viewer") {
-      return getViewerLimit(profileData?.plan || "Enhance Stream Free", profileData);
+      return getViewerLimit();
     } else {
-      return getChatterLimit(profileData?.plan || "Enhance Stream Free", profileData);
+      return getChatterLimit();
     }
   };
 
