@@ -1,4 +1,4 @@
-import { Users, MessageSquare, TrendingUp, Activity, Clock, Calendar } from "lucide-react"
+import { Users, MessageSquare, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
 import { supabase } from "@/lib/supabaseClient"
@@ -390,7 +390,7 @@ const Dashboard = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatsCard
           title="Total Viewers"
           value={viewerCount}
@@ -405,12 +405,6 @@ const Dashboard = () => {
           change="Calculating..."
           icon={MessageSquare}
           limit={PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS]}
-        />
-        <StatsCard
-          title="Growth Rate"
-          value="+12.5%"
-          change="Increased by 7.2%"
-          icon={TrendingUp}
         />
         <StatsCard
           title="Stream Health"
