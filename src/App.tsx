@@ -19,6 +19,7 @@ import Terms from "./pages/Legal/Terms";
 import Privacy from "./pages/Legal/Privacy";
 import Cancellation from "./pages/Legal/Cancellation";
 import Imprint from "./pages/Legal/Imprint";
+import { CookieManager } from "./components/CookieManager";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
           </div>
           <Toaster />
           <Sonner />
+          <CookieManager />
         </BrowserRouter>
       </LanguageProvider>
     </TooltipProvider>

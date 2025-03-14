@@ -1,5 +1,7 @@
 
 import { useLanguage } from "@/lib/LanguageContext";
+import { Button } from "@/components/ui/button";
+import { CookieSettingsButton } from "@/components/CookieManager";
 
 const Privacy = () => {
   const { language } = useLanguage();
@@ -9,6 +11,7 @@ const Privacy = () => {
       title: "Privacy Policy",
       lastUpdated: "This Privacy Policy was last updated on February 4, 2025.",
       intro: "The operators of the website (hereinafter also referred to as 'Enhance Stream', 'Operators', 'We' or 'Our') https://enhanceyour.stream and all related pages and subpages require the following privacy policy for the use of the services offered on the platform.",
+      cookieSettings: "You can manage your cookie preferences at any time:",
       sections: [
         {
           title: "1. Responsible Party",
@@ -47,20 +50,24 @@ const Privacy = () => {
           content: "Our website is SSL encrypted to protect your personal data."
         },
         {
-          title: "10. Order Process",
+          title: "10. Cookies",
+          content: "Our website uses cookies. Cookies are small text files that are stored on your device when you visit our website. Some cookies are essential for the website to function properly. Other cookies help us improve your experience by providing insights into how the site is used. You can control non-essential cookies using our cookie manager. For more information about the cookies we use, please see the cookie categories in our cookie consent dialog."
+        },
+        {
+          title: "11. Order Process",
           content: "Enhance Stream collects and processes personal data during the order process, including name, address, email, and payment data."
         },
         {
-          title: "11. Analytics Tools",
-          content: "11.1 Google Analytics\nWe use Google Analytics to analyze user behavior on our website. More information: https://support.google.com/analytics/answer/9019185?hl=en\n\n11.2 Google Ads\nWe use Google Ads conversion tracking to determine the effectiveness of our advertising. More information: https://business.safety.google/adscontrollerterms/"
+          title: "12. Analytics Tools",
+          content: "12.1 Google Analytics\nWe use Google Analytics to analyze user behavior on our website. More information: https://support.google.com/analytics/answer/9019185?hl=en\n\n12.2 Google Ads\nWe use Google Ads conversion tracking to determine the effectiveness of our advertising. More information: https://business.safety.google/adscontrollerterms/"
         },
         {
-          title: "12. Payment Methods",
-          content: "12.1 Stripe\nWhen you pay by credit card or other payment methods, payment data is transmitted to Stripe (Stripe Inc., 510 Townsend Street, San Francisco, CA 94103, USA). More information: https://stripe.com/privacy"
+          title: "13. Payment Methods",
+          content: "13.1 Stripe\nWhen you pay by credit card or other payment methods, payment data is transmitted to Stripe (Stripe Inc., 510 Townsend Street, San Francisco, CA 94103, USA). More information: https://stripe.com/privacy"
         },
         {
-          title: "13. Other Third-Party Providers",
-          content: "13.1 FastBill\nWe use FastBill for our accounting. More information: https://www.fastbill.com/privacy\n\n13.2 Sendinblue\nOur emails are sent via Sendinblue. More information: https://www.sendinblue.com/legal/privacypolicy/"
+          title: "14. Other Third-Party Providers",
+          content: "14.1 FastBill\nWe use FastBill for our accounting. More information: https://www.fastbill.com/privacy\n\n14.2 Sendinblue\nOur emails are sent via Sendinblue. More information: https://www.sendinblue.com/legal/privacypolicy/"
         }
       ]
     },
@@ -68,6 +75,7 @@ const Privacy = () => {
       title: "Datenschutzerklärung",
       lastUpdated: "Diese Datenschutzerklärung wurde zuletzt am 04.02.2025 aktualisiert.",
       intro: "Die Betreiber der Website (im Folgenden auch \"Enhance Stream\", \"Betreiber\", \"Wir\" oder \"Unsere\" genannt) https://enhanceyour.stream und allen damit verbundenen Seiten und Unterseiten setzen die folgende Datenschutzerklärung für die Nutzung der auf der Plattform angebotenen Dienstleistungen voraus.",
+      cookieSettings: "Sie können Ihre Cookie-Einstellungen jederzeit verwalten:",
       sections: [
         {
           title: "1. Verantwortlicher",
@@ -106,20 +114,24 @@ const Privacy = () => {
           content: "Unsere Website ist durch SSL verschlüsselt, um Ihre personenbezogenen Daten zu schützen."
         },
         {
-          title: "10. Bestellvorgang",
+          title: "10. Cookies",
+          content: "Unsere Website verwendet Cookies. Cookies sind kleine Textdateien, die auf Ihrem Gerät gespeichert werden, wenn Sie unsere Website besuchen. Einige Cookies sind für das ordnungsgemäße Funktionieren der Website unerlässlich. Andere Cookies helfen uns, Ihre Erfahrung zu verbessern, indem sie Einblicke in die Nutzung der Website geben. Sie können nicht wesentliche Cookies über unseren Cookie-Manager steuern. Weitere Informationen zu den von uns verwendeten Cookies finden Sie in den Cookie-Kategorien in unserem Cookie-Zustimmungsdialog."
+        },
+        {
+          title: "11. Bestellvorgang",
           content: "Enhance Stream erhebt und verarbeitet personenbezogene Daten beim Bestellvorgang, einschließlich Name, Adresse, E-Mail und Zahlungsdaten."
         },
         {
-          title: "11. Analyse-Tools",
-          content: "11.1 Google Analytics\nWir nutzen Google Analytics zur Analyse des Nutzerverhaltens auf unserer Website. Weitere Informationen: https://support.google.com/analytics/answer/9019185?hl=de\n\n11.2 Google Ads\nWir nutzen Google Ads Conversion-Tracking, um die Effektivität unserer Werbung zu ermitteln. Weitere Informationen: https://business.safety.google/adscontrollerterms/"
+          title: "12. Analyse-Tools",
+          content: "12.1 Google Analytics\nWir nutzen Google Analytics zur Analyse des Nutzerverhaltens auf unserer Website. Weitere Informationen: https://support.google.com/analytics/answer/9019185?hl=de\n\n12.2 Google Ads\nWir nutzen Google Ads Conversion-Tracking, um die Effektivität unserer Werbung zu ermitteln. Weitere Informationen: https://business.safety.google/adscontrollerterms/"
         },
         {
-          title: "12. Zahlungsmethoden",
-          content: "12.1 Stripe\nWenn Sie per Kreditkarte oder anderen Zahlungsmethoden bezahlen, werden Zahlungsdaten an Stripe (Stripe Inc., 510 Townsend Street, San Francisco, CA 94103, USA) übermittelt. Weitere Informationen: https://stripe.com/de/privacy"
+          title: "13. Zahlungsmethoden",
+          content: "13.1 Stripe\nWenn Sie per Kreditkarte oder anderen Zahlungsmethoden bezahlen, werden Zahlungsdaten an Stripe (Stripe Inc., 510 Townsend Street, San Francisco, CA 94103, USA) übermittelt. Weitere Informationen: https://stripe.com/de/privacy"
         },
         {
-          title: "13. Sonstige Drittanbieter",
-          content: "13.1 FastBill\nWir nutzen FastBill für unsere Buchhaltung. Weitere Informationen: https://www.fastbill.com/datenschutz\n\n13.2 Sendinblue\nUnsere E-Mails werden über Sendinblue versendet. Weitere Informationen: https://de.sendinblue.com/legal/privacypolicy/"
+          title: "14. Sonstige Drittanbieter",
+          content: "14.1 FastBill\nWir nutzen FastBill für unsere Buchhaltung. Weitere Informationen: https://www.fastbill.com/datenschutz\n\n14.2 Sendinblue\nUnsere E-Mails werden über Sendinblue versendet. Weitere Informationen: https://de.sendinblue.com/legal/privacypolicy/"
         }
       ]
     }
@@ -134,6 +146,12 @@ const Privacy = () => {
         <div className="prose prose-sm max-w-none dark:prose-invert">
           <p className="text-muted-foreground mb-6">{t.lastUpdated}</p>
           <p className="mb-8">{t.intro}</p>
+          
+          <div className="bg-muted p-4 rounded-md flex flex-col sm:flex-row items-center justify-between mb-8">
+            <p className="mb-3 sm:mb-0">{t.cookieSettings}</p>
+            <CookieSettingsButton />
+          </div>
+          
           {t.sections.map((section, index) => (
             <div key={index} className="mb-8">
               <h2 className="text-xl font-semibold mb-3">{section.title}</h2>
