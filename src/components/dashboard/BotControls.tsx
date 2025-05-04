@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Info } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
@@ -61,7 +61,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       serverBusy: "All servers are currently busy",
       tryAgainLater: "Please try again later when server resources are available.",
       planLimitReached: "Plan limit reached",
-      upgradeRequired: "Upgrade your plan to add more viewers."
+      upgradeRequired: "Upgrade your plan to add more viewers.",
+      approachingLimit: "Approaching limit",
+      limitWarning: "You're at {percent}% of your plan limit. Consider upgrading for more capacity."
     },
     de: {
       tooltipMessage: "Bitte geben Sie zuerst eine Stream-URL ein",
@@ -85,7 +87,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       serverBusy: "Alle Server sind derzeit ausgelastet",
       tryAgainLater: "Bitte versuchen Sie es später erneut, wenn Serverressourcen verfügbar sind.",
       planLimitReached: "Planlimit erreicht",
-      upgradeRequired: "Aktualisieren Sie Ihren Plan, um mehr Zuschauer hinzuzufügen."
+      upgradeRequired: "Aktualisieren Sie Ihren Plan, um mehr Zuschauer hinzuzufügen.",
+      approachingLimit: "Limitgrenze nähert sich",
+      limitWarning: "Sie sind bei {percent}% Ihres Planlimits. Erwägen Sie ein Upgrade für mehr Kapazität."
     }
   };
 
@@ -134,6 +138,27 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   };
 
   const limit = getLimit();
+
+  // Calculate usage percentage for UI indicators
+  const usagePercentage = (currentCount / limit) * 100;
+  
+  // Get indicator color based on usage percentage
+  const getIndicatorColor = () => {
+    if (usagePercentage >= 90) return "bg-red-500";
+    if (usagePercentage >= 75) return "bg-yellow-500";
+    return "bg-green-500";
+  };
+
+  // Check if approaching limit and show warning
+  useEffect(() => {
+    if (usagePercentage >= 80 && usagePercentage < 100) {
+      toast({
+        title: t.approachingLimit,
+        description: t.limitWarning.replace("{percent}", Math.round(usagePercentage).toString()),
+        variant: "warning",
+      });
+    }
+  }, [usagePercentage]);
 
   const updateCount = async (newCount: number) => {
     if (!user?.id) return;
@@ -410,6 +435,16 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
         setCurrentCount(newCount);
         await updateCount(newCount);
         onAdd(changeAmount);
+        
+        // Show warning if the new count approaches the limit
+        const newPercentage = (newCount / limit) * 100;
+        if (newPercentage >= 80 && newPercentage < 100) {
+          toast({
+            title: t.approachingLimit,
+            description: t.limitWarning.replace("{percent}", Math.round(newPercentage).toString()),
+            variant: "warning",
+          });
+        }
       }
     } catch (error) {
       console.error(`Error modifying ${type} count:`, error);
@@ -470,9 +505,26 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
-              <span>{currentCount}/{limit}</span>
+              <div className="flex items-center">
+                <span>{currentCount}/{limit}</span>
+                {usagePercentage >= 75 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 ml-1 text-yellow-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t.limitWarning.replace("{percent}", Math.round(usagePercentage).toString())}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             </div>
-            <Progress value={(currentCount / limit) * 100} />
+            <Progress 
+              value={usagePercentage} 
+              indicatorColor={getIndicatorColor()} 
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button 
