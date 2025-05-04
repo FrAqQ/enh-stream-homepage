@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
+import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -27,7 +28,9 @@ const Login = () => {
       loginFailed: "Login failed",
       checkCredentials: "Please check your credentials and try again.",
       emailNotConfirmed: "Email not confirmed",
-      confirmEmail: "Please confirm your email address first."
+      confirmEmail: "Please confirm your email address first.",
+      emailTooltip: "Enter the email address you used during registration.",
+      passwordTooltip: "Enter your password to access your account."
     },
     de: {
       title: "Anmelden",
@@ -39,7 +42,9 @@ const Login = () => {
       loginFailed: "Login fehlgeschlagen",
       checkCredentials: "Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
       emailNotConfirmed: "E-Mail nicht bestätigt",
-      confirmEmail: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse."
+      confirmEmail: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+      emailTooltip: "Geben Sie die E-Mail-Adresse ein, die Sie bei der Registrierung verwendet haben.",
+      passwordTooltip: "Geben Sie Ihr Passwort ein, um auf Ihr Konto zuzugreifen."
     }
   };
 
@@ -80,7 +85,7 @@ const Login = () => {
 
       console.log("Login successful:", data);
       toast({
-        title: "Erfolg",
+        title: "Success",
         description: t.loginSuccess,
       });
       
@@ -91,32 +96,52 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen pt-16 flex items-center justify-center">
-      <Card className="w-full max-w-md p-6 bg-card/50 backdrop-blur">
-        <h1 className="text-2xl font-bold text-center mb-6">{t.title}</h1>
+    <div className="min-h-screen pt-16 md:pt-24 flex items-center justify-center px-4">
+      <Card className="w-full max-w-md p-4 md:p-6 bg-card/50 backdrop-blur shadow-lg">
+        <h1 className="text-xl md:text-2xl font-bold text-center mb-4 md:mb-6">{t.title}</h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <Input
-              type="email"
-              placeholder={t.emailPlaceholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-            />
+            <OnboardingTooltip
+              id="login-email-tooltip"
+              content={{
+                en: t.emailTooltip,
+                de: t.emailTooltip
+              }}
+              position="top"
+            >
+              <Input
+                type="email"
+                placeholder={t.emailPlaceholder}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                className="transition-all focus:ring-2 focus:ring-primary"
+              />
+            </OnboardingTooltip>
           </div>
           <div>
-            <Input
-              type="password"
-              placeholder={t.passwordPlaceholder}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
+            <OnboardingTooltip
+              id="login-password-tooltip"
+              content={{
+                en: t.passwordTooltip,
+                de: t.passwordTooltip
+              }}
+              position="bottom"
+            >
+              <Input
+                type="password"
+                placeholder={t.passwordPlaceholder}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="transition-all focus:ring-2 focus:ring-primary"
+              />
+            </OnboardingTooltip>
           </div>
           <Button 
-            className="w-full" 
+            className="w-full transition-all hover:scale-[1.02]" 
             type="submit" 
             disabled={isLoading}
           >

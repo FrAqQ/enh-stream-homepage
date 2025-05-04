@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
+import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -25,7 +26,9 @@ const Register = () => {
       registering: "Registering...",
       registerSuccess: "Registration successful! You can log in now.",
       registerFailed: "Registration failed",
-      unexpectedError: "An unexpected error occurred. Please try again later."
+      unexpectedError: "An unexpected error occurred. Please try again later.",
+      emailTooltip: "Enter your email address here. We'll send a confirmation link to verify your account.",
+      passwordTooltip: "Create a strong password with at least 8 characters, including uppercase and lowercase letters, numbers, and special characters."
     },
     de: {
       title: "Registrierung",
@@ -35,7 +38,9 @@ const Register = () => {
       registering: "Registriere...",
       registerSuccess: "Registrierung erfolgreich! Sie können sich jetzt einloggen.",
       registerFailed: "Registrierung fehlgeschlagen",
-      unexpectedError: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut."
+      unexpectedError: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+      emailTooltip: "Geben Sie hier Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Bestätigungslink zur Verifizierung Ihres Kontos.",
+      passwordTooltip: "Erstellen Sie ein sicheres Passwort mit mindestens 8 Zeichen, einschließlich Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen."
     }
   };
 
@@ -86,32 +91,52 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen pt-16 flex items-center justify-center">
-      <Card className="w-full max-w-md p-6 bg-card/50 backdrop-blur">
-        <h1 className="text-2xl font-bold text-center mb-6">{t.title}</h1>
+    <div className="min-h-screen pt-16 md:pt-24 flex items-center justify-center px-4">
+      <Card className="w-full max-w-md p-4 md:p-6 bg-card/50 backdrop-blur shadow-lg">
+        <h1 className="text-xl md:text-2xl font-bold text-center mb-4 md:mb-6">{t.title}</h1>
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <Input
-              type="email"
-              placeholder={t.emailPlaceholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-            />
+            <OnboardingTooltip
+              id="register-email-tooltip"
+              content={{
+                en: t.emailTooltip,
+                de: t.emailTooltip
+              }}
+              position="top"
+            >
+              <Input
+                type="email"
+                placeholder={t.emailPlaceholder}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                className="transition-all focus:ring-2 focus:ring-primary"
+              />
+            </OnboardingTooltip>
           </div>
           <div>
-            <Input
-              type="password"
-              placeholder={t.passwordPlaceholder}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
+            <OnboardingTooltip
+              id="register-password-tooltip"
+              content={{
+                en: t.passwordTooltip,
+                de: t.passwordTooltip
+              }}
+              position="bottom"
+            >
+              <Input
+                type="password"
+                placeholder={t.passwordPlaceholder}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="transition-all focus:ring-2 focus:ring-primary"
+              />
+            </OnboardingTooltip>
           </div>
           <Button 
-            className="w-full" 
+            className="w-full transition-all hover:scale-[1.02]" 
             type="submit" 
             disabled={isLoading}
           >

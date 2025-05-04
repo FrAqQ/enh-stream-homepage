@@ -17,9 +17,12 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { Menu, X } from "lucide-react";
+import { Menu, Settings, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PersonalizationPanel } from "./PersonalizationPanel";
+import { useOnboarding } from "@/lib/OnboardingContext";
+import { OnboardingTooltip } from "./ui/onboarding-tooltip";
 
 const Navbar = () => {
   const { user } = useUser();
@@ -29,6 +32,8 @@ const Navbar = () => {
   const [message, setMessage] = useState("");
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
+  const { resetOnboarding } = useOnboarding();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -48,22 +53,22 @@ const Navbar = () => {
 
   const handleChatRequest = async () => {
     if (!user) {
-      toast.error('Bitte melden Sie sich an, um mit uns zu chatten');
+      toast.error(language === 'en' ? 'Please login to chat with us' : 'Bitte melden Sie sich an, um mit uns zu chatten');
       return;
     }
 
     try {
       const { error } = await supabase
         .from('chat_requests')
-        .insert([{ user_id: user.id }]);
+        .insert([{ user_id: user.id, message }]);
 
       if (error) throw error;
 
-      toast.success('Chat-Anfrage wurde gesendet');
+      toast.success(language === 'en' ? 'Chat request sent' : 'Chat-Anfrage wurde gesendet');
       setIsChatOpen(false);
       setMessage("");
     } catch (error) {
-      toast.error('Fehler beim Senden der Chat-Anfrage');
+      toast.error(language === 'en' ? 'Error sending chat request' : 'Fehler beim Senden der Chat-Anfrage');
     }
   };
 
@@ -79,7 +84,10 @@ const Navbar = () => {
       chatWithUs: "Support Chat",
       sendRequest: "Send request",
       chatMessage: "How can we help you?",
-      menu: "Menü"
+      menu: "Menu",
+      personalize: "Personalize",
+      restartOnboarding: "Restart Onboarding",
+      personalizeTooltip: "Customize your experience with themes and colors"
     },
     de: {
       dashboard: "Dashboard",
@@ -92,7 +100,10 @@ const Navbar = () => {
       chatWithUs: "Support Chat",
       sendRequest: "Anfrage senden",
       chatMessage: "Wie können wir Ihnen helfen?",
-      menu: "Menü"
+      menu: "Menü",
+      personalize: "Personalisieren",
+      restartOnboarding: "Onboarding neu starten",
+      personalizeTooltip: "Passen Sie Ihr Erlebnis mit Themes und Farben an"
     }
   };
 
@@ -151,6 +162,12 @@ const Navbar = () => {
             <DropdownMenuItem asChild>
               <Link to="/profile">{t.profile}</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
+              {t.personalize}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={resetOnboarding}>
+              {t.restartOnboarding}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
               {t.logout}
@@ -175,6 +192,27 @@ const Navbar = () => {
           <Button variant="outline" onClick={() => setIsChatOpen(true)}>
             {t.chatWithUs}
           </Button>
+
+          {user && (
+            <OnboardingTooltip
+              id="personalize-tooltip"
+              content={{
+                en: t.personalizeTooltip,
+                de: t.personalizeTooltip
+              }}
+              position="bottom"
+            >
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsPersonalizationOpen(true)}
+                className="relative"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">{t.personalize}</span>
+              </Button>
+            </OnboardingTooltip>
+          )}
 
           <LanguageSwitcher />
           
@@ -209,6 +247,20 @@ const Navbar = () => {
                   >
                     {t.chatWithUs}
                   </Button>
+
+                  {user && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsPersonalizationOpen(true);
+                        closeSheet();
+                      }}
+                      className="justify-start"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t.personalize}
+                    </Button>
+                  )}
                 </div>
                 
                 <div className="mt-auto border-t pt-4">
@@ -220,6 +272,7 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* Chat Dialog */}
       <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
         <DialogContent>
           <DialogHeader>
@@ -235,6 +288,12 @@ const Navbar = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Personalization Panel */}
+      <PersonalizationPanel 
+        open={isPersonalizationOpen} 
+        onOpenChange={setIsPersonalizationOpen} 
+      />
     </nav>
   );
 };
