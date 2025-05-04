@@ -155,7 +155,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       toast({
         title: t.approachingLimit,
         description: t.limitWarning.replace("{percent}", Math.round(usagePercentage).toString()),
-        variant: "warning",
+        variant: "default",  // Changed from "warning" to "default"
       });
     }
   }, [usagePercentage]);
