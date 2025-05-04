@@ -112,7 +112,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent" 
-                role="heading" aria-level="1">
+                role="heading" aria-level={1}>
               {t.hero.title}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -135,7 +135,7 @@ const Index = () => {
 
         {/* Features Section */}
         <section className="container mx-auto px-4 py-16 bg-card/50 rounded-lg">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12" role="heading" aria-level="2">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12" role="heading" aria-level={2}>
             {t.features.title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -152,7 +152,7 @@ const Index = () => {
         {/* Final CTA Section */}
         <section className="container mx-auto px-4 py-16 md:py-24 text-center">
           <div className="max-w-3xl mx-auto glass-morphism p-8 rounded-lg">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4" role="heading" aria-level="2">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4" role="heading" aria-level={2}>
               {language === 'en' ? 'Ready to grow your audience?' : 'Bereit, deine Zuschauerzahl zu steigern?'}
             </h2>
             <p className="text-muted-foreground mb-6">
