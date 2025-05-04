@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +14,36 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { language } = useLanguage();
+
+  const translations = {
+    en: {
+      title: "Login",
+      emailPlaceholder: "Email",
+      passwordPlaceholder: "Password",
+      loginButton: "Login",
+      loginLoading: "Logging in...",
+      loginSuccess: "Successfully logged in",
+      loginFailed: "Login failed",
+      checkCredentials: "Please check your credentials and try again.",
+      emailNotConfirmed: "Email not confirmed",
+      confirmEmail: "Please confirm your email address first."
+    },
+    de: {
+      title: "Anmelden",
+      emailPlaceholder: "E-Mail",
+      passwordPlaceholder: "Passwort",
+      loginButton: "Anmelden",
+      loginLoading: "Anmeldung läuft...",
+      loginSuccess: "Sie wurden erfolgreich eingeloggt",
+      loginFailed: "Login fehlgeschlagen",
+      checkCredentials: "Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
+      emailNotConfirmed: "E-Mail nicht bestätigt",
+      confirmEmail: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse."
+    }
+  };
+
+  const t = translations[language];
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,20 +59,20 @@ const Login = () => {
       if (error) {
         console.error("Login error:", error);
         
-        // Spezifische Fehlermeldung für nicht bestätigte E-Mail
+        // Specific message for unconfirmed email
         if (error.message === "Email not confirmed") {
           toast({
-            title: "E-Mail nicht bestätigt",
-            description: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+            title: t.emailNotConfirmed,
+            description: t.confirmEmail,
             variant: "destructive"
           });
           return;
         }
 
-        // Allgemeine Fehlermeldung
+        // General error message
         toast({
-          title: "Login fehlgeschlagen",
-          description: "Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
+          title: t.loginFailed,
+          description: t.checkCredentials,
           variant: "destructive"
         });
         return;
@@ -49,7 +81,7 @@ const Login = () => {
       console.log("Login successful:", data);
       toast({
         title: "Erfolg",
-        description: "Sie wurden erfolgreich eingeloggt",
+        description: t.loginSuccess,
       });
       
       navigate("/dashboard");
@@ -61,12 +93,12 @@ const Login = () => {
   return (
     <div className="min-h-screen pt-16 flex items-center justify-center">
       <Card className="w-full max-w-md p-6 bg-card/50 backdrop-blur">
-        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">{t.title}</h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <Input
               type="email"
-              placeholder="E-Mail"
+              placeholder={t.emailPlaceholder}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -76,7 +108,7 @@ const Login = () => {
           <div>
             <Input
               type="password"
-              placeholder="Passwort"
+              placeholder={t.passwordPlaceholder}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -88,7 +120,7 @@ const Login = () => {
             type="submit" 
             disabled={isLoading}
           >
-            {isLoading ? "Anmeldung läuft..." : "Anmelden"}
+            {isLoading ? t.loginLoading : t.loginButton}
           </Button>
         </form>
       </Card>
