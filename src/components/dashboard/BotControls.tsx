@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,8 +35,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [currentCount, setCurrentCount] = useState(0);
   const { toast } = useToast();
-  const { user } = useUser();
-  const [userPlan, setUserPlan] = useState<string>("Free");
+  const { user, profile } = useUser();
   const { language } = useLanguage();
 
   const translations = {
@@ -61,7 +59,9 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       cooldownActive: "Cooldown Active",
       cooldownMessage: "Please wait 5 seconds before increasing reach further.",
       serverBusy: "All servers are currently busy",
-      tryAgainLater: "Please try again later when server resources are available."
+      tryAgainLater: "Please try again later when server resources are available.",
+      planLimitReached: "Plan limit reached",
+      upgradeRequired: "Upgrade your plan to add more viewers."
     },
     de: {
       tooltipMessage: "Bitte geben Sie zuerst eine Stream-URL ein",
@@ -83,66 +83,53 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       cooldownActive: "Cooldown Aktiv",
       cooldownMessage: "Bitte warten Sie 5 Sekunden, bevor Sie die Reichweite weiter erhöhen.",
       serverBusy: "Alle Server sind derzeit ausgelastet",
-      tryAgainLater: "Bitte versuchen Sie es später erneut, wenn Serverressourcen verfügbar sind."
+      tryAgainLater: "Bitte versuchen Sie es später erneut, wenn Serverressourcen verfügbar sind.",
+      planLimitReached: "Planlimit erreicht",
+      upgradeRequired: "Aktualisieren Sie Ihren Plan, um mehr Zuschauer hinzuzufügen."
     }
   };
 
   const t = translations[language];
 
   useEffect(() => {
-    const fetchUserPlan = async () => {
-      if (user?.id) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('plan, subscription_status')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user plan:', error);
-          setUserPlan("Free");
-          return;
-        }
-
-        if (profile?.subscription_status === 'active') {
-          setUserPlan(profile?.plan || "Free");
-        } else {
-          setUserPlan("Free");
-        }
-      }
-    };
-
-    fetchUserPlan();
-    const interval = setInterval(fetchUserPlan, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
-
-  useEffect(() => {
     const fetchCurrentCount = async () => {
       if (user?.id) {
-        const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
-        const countField = type === 'viewer' ? 'viewer_count' : 'chatter_count';
-        
-        const { data, error } = await supabase
-          .from(tableName)
-          .select(countField)
-          .eq('user_id', user.id)
-          .single();
+        if (type === 'viewer') {
+          // For viewers, get the active count from the profile
+          if (profile?.viewers_active !== undefined) {
+            setCurrentCount(profile.viewers_active);
+            return;
+          }
+        } else {
+          // For chatters, continue with the current approach
+          const tableName = 'chatter_counts';
+          const countField = 'chatter_count';
+          
+          const { data, error } = await supabase
+            .from(tableName)
+            .select(countField)
+            .eq('user_id', user.id)
+            .single();
 
-        if (!error && data) {
-          setCurrentCount(data[countField]);
+          if (!error && data) {
+            setCurrentCount(data[countField]);
+          }
         }
       }
     };
 
     fetchCurrentCount();
-  }, [user, type]);
+  }, [user, profile, type]);
 
   const getLimit = () => {
     if (type === "viewer") {
-      return PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+      // Use the profile's viewer limit if available
+      return profile?.viewer_limit || 4;
     } else {
-      return PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+      const userPlan = profile?.plan || "Free";
+      const subscriptionActive = profile?.subscription_status === 'active';
+      const planKey = subscriptionActive ? userPlan : "Free";
+      return PLAN_CHATTER_LIMITS[planKey as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
     }
   };
 
@@ -151,24 +138,42 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const updateCount = async (newCount: number) => {
     if (!user?.id) return;
 
-    const tableName = type === 'viewer' ? 'viewer_counts' : 'chatter_counts';
-    const countField = type === 'viewer' ? 'viewer_count' : 'chatter_count';
+    if (type === 'viewer') {
+      // For viewers, update the profile's viewers_active
+      const { error } = await supabase
+        .from('profiles')
+        .update({ viewers_active: newCount })
+        .eq('id', user.id);
 
-    const { error } = await supabase
-      .from(tableName)
-      .upsert({
-        user_id: user.id,
-        [countField]: newCount,
-        updated_at: new Date().toISOString()
-      });
+      if (error) {
+        console.error('Error updating viewers_active:', error);
+        toast({
+          title: "Error",
+          description: `Failed to update ${type} count`,
+          variant: "destructive",
+        });
+      }
+    } else {
+      // For chatters, continue with the current approach
+      const tableName = 'chatter_counts';
+      const countField = 'chatter_count';
 
-    if (error) {
-      console.error(`Error updating ${type} count:`, error);
-      toast({
-        title: "Error",
-        description: `Failed to update ${type} count`,
-        variant: "destructive",
-      });
+      const { error } = await supabase
+        .from(tableName)
+        .upsert({
+          user_id: user.id,
+          [countField]: newCount,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error(`Error updating ${type} count:`, error);
+        toast({
+          title: "Error",
+          description: `Failed to update ${type} count`,
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -243,7 +248,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
           body: JSON.stringify({
             user_id: user?.id || "123",
             twitch_url: streamUrl,
-            [`${type}_count`]: Math.abs(count)
+            count: Math.abs(count)
           })
         });
         
@@ -391,8 +396,8 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
 
     if (changeAmount > 0 && currentCount + changeAmount > limit) {
       toast({
-        title: t.viewerLimitReached,
-        description: t.maxViewersAllowed.replace("${0}", limit.toString()),
+        title: t.planLimitReached,
+        description: t.upgradeRequired,
         variant: "destructive",
       });
       return;

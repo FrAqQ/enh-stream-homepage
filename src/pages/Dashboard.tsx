@@ -1,3 +1,4 @@
+
 import { Users, MessageSquare, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -13,7 +14,7 @@ import { getChatterCount } from "@/services/chatterScraper"
 import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 
 const Dashboard = () => {
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const { toast } = useToast();
   const [streamUrl, setStreamUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
@@ -27,58 +28,13 @@ const Dashboard = () => {
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
 
-  const fetchUserPlan = async () => {
-    if (user?.id) {
-      try {
-        console.log("Starting plan fetch for user:", user.id);
-        
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('plan, subscription_status')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          toast({
-            title: "Error",
-            description: "Failed to fetch subscription status",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        console.log("Raw profile data:", profile);
-
-        if (profile) {
-          console.log("Profile found:", {
-            plan: profile.plan,
-            status: profile.subscription_status
-          });
-          
-          setUserPlan(profile.plan || "Free");
-          setSubscriptionStatus(profile.subscription_status || "inactive");
-        } else {
-          console.log("No profile found, setting to Free plan");
-          setUserPlan("Free");
-          setSubscriptionStatus("inactive");
-        }
-      } catch (err) {
-        console.error("Unexpected error in subscription check:", err);
-        toast({
-          title: "Error",
-          description: "Failed to verify subscription status",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   useEffect(() => {
-    fetchUserPlan();
-    const interval = setInterval(fetchUserPlan, 5000);
-    return () => clearInterval(interval);
-  }, [user]);
+    if (profile) {
+      setViewerCount(profile.viewers_active || 0);
+      setUserPlan(profile.plan || "Free");
+      setSubscriptionStatus(profile.subscription_status || "inactive");
+    }
+  }, [profile]);
 
   const handleSaveUrl = () => {
     try {
@@ -346,7 +302,9 @@ const Dashboard = () => {
   };
 
   const addViewers = (count: number) => {
-    const viewerLimit = PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS] || PLAN_VIEWER_LIMITS.Free;
+    if (!profile) return;
+    
+    const viewerLimit = profile.viewer_limit || 4;
     
     if (viewerCount + count > viewerLimit) {
       toast({
@@ -361,7 +319,13 @@ const Dashboard = () => {
   };
 
   const addChatters = (count: number) => {
-    const chatterLimit = PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS] || PLAN_CHATTER_LIMITS.Free;
+    if (!profile) return;
+    
+    const chatterLimit = profile.plan ? 
+      (profile.subscription_status === 'active' ?
+        PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
+        PLAN_CHATTER_LIMITS.Free) :
+      PLAN_CHATTER_LIMITS.Free;
     
     if (chatterCount + count > chatterLimit) {
       toast({
@@ -396,7 +360,7 @@ const Dashboard = () => {
           value={viewerCount}
           change={`${viewerGrowth}% from first stream`}
           icon={Users}
-          limit={PLAN_VIEWER_LIMITS[userPlan as keyof typeof PLAN_VIEWER_LIMITS]}
+          limit={profile?.viewer_limit || 4}
         />
         <StatsCard
           title="Chat Messages"
@@ -404,7 +368,11 @@ const Dashboard = () => {
           subtitle="Last 10 minutes"
           change="Calculating..."
           icon={MessageSquare}
-          limit={PLAN_CHATTER_LIMITS[userPlan as keyof typeof PLAN_CHATTER_LIMITS]}
+          limit={profile?.plan ? 
+            (profile?.subscription_status === 'active' ?
+              PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
+              PLAN_CHATTER_LIMITS.Free) :
+            PLAN_CHATTER_LIMITS.Free}
         />
         <StatsCard
           title="Stream Health"
