@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -879,7 +878,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
             <Progress 
               value={usagePercentage} 
               className="h-2"
-              indicatorClassName={getIndicatorColor()}
+              indicatorColor={getIndicatorColor()}
             />
           </div>
           
