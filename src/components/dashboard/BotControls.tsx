@@ -160,44 +160,99 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     }
   }, [usagePercentage]);
 
+  // Modify the updateCount function to use RPC calls instead of direct DB updates
   const updateCount = async (newCount: number) => {
     if (!user?.id) return;
 
     if (type === 'viewer') {
-      // For viewers, update the profile's viewers_active
-      const { error } = await supabase
-        .from('profiles')
-        .update({ viewers_active: newCount })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error updating viewers_active:', error);
-        toast({
-          title: "Error",
-          description: `Failed to update ${type} count`,
-          variant: "destructive",
+      const currentViewerCount = profile?.viewers_active || 0;
+      const changeAmount = newCount - currentViewerCount;
+      
+      // Determine whether to increment or decrement
+      if (changeAmount > 0) {
+        // Increment viewers
+        const { data, error } = await supabase.rpc('increment_viewer_count', {
+          user_id: user.id,
+          count: Math.abs(changeAmount)
         });
+
+        if (error) {
+          console.error('Error incrementing viewers_active:', error);
+          toast({
+            title: "Error",
+            description: `Failed to update ${type} count`,
+            variant: "destructive",
+          });
+        }
+      } else if (changeAmount < 0) {
+        // Decrement viewers
+        const { data, error } = await supabase.rpc('decrement_viewer_count', {
+          user_id: user.id,
+          count: Math.abs(changeAmount)
+        });
+
+        if (error) {
+          console.error('Error decrementing viewers_active:', error);
+          toast({
+            title: "Error",
+            description: `Failed to update ${type} count`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        // No change needed
+        return;
       }
     } else {
       // For chatters, continue with the current approach
       const tableName = 'chatter_counts';
       const countField = 'chatter_count';
-
-      const { error } = await supabase
+      
+      const { data, error } = await supabase
         .from(tableName)
-        .upsert({
-          user_id: user.id,
-          [countField]: newCount,
-          updated_at: new Date().toISOString()
-        });
+        .select(countField)
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) {
-        console.error(`Error updating ${type} count:`, error);
-        toast({
-          title: "Error",
-          description: `Failed to update ${type} count`,
-          variant: "destructive",
-        });
+      if (!error && data) {
+        const currentCount = data[countField];
+        const changeAmount = newCount - currentCount;
+        
+        // Determine whether to increment or decrement
+        if (changeAmount > 0) {
+          // Increment chatters
+          const { data: updateData, error: updateError } = await supabase
+            .from(tableName)
+            .update({ [countField]: currentCount + changeAmount })
+            .eq('user_id', user.id);
+
+          if (updateError) {
+            console.error('Error updating chatter_count:', updateError);
+            toast({
+              title: "Error",
+              description: `Failed to update ${type} count`,
+              variant: "destructive",
+            });
+          }
+        } else if (changeAmount < 0) {
+          // Decrement chatters
+          const { data: updateData, error: updateError } = await supabase
+            .from(tableName)
+            .update({ [countField]: currentCount + changeAmount })
+            .eq('user_id', user.id);
+
+          if (updateError) {
+            console.error('Error updating chatter_count:', updateError);
+            toast({
+              title: "Error",
+              description: `Failed to update ${type} count`,
+              variant: "destructive",
+            });
+          }
+        } else {
+          // No change needed
+          return;
+        }
       }
     }
   };
@@ -248,6 +303,48 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
             variant: "destructive",
           });
           return false;
+        }
+
+        // Bevor wir den Request senden, prüfen wir serverseitig nochmals das Limit
+        if (type === 'viewer' && user?.id) {
+          // Prüfe aktuelles Limit und aktive Viewer
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('viewer_limit, viewers_active, plan, subscription_status')
+            .eq('id', user.id)
+            .single();
+            
+          if (profileError) {
+            console.error("Fehler beim Abrufen der Profilinformationen:", profileError);
+            toast({
+              title: "Fehler",
+              description: "Konnte Benutzerlimit nicht überprüfen",
+              variant: "destructive",
+            });
+            return false;
+          }
+          
+          const currentViewers = profileData?.viewers_active || 0;
+          let viewerLimit = 4; // Default Free Limit
+          
+          // Bestimme Limit basierend auf Plan
+          if (profileData?.subscription_status === 'active') {
+            if (profileData.plan?.includes('Ultimate')) viewerLimit = 1000;
+            else if (profileData.plan?.includes('Expert')) viewerLimit = 300;
+            else if (profileData.plan?.includes('Professional')) viewerLimit = 200;
+            else if (profileData.plan?.includes('Basic')) viewerLimit = 50;
+            else if (profileData.plan?.includes('Starter')) viewerLimit = 25;
+          }
+          
+          // Prüfe, ob das Limit überschritten werden würde
+          if (currentViewers + count > viewerLimit) {
+            toast({
+              title: t.viewerLimitReached,
+              description: t.maxViewersAllowed.replace("${0}", viewerLimit.toString()),
+              variant: "destructive",
+            });
+            return false;
+          }
         }
 
         // Reserviere Kapazität für diesen Server
