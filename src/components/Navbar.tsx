@@ -28,6 +28,7 @@ const Navbar = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState("");
   const isMobile = useIsMobile();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -78,7 +79,7 @@ const Navbar = () => {
       chatWithUs: "Support Chat",
       sendRequest: "Send request",
       chatMessage: "How can we help you?",
-      menu: "Menu"
+      menu: "Menü"
     },
     de: {
       dashboard: "Dashboard",
@@ -96,6 +97,10 @@ const Navbar = () => {
   };
 
   const t = translations[language];
+
+  const closeSheet = () => {
+    setIsSheetOpen(false);
+  };
 
   const NavLinks = () => (
     <>
@@ -115,15 +120,19 @@ const Navbar = () => {
     </>
   );
 
-  const AuthButtons = () => (
+  const AuthButtons = ({ inMobileMenu = false }) => (
     <>
       {!user ? (
-        <div className="flex items-center gap-2">
-          <Link to="/login">
-            <Button variant="ghost">{t.login}</Button>
+        <div className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}>
+          <Link to="/login" onClick={inMobileMenu ? closeSheet : undefined}>
+            <Button variant={inMobileMenu ? "outline" : "ghost"} className={inMobileMenu ? "w-full justify-start" : ""}>
+              {t.login}
+            </Button>
           </Link>
-          <Link to="/register">
-            <Button>{t.register}</Button>
+          <Link to="/register" onClick={inMobileMenu ? closeSheet : undefined}>
+            <Button className={inMobileMenu ? "w-full justify-start" : ""}>
+              {t.register}
+            </Button>
           </Link>
         </div>
       ) : (
@@ -178,7 +187,7 @@ const Navbar = () => {
           
           {!isMobile && <AuthButtons />}
           
-          <Sheet>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button size="icon" variant="outline">
                 <Menu className="h-5 w-5" />
@@ -194,10 +203,7 @@ const Navbar = () => {
                     variant="outline" 
                     onClick={() => {
                       setIsChatOpen(true);
-                      const closeButton = document.querySelector('[data-trigger-for="sheet"]');
-                      if (closeButton instanceof HTMLElement) {
-                        closeButton.click();
-                      }
+                      closeSheet();
                     }}
                     className="justify-start"
                   >
@@ -206,7 +212,7 @@ const Navbar = () => {
                 </div>
                 
                 <div className="mt-auto border-t pt-4">
-                  {isMobile && <AuthButtons />}
+                  {isMobile && <AuthButtons inMobileMenu={true} />}
                 </div>
               </div>
             </SheetContent>
