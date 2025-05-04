@@ -17,6 +17,9 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { Menu, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
   const { user } = useUser();
@@ -24,6 +27,7 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -73,7 +77,8 @@ const Navbar = () => {
       logout: "Logout",
       chatWithUs: "Support Chat",
       sendRequest: "Send request",
-      chatMessage: "How can we help you?"
+      chatMessage: "How can we help you?",
+      menu: "Menu"
     },
     de: {
       dashboard: "Dashboard",
@@ -85,11 +90,67 @@ const Navbar = () => {
       logout: "Abmelden",
       chatWithUs: "Support Chat",
       sendRequest: "Anfrage senden",
-      chatMessage: "Wie können wir Ihnen helfen?"
+      chatMessage: "Wie können wir Ihnen helfen?",
+      menu: "Menü"
     }
   };
 
   const t = translations[language];
+
+  const NavLinks = () => (
+    <>
+      <Link to="/dashboard" className="text-foreground/80 hover:text-foreground">
+        {t.dashboard}
+      </Link>
+      
+      {isAdmin && (
+        <Link to="/admin" className="text-foreground/80 hover:text-foreground">
+          {t.admin}
+        </Link>
+      )}
+      
+      <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
+        {t.pricing}
+      </Link>
+    </>
+  );
+
+  const AuthButtons = () => (
+    <>
+      {!user ? (
+        <div className="flex items-center gap-2">
+          <Link to="/login">
+            <Button variant="ghost">{t.login}</Button>
+          </Link>
+          <Link to="/register">
+            <Button>{t.register}</Button>
+          </Link>
+        </div>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.user_metadata.avatar_url} />
+                <AvatarFallback>
+                  {user.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/profile">{t.profile}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
+              {t.logout}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </>
+  );
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -98,59 +159,58 @@ const Navbar = () => {
           Enhance Stream
         </Link>
         
-        <div className="flex items-center gap-6">
-          <Link to="/dashboard" className="text-foreground/80 hover:text-foreground">
-            {t.dashboard}
-          </Link>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-6">
+          <NavLinks />
           
-          {isAdmin && (
-            <Link to="/admin" className="text-foreground/80 hover:text-foreground">
-              {t.admin}
-            </Link>
-          )}
-          
-          <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
-            {t.pricing}
-          </Link>
-
           <Button variant="outline" onClick={() => setIsChatOpen(true)}>
             {t.chatWithUs}
           </Button>
 
           <LanguageSwitcher />
           
-          {!user ? (
-            <div className="flex items-center gap-2">
-              <Link to="/login">
-                <Button variant="ghost">{t.login}</Button>
-              </Link>
-              <Link to="/register">
-                <Button>{t.register}</Button>
-              </Link>
-            </div>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.user_metadata.avatar_url} />
-                    <AvatarFallback>
-                      {user.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link to="/profile">{t.profile}</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
-                  {t.logout}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <AuthButtons />
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="flex md:hidden items-center gap-2">
+          <LanguageSwitcher />
+          
+          {!isMobile && <AuthButtons />}
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">{t.menu}</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+              <div className="flex flex-col gap-6 py-6">
+                <div className="flex flex-col gap-4">
+                  <NavLinks />
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsChatOpen(true);
+                      const closeButton = document.querySelector('[data-trigger-for="sheet"]');
+                      if (closeButton instanceof HTMLElement) {
+                        closeButton.click();
+                      }
+                    }}
+                    className="justify-start"
+                  >
+                    {t.chatWithUs}
+                  </Button>
+                </div>
+                
+                <div className="mt-auto border-t pt-4">
+                  {isMobile && <AuthButtons />}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
