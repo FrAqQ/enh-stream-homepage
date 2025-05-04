@@ -50,7 +50,7 @@ export function ComplianceChecker() {
         description: language === 'en' 
           ? "Consider adjusting your viewer configuration" 
           : "Erwägen Sie, Ihre Zuschauerkonfiguration anzupassen",
-        variant: "warning"
+        variant: "destructive"
       });
     } else {
       toast({
@@ -111,9 +111,8 @@ export function ComplianceChecker() {
         {complianceResult && (
           <Alert variant={
             complianceResult.risk === 'high' ? "destructive" : 
-            complianceResult.risk === 'medium' ? "warning" : 
             "default"
-          }>
+          } className={complianceResult.risk === 'medium' ? "border-yellow-500 bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300" : ""}>
             {complianceResult.risk === 'low' && <ShieldCheck className="h-4 w-4" />}
             {complianceResult.risk === 'medium' && <AlertTriangle className="h-4 w-4" />}
             {complianceResult.risk === 'high' && <AlertOctagon className="h-4 w-4" />}
@@ -160,3 +159,4 @@ export function ComplianceChecker() {
     </div>
   );
 }
+

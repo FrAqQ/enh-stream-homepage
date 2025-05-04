@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -211,7 +210,7 @@ export default function Register() {
                   <p className="text-sm font-medium text-destructive">{formErrors.terms}</p>
                 )}
 
-                <Alert variant="warning" className="mt-4">
+                <Alert variant="default" className="mt-4 border-yellow-500 bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     {language === 'en'
