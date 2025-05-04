@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
+import { databaseService } from './databaseService';
+import { useToast } from "@/hooks/use-toast";
 
 export interface UserProfile {
   id: string;
@@ -15,47 +17,38 @@ export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, plan, subscription_status, viewers_active')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return null;
-      }
-
-      // Get the viewer limit based on the plan
-      const viewerLimit = data.plan ? 
-        (data.subscription_status === 'active' ? 
-          (data.plan.includes('Ultimate') ? 1000 :
-           data.plan.includes('Expert') ? 300 :
-           data.plan.includes('Professional') ? 200 :
-           data.plan.includes('Basic') ? 50 :
-           data.plan.includes('Starter') ? 25 : 4) : 4) : 4;
-
-      return {
-        ...data,
-        viewer_limit: viewerLimit
-      };
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
+    const { data, error } = await databaseService.getProfile(userId);
+    
+    if (error) {
+      toast({
+        title: "Error loading profile",
+        description: "We couldn't load your profile information",
+        variant: "destructive"
+      });
       return null;
     }
+    
+    return data;
   };
 
   useEffect(() => {
     // Get initial session
     const initUser = async () => {
       try {
+        setIsLoading(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session error:', error);
+          toast({
+            title: "Authentication Error",
+            description: "There was a problem with your session",
+            variant: "destructive"
+          });
+          
           // If there's an error with the session, clear it
           await supabase.auth.signOut();
           setUser(null);
@@ -72,6 +65,12 @@ export const useUser = () => {
         }
       } catch (error) {
         console.error('Error getting session:', error);
+        toast({
+          title: "System Error",
+          description: "There was a problem loading your data",
+          variant: "destructive"
+        });
+        
         // On error, clear the session
         await supabase.auth.signOut();
         setUser(null);
@@ -89,6 +88,8 @@ export const useUser = () => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        // Clear any cached data
+        databaseService.clearCache();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null);
         

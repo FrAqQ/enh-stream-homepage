@@ -9,6 +9,8 @@ import { LanguageProvider } from "./lib/LanguageContext";
 import { OnboardingProvider } from "./lib/OnboardingContext";
 import { PersonalizationProvider } from "./lib/PersonalizationContext";
 import { Onboarding } from "./components/Onboarding";
+import { LoadingOverlay } from "./components/ui/loading-overlay";
+import { ApiErrorBoundary } from "./components/ApiErrorBoundary";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Landing from "./pages/Landing";
@@ -24,14 +26,23 @@ import Cancellation from "./pages/Legal/Cancellation";
 import Imprint from "./pages/Legal/Imprint";
 import { CookieManager } from "./components/CookieManager";
 
-const queryClient = new QueryClient();
+// Create React Query client with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useUser();
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingOverlay isLoading={true} fullScreen text="Loading your profile..." />;
   }
   
   if (!user) {
@@ -47,44 +58,46 @@ const App = () => (
       <LanguageProvider>
         <PersonalizationProvider>
           <OnboardingProvider>
-            <BrowserRouter>
-              <div className="min-h-screen bg-background text-foreground flex flex-col">
-                <Navbar />
-                <div className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Landing />} />
-                    <Route path="/index" element={<Landing />} />
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin" element={
-                      <ProtectedRoute>
-                        <AdminDashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/pricing" element={<Pricing />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/profile" element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/privacy" element={<Privacy />} />
-                    <Route path="/cancellation" element={<Cancellation />} />
-                    <Route path="/imprint" element={<Imprint />} />
-                  </Routes>
+            <ApiErrorBoundary>
+              <BrowserRouter>
+                <div className="min-h-screen bg-background text-foreground flex flex-col">
+                  <Navbar />
+                  <div className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/index" element={<Landing />} />
+                      <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin" element={
+                        <ProtectedRoute>
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/pricing" element={<Pricing />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/profile" element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/terms" element={<Terms />} />
+                      <Route path="/privacy" element={<Privacy />} />
+                      <Route path="/cancellation" element={<Cancellation />} />
+                      <Route path="/imprint" element={<Imprint />} />
+                    </Routes>
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
-              <Toaster />
-              <Sonner />
-              <CookieManager />
-              <Onboarding />
-            </BrowserRouter>
+                <Toaster />
+                <Sonner />
+                <CookieManager />
+                <Onboarding />
+              </BrowserRouter>
+            </ApiErrorBoundary>
           </OnboardingProvider>
         </PersonalizationProvider>
       </LanguageProvider>
