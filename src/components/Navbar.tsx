@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -90,9 +89,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      console.log("[Logout] Vor logout", user);
       const { success, error } = await logout();
-      console.log("[Logout] Nach logout", user);
       
       if (!success) {
         console.error("Logout error:", error);
@@ -112,14 +109,12 @@ const Navbar = () => {
     }
   };
 
-  // Direkte Login- und Register-Handler
+  // Diese direkte Funktionen sind wichtig und müssen erhalten bleiben
   const handleLogin = () => {
-    console.log("Login-Button geklickt - Navigiere direkt zu /login");
     navigate("/login");
   };
 
   const handleRegister = () => {
-    console.log("Register-Button geklickt - Navigiere direkt zu /register");
     navigate("/register");
   };
 
@@ -182,9 +177,8 @@ const Navbar = () => {
     </>
   );
 
+  // Überarbeitete Funktion für Login/Register Buttons - Direktes Klick-Handling
   const renderLoginButtons = (inMobileMenu = false) => {
-    console.log("Rendering login buttons - Aktiver Render-Durchlauf");
-    
     return (
       <div 
         className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}
@@ -192,13 +186,15 @@ const Navbar = () => {
         <Button 
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
-          onClick={handleLogin}
+          onClick={() => handleLogin()}
+          type="button"
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
-          onClick={handleRegister}
+          onClick={() => handleRegister()}
+          type="button"
         >
           {t.register}
         </Button>
@@ -207,8 +203,6 @@ const Navbar = () => {
   };
 
   const AuthButtons = ({ inMobileMenu = false }) => {
-    console.log("AuthButtons Rendering - User:", !!user);
-    
     if (!user) {
       return renderLoginButtons(inMobileMenu);
     }

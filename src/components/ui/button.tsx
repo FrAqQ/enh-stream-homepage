@@ -42,9 +42,8 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
-    // Verbesserte Click-Handler-Weiterleitung
+    // Verbesserte Click-Handler-Weiterleitung - wichtig für Login/Register Buttons
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      console.log('[DEBUG] Button wurde geklickt');
       if (onClick) {
         onClick(e);
       }
