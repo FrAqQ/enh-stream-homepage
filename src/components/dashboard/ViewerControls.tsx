@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Users, Clock } from "lucide-react";
 import { Slider } from "@/components/ui/slider"
@@ -37,8 +36,17 @@ const ViewerControls = ({
   const [autoStopTimerId, setAutoStopTimerId] = useState<NodeJS.Timeout | null>(null);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   
-  const isLimitReached = viewerCount >= viewerLimit;
-  const percentageFilled = Math.min(100, (viewerCount / viewerLimit) * 100);
+  // Korrigierte Überprüfung, ob das Limit erreicht ist
+  // Für Chatter nutzen wir chatterStats.enhanced_chatters statt viewerCount
+  const isLimitReached = type === "chatter" && chatterStats 
+    ? chatterStats.enhanced_chatters >= viewerLimit 
+    : viewerCount >= viewerLimit;
+  
+  const percentageFilled = Math.min(100, (
+    type === "chatter" && chatterStats 
+      ? (chatterStats.enhanced_chatters / viewerLimit) 
+      : (viewerCount / viewerLimit)
+  ) * 100);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -189,7 +197,7 @@ const ViewerControls = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLimitReached && (
+          {isLimitReached && displayedCount > 0 && (
             <Alert variant="destructive" className="mb-4">
               <AlertTitle>Limit Reached</AlertTitle>
               <AlertDescription>

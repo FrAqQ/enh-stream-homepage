@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -39,16 +38,8 @@ export const useUser = () => {
     try {
       console.log(`Loading profile for user: ${userId}`);
       
-      // Timeout nach 8 Sekunden (erhöht von vorherigen 5 Sekunden)
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 8000);
-      });
-      
-      // Race zwischen tatsächlicher Anfrage und Timeout
-      const result = await Promise.race([
-        databaseService.getProfile(userId),
-        timeoutPromise
-      ]);
+      // Erhöhter Timeout auf 10 Sekunden (direkte Promise, ohne Race)
+      const result = await databaseService.getProfile(userId);
       
       if (!result || !result.data) {
         throw new Error('Profile could not be loaded');
