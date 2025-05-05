@@ -28,9 +28,9 @@ export const useUser = () => {
     try {
       console.log(`Loading profile for user: ${userId}`);
       
-      // Timeout nach 3 Sekunden (erhöht von vorherigen 3 Sekunden)
+      // Timeout nach 5 Sekunden (erhöht von vorherigen 3 Sekunden)
       const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 3000);
+        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 5000);
       });
       
       // Race zwischen tatsächlicher Anfrage und Timeout
