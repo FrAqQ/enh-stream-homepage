@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
+      console.log("Logout Funktion gestartet");
       const { success, error } = await logout();
       
       if (!success) {
@@ -99,19 +101,44 @@ const Navbar = () => {
       
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       
+      // Navigation nach Logout
       navigate('/');
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
     } catch (error) {
       console.error("Unexpected logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
     }
   };
 
-  // Direkte Navigations-Funktionen - vereinfacht
-  const handleLogin = () => navigate("/login");
-  const handleRegister = () => navigate("/register");
+  // Navigations-Funktionen - explizit definiert für besseres Debugging
+  const handleLoginClick = () => {
+    console.log("handleLoginClick aufgerufen");
+    navigate("/login");
+  };
+
+  const handleRegisterClick = () => {
+    console.log("handleRegisterClick aufgerufen");
+    navigate("/register");
+  };
+  
+  const handleProfileClick = () => {
+    console.log("handleProfileClick aufgerufen");
+    navigate("/profile");
+  };
+
+  const handleDashboardClick = () => {
+    console.log("handleDashboardClick aufgerufen");
+    navigate("/dashboard");
+  };
+
+  const handlePricingClick = () => {
+    console.log("handlePricingClick aufgerufen");
+    navigate("/pricing");
+  };
+
+  const handleAdminClick = () => {
+    console.log("handleAdminClick aufgerufen");
+    navigate("/admin");
+  };
 
   const closeSheet = () => {
     setIsSheetOpen(false);
@@ -154,25 +181,38 @@ const Navbar = () => {
 
   const t = translations[language];
 
+  // Navigations-Links mit Klick-Handlern statt React Router Links
   const NavLinks = () => (
     <>
-      <Link to="/dashboard" className="text-foreground/80 hover:text-foreground">
+      <Button 
+        variant="ghost" 
+        onClick={handleDashboardClick} 
+        className="text-foreground/80 hover:text-foreground"
+      >
         {t.dashboard}
-      </Link>
+      </Button>
       
       {isAdmin && (
-        <Link to="/admin" className="text-foreground/80 hover:text-foreground">
+        <Button 
+          variant="ghost" 
+          onClick={handleAdminClick} 
+          className="text-foreground/80 hover:text-foreground"
+        >
           {t.admin}
-        </Link>
+        </Button>
       )}
       
-      <Link to="/pricing" className="text-foreground/80 hover:text-foreground">
+      <Button 
+        variant="ghost" 
+        onClick={handlePricingClick} 
+        className="text-foreground/80 hover:text-foreground"
+      >
         {t.pricing}
-      </Link>
+      </Button>
     </>
   );
 
-  // Vereinfachte Funktion für Login/Register Buttons - direkte Referenzen
+  // Login/Register Buttons mit expliziten Handlefunktionen
   const renderLoginButtons = (inMobileMenu = false) => {
     return (
       <div 
@@ -181,13 +221,13 @@ const Navbar = () => {
         <Button 
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
-          onClick={handleLogin}
+          onClick={handleLoginClick}
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
-          onClick={handleRegister}
+          onClick={handleRegisterClick}
         >
           {t.register}
         </Button>
@@ -195,11 +235,13 @@ const Navbar = () => {
     );
   };
 
+  // Profilmenü mit expliziten Handlern
   const AuthButtons = ({ inMobileMenu = false }) => {
     if (!user) {
       return renderLoginButtons(inMobileMenu);
     }
     
+    // Mit direkten Event-Handlern statt Links
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -213,8 +255,8 @@ const Navbar = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link to="/profile">{t.profile}</Link>
+          <DropdownMenuItem onClick={handleProfileClick}>
+            {t.profile}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
             {t.personalize}
@@ -234,9 +276,9 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-primary">
+        <Button variant="ghost" onClick={() => navigate("/")} className="text-xl font-bold text-primary p-0">
           Enhance Stream
-        </Link>
+        </Button>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">
@@ -288,7 +330,31 @@ const Navbar = () => {
             <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <div className="flex flex-col gap-6 py-6">
                 <div className="flex flex-col gap-4">
-                  <NavLinks />
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleDashboardClick} 
+                    className="justify-start"
+                  >
+                    {t.dashboard}
+                  </Button>
+                  
+                  {isAdmin && (
+                    <Button 
+                      variant="ghost" 
+                      onClick={handleAdminClick} 
+                      className="justify-start"
+                    >
+                      {t.admin}
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="ghost" 
+                    onClick={handlePricingClick} 
+                    className="justify-start"
+                  >
+                    {t.pricing}
+                  </Button>
                   
                   <Button 
                     variant="outline" 

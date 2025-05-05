@@ -42,13 +42,22 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
-    // Stabilisierter Click-Handler ohne zusätzliche Wrapper-Funktion
     const Comp = asChild ? Slot : "button"
+    
+    // Sicherstellung, dass onClick-Events zuverlässig weitergeleitet werden
+    const handleClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+      console.log("Button clicked - Event wird weitergeleitet");
+      if (onClick) {
+        onClick(e);
+      }
+    }, [onClick]);
+    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
-        onClick={onClick}
+        onClick={handleClick}
         ref={ref}
+        type={props.type || "button"} // Standardwert "button" für type, wenn nicht angegeben
         {...props}
       />
     )
