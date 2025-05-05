@@ -10,7 +10,9 @@ export interface UserProfile {
   plan: string;
   subscription_status: string;
   viewers_active: number;
+  chatters_active: number; // Neu hinzugefügt
   viewer_limit: number;  // Dies wird aus computed_viewer_limit in databaseService gemappt
+  chatter_limit: number; // Neu hinzugefügt
 }
 
 export const useUser = () => {
@@ -147,6 +149,29 @@ export const useUser = () => {
     }
   }, [user?.id, profile]);
 
+  // Neue Funktion zum Aktualisieren der Chatterzahl
+  const updateUserChatters = useCallback(async (count: number) => {
+    if (!user?.id || !profile) return false;
+    
+    try {
+      // Lokalen State aktualisieren
+      setProfile(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          chatters_active: count
+        };
+      });
+      
+      // Datenbank aktualisieren
+      const result = await databaseService.updateChattersActive(user.id, count);
+      return result.success;
+    } catch (error) {
+      console.error('Error updating chatters:', error);
+      return false;
+    }
+  }, [user?.id, profile]);
+
   // Initiales Laden und Auth-Listener
   useEffect(() => {
     fetchUserProfile();
@@ -189,6 +214,7 @@ export const useUser = () => {
     isLoading, 
     loadError, 
     retryLoading,
-    updateUserEnhancedViewers
+    updateUserEnhancedViewers,
+    updateUserChatters // Neue Funktion exportieren
   };
 };
