@@ -57,6 +57,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
   const [adjustmentMode, setAdjustmentMode] = useState<"percentage" | "fixed">("percentage");
   const [adjustmentValue, setAdjustmentValue] = useState(20); // Default to 20% increase
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, profile } = useUser();
   const { language } = useLanguage();
@@ -101,7 +102,13 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       adjustmentValue: "Adjustment Value",
       autoAdjustmentEnabled: "Auto-adjustment enabled",
       targetReached: "Target reached",
-      adjustingViewers: "Adjusting viewers..."
+      adjustingViewers: "Adjusting viewers...",
+      presets: "Presets",
+      lowUsage: "Low (25%)",
+      normalUsage: "Normal (50%)",
+      highUsage: "High (75%)",
+      maxUsage: "Max (100%)",
+      limitReachedBanner: "Limit reached - Upgrade for more capacity"
     },
     de: {
       tooltipMessage: "Bitte geben Sie zuerst eine Stream-URL ein",
@@ -142,7 +149,13 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       adjustmentValue: "Anpassungswert",
       autoAdjustmentEnabled: "Automatische Anpassung aktiviert",
       targetReached: "Ziel erreicht",
-      adjustingViewers: "Zuschauer werden angepasst..."
+      adjustingViewers: "Zuschauer werden angepasst...",
+      presets: "Voreinstellungen",
+      lowUsage: "Niedrig (25%)",
+      normalUsage: "Normal (50%)",
+      highUsage: "Hoch (75%)",
+      maxUsage: "Maximum (100%)",
+      limitReachedBanner: "Limit erreicht - Upgrade für mehr Kapazität"
     }
   };
 
@@ -265,7 +278,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
       toast({
         title: t.approachingLimit,
         description: t.limitWarning.replace("{percent}", Math.round(usagePercentage).toString()),
-        variant: "warning",
+        variant: "destructive",
       });
     }
   }, [usagePercentage]);
@@ -775,6 +788,49 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
     if (diff < 0) return "text-red-500";
     return "text-gray-500";
   };
+  
+  // Neuer Code - für Presets
+  const applyPreset = (presetType: string) => {
+    if (isOnCooldown || isProcessing) {
+      toast({
+        title: t.cooldownActive,
+        description: t.cooldownMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    let percentage = 0;
+    
+    switch(presetType) {
+      case 'low':
+        percentage = 25;
+        setActivePreset('low');
+        break;
+      case 'normal':
+        percentage = 50;
+        setActivePreset('normal');
+        break;
+      case 'high':
+        percentage = 75;
+        setActivePreset('high');
+        break;
+      case 'max':
+        percentage = 100;
+        setActivePreset('max');
+        break;
+      default:
+        return;
+    }
+    
+    const newTarget = Math.round((limit * percentage) / 100);
+    setTargetCount(newTarget);
+    
+    const diff = newTarget - currentCount;
+    if (diff !== 0) {
+      applyChanges(diff);
+    }
+  };
 
   return (
     <Card className="glass-morphism">
@@ -860,19 +916,17 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
             <div className="flex justify-between text-sm">
               <span>{type === "viewer" ? t.currentViewers : t.currentChatters}</span>
               <div className="flex items-center">
-                <span>{currentCount}/{limit}</span>
-                {usagePercentage >= 75 && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-4 w-4 ml-1 text-yellow-500" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t.limitWarning.replace("{percent}", Math.round(usagePercentage).toString())}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                <span className="font-medium">{currentCount}/{limit}</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 ml-1 text-blue-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t.limitWarning.replace("{percent}", Math.round(usagePercentage).toString())}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
             <Progress 
@@ -882,6 +936,13 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
             />
           </div>
           
+          {usagePercentage >= 100 && (
+            <div className="p-3 border border-red-500 bg-red-50 text-red-800 rounded-md flex items-center gap-2 my-3 dark:bg-red-900/20 dark:text-red-300">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm font-medium">{t.limitReachedBanner}</p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
               <span>{type === "viewer" ? t.targetViewers : t.targetChatters}</span>
@@ -894,25 +955,84 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                 )}
               </div>
             </div>
-            <Slider
-              value={[targetCount]}
-              min={0}
-              max={limit}
-              step={1}
-              onValueChange={([value]) => setTargetCount(value)}
-              disabled={isActionDisabled()}
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0</span>
-              <span>{Math.floor(limit / 2)}</span>
-              <span>{limit}</span>
+            
+            <div className="relative pt-5 pb-1">
+              <Slider
+                value={[targetCount]}
+                min={0}
+                max={limit}
+                step={1}
+                onValueChange={([value]) => {
+                  setTargetCount(value);
+                  setActivePreset(null); // Clear active preset when manually moving slider
+                }}
+                disabled={isActionDisabled() || currentCount >= limit}
+                indicatorColor={getIndicatorColor()}
+              />
+              
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>0</span>
+                <span>{Math.floor(limit / 2)}</span>
+                <span>{limit}</span>
+              </div>
+              
+              {/* Tooltip that follows the slider thumb */}
+              <div 
+                className="absolute top-0 transform -translate-x-1/2 bg-background border border-input px-2 py-1 rounded shadow-sm text-xs" 
+                style={{ left: `${(targetCount / limit) * 100}%` }}
+              >
+                {targetCount} / {limit}
+              </div>
+            </div>
+          </div>
+          
+          {/* Preset-Buttons */}
+          <div className="space-y-2">
+            <Label className="text-sm">{t.presets}</Label>
+            <div className="grid grid-cols-4 gap-2">
+              <Button 
+                size="sm" 
+                variant={activePreset === 'low' ? "default" : "outline"} 
+                className={activePreset === 'low' ? "border-2 border-primary" : ""} 
+                onClick={() => applyPreset('low')}
+                disabled={isActionDisabled() || currentCount >= limit}
+              >
+                {t.lowUsage}
+              </Button>
+              <Button 
+                size="sm" 
+                variant={activePreset === 'normal' ? "default" : "outline"} 
+                className={activePreset === 'normal' ? "border-2 border-primary" : ""}
+                onClick={() => applyPreset('normal')}
+                disabled={isActionDisabled() || currentCount >= limit}
+              >
+                {t.normalUsage}
+              </Button>
+              <Button 
+                size="sm" 
+                variant={activePreset === 'high' ? "default" : "outline"} 
+                className={activePreset === 'high' ? "border-2 border-primary" : ""}
+                onClick={() => applyPreset('high')}
+                disabled={isActionDisabled() || currentCount >= limit}
+              >
+                {t.highUsage}
+              </Button>
+              <Button 
+                size="sm" 
+                variant={activePreset === 'max' ? "default" : "outline"} 
+                className={activePreset === 'max' ? "border-2 border-primary" : ""}
+                onClick={() => applyPreset('max')}
+                disabled={isActionDisabled() || currentCount >= limit}
+              >
+                {t.maxUsage}
+              </Button>
             </div>
           </div>
           
           <div className="flex flex-wrap gap-2 justify-between">
             <Button 
               onClick={() => applyChanges(targetCount - currentCount)}
-              disabled={isActionDisabled() || targetCount === currentCount}
+              disabled={isActionDisabled() || targetCount === currentCount || currentCount >= limit && targetCount > currentCount}
               className="flex-1"
               variant={targetCount > currentCount ? "default" : "outline"}
             >
@@ -949,7 +1069,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                 <Button 
                   onClick={() => handleQuickAdd(1)} 
                   variant="outline"
-                  disabled={isActionDisabled()}
+                  disabled={isActionDisabled() || currentCount >= limit}
                   size="sm"
                   className="justify-start"
                 >
@@ -958,7 +1078,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                 <Button 
                   onClick={() => handleQuickAdd(5)} 
                   variant="outline"
-                  disabled={isActionDisabled()}
+                  disabled={isActionDisabled() || currentCount + 5 > limit}
                   size="sm"
                   className="justify-start"
                 >
@@ -967,7 +1087,7 @@ export function BotControls({ title, onAdd, type, streamUrl }: BotControlsProps)
                 <Button 
                   onClick={() => handleQuickAdd(20)} 
                   variant="outline"
-                  disabled={isActionDisabled()}
+                  disabled={isActionDisabled() || currentCount + 20 > limit}
                   size="sm"
                   className="justify-start"
                 >
