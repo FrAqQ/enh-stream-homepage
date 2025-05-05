@@ -97,7 +97,7 @@ export const useUser = () => {
           console.warn("1. Versuch fehlgeschlagen, versuche erneut...");
           
           // Prüfen, ob die Anfrage abgebrochen wurde
-          if (abortControllerRef.current.signal.aborted) {
+          if (abortControllerRef.current?.signal.aborted) {
             console.log('Anfrage wurde abgebrochen, breche Retry ab');
             return;
           }
@@ -112,7 +112,7 @@ export const useUser = () => {
             console.log('Zweiter Versuch erfolgreich!');
           } catch (retryError) {
             // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
-            if (!abortControllerRef.current.signal.aborted) {
+            if (!abortControllerRef.current?.signal.aborted) {
               console.error("2. Versuch fehlgeschlagen:", retryError);
               setLoadError(retryError instanceof Error ? retryError : new Error('Unknown error loading profile'));
               setProfile(null);
@@ -131,7 +131,7 @@ export const useUser = () => {
       }
     } catch (error) {
       // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
-      if (!abortControllerRef.current.signal.aborted) {
+      if (!abortControllerRef.current?.signal.aborted) {
         console.error('Error in fetchUserProfile:', error);
         setLoadError(error instanceof Error ? error : new Error('Unknown error loading profile'));
         
@@ -150,7 +150,7 @@ export const useUser = () => {
       }
     } finally {
       // Ladezustand nur zurücksetzen, wenn die Anfrage nicht abgebrochen wurde
-      if (!abortControllerRef.current.signal.aborted) {
+      if (!abortControllerRef.current?.signal.aborted) {
         setIsLoading(false);
       }
     }
@@ -340,6 +340,3 @@ export const useUser = () => {
     updateUserChatters
   };
 };
-
-// We only need one export statement for the type, removing the duplicate export
-// that was causing the TS2484 error
