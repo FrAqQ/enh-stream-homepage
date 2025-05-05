@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ import { OnboardingTooltip } from "./ui/onboarding-tooltip";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const { language } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -77,9 +76,9 @@ const Navbar = () => {
   // Verbesserte Logout-Funktion mit Feedback und Weiterleitung
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { success, error } = await logout();
       
-      if (error) {
+      if (!success) {
         console.error("Logout error:", error);
         toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
         return;

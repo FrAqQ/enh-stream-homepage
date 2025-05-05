@@ -193,6 +193,7 @@ export const useUser = () => {
       await supabase.auth.signOut();
       setUser(null);
       setProfile(null);
+      setChatterStats({ enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 });
       databaseService.clearCache();
       return { success: true, error: null };
     } catch (error) {
@@ -257,6 +258,7 @@ export const useUser = () => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        setChatterStats({ enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 });
         databaseService.clearCache();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         // Aktuelle Anfragen abbrechen
