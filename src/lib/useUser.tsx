@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Dispatch, SetStateAction } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import { databaseService } from './databaseService';
@@ -191,6 +191,110 @@ export const useUser = () => {
     }
   }, []);
 
+  // Add the missing loadChatterStats function
+  const loadChatterStats = useCallback(async (streamUrl: string) => {
+    if (!user?.id || !streamUrl) return false;
+    
+    try {
+      console.log("Loading chatter stats for:", streamUrl);
+      
+      const { data, error } = await supabase
+        .from('chatter_stats')
+        .select('enhanced_chatters, natural_chatters, total_chatters')
+        .eq('user_id', user.id)
+        .eq('stream_url', streamUrl)
+        .single();
+      
+      if (error) {
+        console.warn("Error loading chatter stats:", error);
+        // If no record exists, create one
+        if (error.code === 'PGRST116') {
+          await supabase.from('chatter_stats').insert([{
+            user_id: user.id,
+            stream_url: streamUrl,
+            enhanced_chatters: 0,
+            natural_chatters: 0,
+            total_chatters: 0
+          }]);
+          
+          setChatterStats({
+            enhanced_chatters: 0,
+            natural_chatters: 0,
+            total_chatters: 0
+          });
+        }
+        return false;
+      }
+      
+      if (data) {
+        setChatterStats({
+          enhanced_chatters: data.enhanced_chatters || 0,
+          natural_chatters: data.natural_chatters || 0,
+          total_chatters: data.total_chatters || 0
+        });
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error in loadChatterStats:", error);
+      return false;
+    }
+  }, [user?.id]);
+
+  // Add the missing updateUserChatters function
+  const updateUserChatters = useCallback(async (streamUrl: string, chattersToAdd: number) => {
+    if (!user?.id || !streamUrl) return false;
+    
+    try {
+      // First, get current stats
+      const { data: currentStats, error: statsError } = await supabase
+        .from('chatter_stats')
+        .select('enhanced_chatters, natural_chatters, total_chatters')
+        .eq('user_id', user.id)
+        .eq('stream_url', streamUrl)
+        .single();
+      
+      if (statsError) {
+        console.error("Error getting current chatter stats:", statsError);
+        return false;
+      }
+      
+      // Calculate new values
+      const newEnhancedChatters = (currentStats?.enhanced_chatters || 0) + chattersToAdd;
+      const newTotalChatters = (currentStats?.natural_chatters || 0) + newEnhancedChatters;
+      
+      // Update the database
+      const { error: updateError } = await supabase
+        .from('chatter_stats')
+        .upsert({
+          user_id: user.id,
+          stream_url: streamUrl,
+          enhanced_chatters: newEnhancedChatters,
+          natural_chatters: currentStats?.natural_chatters || 0,
+          total_chatters: newTotalChatters,
+          updated_at: new Date().toISOString()
+        });
+      
+      if (updateError) {
+        console.error("Error updating chatter stats:", updateError);
+        return false;
+      }
+      
+      // Update local state
+      setChatterStats({
+        enhanced_chatters: newEnhancedChatters,
+        natural_chatters: currentStats?.natural_chatters || 0,
+        total_chatters: newTotalChatters
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error in updateUserChatters:", error);
+      return false;
+    }
+  }, [user?.id]);
+
   // Retry loading function for the LoadingOverlay component
   const retryLoading = useCallback(() => {
     console.log("Manual retry loading triggered");
@@ -231,9 +335,11 @@ export const useUser = () => {
     retryLoading,
     logout,
     chatterStats,
-    setChatterStats
+    setChatterStats,
+    loadChatterStats,
+    updateUserChatters
   };
 };
 
-// Export for use in other components
-export type { UserProfile };
+// We only need one export statement for the type, removing the duplicate export
+// that was causing the TS2484 error
