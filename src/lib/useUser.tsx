@@ -187,6 +187,20 @@ export const useUser = () => {
     }, 100);
   }, [fetchUserProfile]);
 
+  // Explizite Logout-Funktion - für den direkten Aufruf
+  const logout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      databaseService.clearCache();
+      return { success: true, error: null };
+    } catch (error) {
+      console.error("Fehler beim Logout:", error);
+      return { success: false, error };
+    }
+  }, []);
+
   // Funktion zum Aktualisieren der Zuschauerzahl
   const updateUserEnhancedViewers = useCallback(async (count: number) => {
     if (!user?.id || !profile) return false;
@@ -292,6 +306,7 @@ export const useUser = () => {
     updateUserEnhancedViewers,
     updateUserChatters,
     chatterStats,
-    loadChatterStats
+    loadChatterStats,
+    logout
   };
 };

@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PersonalizationPanel } from "./PersonalizationPanel";
 import { useOnboarding } from "@/lib/OnboardingContext";
 import { OnboardingTooltip } from "./ui/onboarding-tooltip";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const { user } = useUser();
@@ -34,6 +35,7 @@ const Navbar = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
   const { resetOnboarding } = useOnboarding();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -69,6 +71,28 @@ const Navbar = () => {
       setMessage("");
     } catch (error) {
       toast.error(language === 'en' ? 'Error sending chat request' : 'Fehler beim Senden der Chat-Anfrage');
+    }
+  };
+
+  // Verbesserte Logout-Funktion mit Feedback und Weiterleitung
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
+        return;
+      }
+      
+      // Erfolgsmeldung anzeigen
+      toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
+      
+      // Zur Startseite navigieren
+      navigate('/');
+    } catch (error) {
+      console.error("Unexpected logout error:", error);
+      toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
     }
   };
 
@@ -169,7 +193,7 @@ const Navbar = () => {
               {t.restartOnboarding}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
+            <DropdownMenuItem onClick={handleLogout}>
               {t.logout}
             </DropdownMenuItem>
           </DropdownMenuContent>
