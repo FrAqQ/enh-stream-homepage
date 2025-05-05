@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -10,9 +9,9 @@ export interface UserProfile {
   plan: string;
   subscription_status: string;
   viewers_active: number;
-  chatters_active: number; // Neu hinzugefügt
-  viewer_limit: number;  // Dies wird aus computed_viewer_limit in databaseService gemappt
-  chatter_limit: number; // Neu hinzugefügt
+  chatters_active: number;
+  viewer_limit: number;
+  chatter_limit: number;
 }
 
 export const useUser = () => {
@@ -28,9 +27,9 @@ export const useUser = () => {
     try {
       console.log(`Loading profile for user: ${userId}`);
       
-      // Timeout nach 5 Sekunden (erhöht von vorherigen 3 Sekunden)
+      // Timeout nach 8 Sekunden (erhöht von vorherigen 5 Sekunden)
       const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 5000);
+        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 8000);
       });
       
       // Race zwischen tatsächlicher Anfrage und Timeout
@@ -71,20 +70,32 @@ export const useUser = () => {
       
       if (currentUser?.id) {
         try {
+          console.log('Erster Versuch: Profil laden');
           const userProfile = await fetchProfile(currentUser.id);
           setProfile(userProfile);
         } catch (profileError) {
-          console.error("Failed to load profile:", profileError);
-          setLoadError(profileError instanceof Error ? profileError : new Error('Unknown error loading profile'));
-          // Kein Fallback-Profil mehr setzen
-          setProfile(null);
+          console.warn("1. Versuch fehlgeschlagen, versuche erneut...");
           
-          // Fehler anzeigen
-          toast({
-            title: "Fehler beim Laden des Profils",
-            description: profileError instanceof Error ? profileError.message : "Unbekannter Fehler",
-            variant: "destructive"
-          });
+          try {
+            // Automatischer zweiter Versuch nach kurzer Pause
+            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('Zweiter Versuch: Profil laden');
+            
+            const retryProfile = await fetchProfile(currentUser.id);
+            setProfile(retryProfile);
+            console.log('Zweiter Versuch erfolgreich!');
+          } catch (retryError) {
+            console.error("2. Versuch fehlgeschlagen:", retryError);
+            setLoadError(retryError instanceof Error ? retryError : new Error('Unknown error loading profile'));
+            setProfile(null);
+            
+            // Fehler anzeigen
+            toast({
+              title: "Fehler beim Laden des Profils",
+              description: retryError instanceof Error ? retryError.message : "Unbekannter Fehler",
+              variant: "destructive"
+            });
+          }
         }
       } else {
         setProfile(null);
@@ -215,6 +226,6 @@ export const useUser = () => {
     loadError, 
     retryLoading,
     updateUserEnhancedViewers,
-    updateUserChatters // Neue Funktion exportieren
+    updateUserChatters
   };
 };
