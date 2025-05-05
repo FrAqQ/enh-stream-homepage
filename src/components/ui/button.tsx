@@ -42,18 +42,12 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
-    // Verbesserte Click-Handler-Weiterleitung - wichtig für Login/Register Buttons
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (onClick) {
-        onClick(e);
-      }
-    };
-    
+    // Stabilisierter Click-Handler ohne zusätzliche Wrapper-Funktion
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
-        onClick={handleClick}
+        onClick={onClick}
         ref={ref}
         {...props}
       />

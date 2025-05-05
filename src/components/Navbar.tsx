@@ -109,14 +109,9 @@ const Navbar = () => {
     }
   };
 
-  // Diese direkte Funktionen sind wichtig und müssen erhalten bleiben
-  const handleLogin = () => {
-    navigate("/login");
-  };
-
-  const handleRegister = () => {
-    navigate("/register");
-  };
+  // Direkte Navigations-Funktionen - vereinfacht
+  const handleLogin = () => navigate("/login");
+  const handleRegister = () => navigate("/register");
 
   const closeSheet = () => {
     setIsSheetOpen(false);
@@ -177,7 +172,7 @@ const Navbar = () => {
     </>
   );
 
-  // Überarbeitete Funktion für Login/Register Buttons - Direktes Klick-Handling
+  // Vereinfachte Funktion für Login/Register Buttons - direkte Referenzen
   const renderLoginButtons = (inMobileMenu = false) => {
     return (
       <div 
@@ -186,15 +181,13 @@ const Navbar = () => {
         <Button 
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
-          onClick={() => handleLogin()}
-          type="button"
+          onClick={handleLogin}
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
-          onClick={() => handleRegister()}
-          type="button"
+          onClick={handleRegister}
         >
           {t.register}
         </Button>
