@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/lib/OnboardingContext";
 import { useLanguage } from "@/lib/LanguageContext";
+import { Users, Activity, MessageSquare, Clock, Settings } from "lucide-react";
 
 export const Onboarding = () => {
   const { showOnboarding, currentStep, totalSteps, nextStep, prevStep, skipOnboarding } = useOnboarding();
@@ -13,45 +14,55 @@ export const Onboarding = () => {
     en: [
       {
         title: "Welcome to Enhance Stream",
-        description: "Let's take a quick tour to help you get started with our platform."
+        description: "Let's take a quick tour to help you get started with our platform.",
+        icon: <Settings className="h-8 w-8 text-primary mb-2" />
       },
       {
         title: "Dashboard Overview",
-        description: "The Dashboard gives you a quick overview of your streaming performance and viewer statistics."
+        description: "The Dashboard gives you a quick overview of your streaming performance and key metrics.",
+        icon: <Activity className="h-8 w-8 text-primary mb-2" />
       },
       {
         title: "Viewer Controls",
-        description: "Use the viewer controls to adjust your viewer count and enhance your stream visibility."
+        description: "Use the viewer controls to adjust your viewer count and enhance your stream visibility. You can add viewers, set up auto-stop timers, and monitor limits.",
+        icon: <Users className="h-8 w-8 text-primary mb-2" />
       },
       {
-        title: "Personalization",
-        description: "Customize your experience by changing themes and rearranging your dashboard."
+        title: "Chatter Management",
+        description: "Control chat engagement by adding active chatters to your stream. This makes your stream appear more lively and interactive.",
+        icon: <MessageSquare className="h-8 w-8 text-primary mb-2" />
       },
       {
-        title: "Ready to Start!",
-        description: "You're all set! Explore the platform and boost your streaming experience."
+        title: "Stream Analytics",
+        description: "Track your performance over time with detailed graphs and stats. See how your stream is growing and identify the best times to go live.",
+        icon: <Clock className="h-8 w-8 text-primary mb-2" />
       }
     ],
     de: [
       {
         title: "Willkommen bei Enhance Stream",
-        description: "Wir führen Sie in einer kurzen Tour durch unsere Plattform."
+        description: "Wir führen Sie in einer kurzen Tour durch unsere Plattform.",
+        icon: <Settings className="h-8 w-8 text-primary mb-2" />
       },
       {
         title: "Dashboard Übersicht",
-        description: "Das Dashboard bietet Ihnen einen schnellen Überblick über Ihre Streaming-Leistung und Zuschauer-Statistiken."
+        description: "Das Dashboard bietet Ihnen einen schnellen Überblick über Ihre Streaming-Leistung und wichtige Kennzahlen.",
+        icon: <Activity className="h-8 w-8 text-primary mb-2" />
       },
       {
         title: "Zuschauer-Steuerung",
-        description: "Nutzen Sie die Zuschauer-Steuerung, um Ihre Zuschauerzahlen anzupassen und die Sichtbarkeit Ihres Streams zu verbessern."
+        description: "Nutzen Sie die Zuschauer-Steuerung, um Ihre Zuschauerzahlen anzupassen und die Sichtbarkeit Ihres Streams zu verbessern. Sie können Zuschauer hinzufügen, Auto-Stop-Timer einrichten und Limits überwachen.",
+        icon: <Users className="h-8 w-8 text-primary mb-2" />
       },
       {
-        title: "Personalisierung",
-        description: "Passen Sie Ihre Erfahrung an, indem Sie Themes ändern und Ihr Dashboard neu anordnen."
+        title: "Chatter-Verwaltung",
+        description: "Steuern Sie die Chat-Aktivität, indem Sie aktive Chatter zu Ihrem Stream hinzufügen. Dies macht Ihren Stream lebendiger und interaktiver.",
+        icon: <MessageSquare className="h-8 w-8 text-primary mb-2" />
       },
       {
-        title: "Bereit zum Start!",
-        description: "Sie sind startklar! Erkunden Sie die Plattform und verbessern Sie Ihr Streaming-Erlebnis."
+        title: "Stream-Analytik",
+        description: "Verfolgen Sie Ihre Leistung im Zeitverlauf mit detaillierten Grafiken und Statistiken. Sehen Sie, wie Ihr Stream wächst und identifizieren Sie die besten Zeiten für Ihre Übertragungen.",
+        icon: <Clock className="h-8 w-8 text-primary mb-2" />
       }
     ]
   };
@@ -64,6 +75,10 @@ export const Onboarding = () => {
     <Dialog open={showOnboarding} onOpenChange={skipOnboarding}>
       <DialogContent className="sm:max-w-md">
         <div className="space-y-4">
+          <div className="flex items-center justify-center mb-4">
+            {content.icon}
+          </div>
+          
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">{content.title}</h2>
             <div className="text-sm text-muted-foreground">

@@ -1,4 +1,3 @@
-
 import { Users, MessageSquare, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -6,12 +5,15 @@ import { supabase } from "@/lib/supabaseClient"
 import { StatsCard } from "@/components/dashboard/StatsCard"
 import { StreamPreview } from "@/components/dashboard/StreamPreview"
 import { StreamSettings } from "@/components/dashboard/StreamSettings"
-import { BotControls } from "@/components/dashboard/BotControls"
+import ViewerControls from "@/components/dashboard/ViewerControls"
 import { ProgressCard } from "@/components/dashboard/ProgressCard"
 import { useToast } from "@/hooks/use-toast"
 import { getViewerCount } from "@/services/viewerScraper"
 import { getChatterCount } from "@/services/chatterScraper"
 import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
+import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip"
+import ViewerHistoryGraph from "@/components/dashboard/ViewerHistoryGraph"
+import { Onboarding } from "@/components/Onboarding"
 
 const Dashboard = () => {
   const { user, profile } = useUser();
@@ -27,6 +29,11 @@ const Dashboard = () => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
+  
+  // Add new state for viewer history
+  const [viewerHistory, setViewerHistory] = useState<any[]>([]);
+  const [botViewerCount, setBotViewerCount] = useState(0);
+  const [actualViewerCount, setActualViewerCount] = useState(0);
 
   useEffect(() => {
     if (profile) {
@@ -35,6 +42,52 @@ const Dashboard = () => {
       setSubscriptionStatus(profile.subscription_status || "inactive");
     }
   }, [profile]);
+
+  // Generate random viewer history data for demo purposes
+  // In a real application, this would be fetched from your database
+  useEffect(() => {
+    // Generate past 24 hours of data
+    const generateHistory = () => {
+      const history = [];
+      const now = new Date();
+      
+      for (let i = 0; i < 24; i++) {
+        const time = new Date(now);
+        time.setHours(time.getHours() - (23 - i));
+        
+        // Generate some random but sensible data
+        const botCount = i < 12 ? Math.floor(Math.random() * 10) : botViewerCount;
+        const actualCount = Math.floor(Math.random() * 15) + 5;
+        const totalCount = botCount + actualCount;
+        
+        history.push({
+          time: time.getHours() + ':00',
+          botViewers: botCount,
+          actualViewers: actualCount,
+          total: totalCount
+        });
+      }
+      
+      return history;
+    };
+    
+    setViewerHistory(generateHistory());
+  }, [botViewerCount]);
+
+  // Update actual and bot viewer counts
+  useEffect(() => {
+    if (viewerCount > 0) {
+      // Assuming botViewerCount is the number added through our interface
+      setBotViewerCount(viewerCount);
+      
+      // Actual viewers would typically come from the Twitch API
+      // For demo purposes, we'll simulate it
+      if (streamUrl) {
+        const randomActualViewers = Math.floor(Math.random() * 10) + 1;
+        setActualViewerCount(randomActualViewers);
+      }
+    }
+  }, [viewerCount, streamUrl]);
 
   const handleSaveUrl = () => {
     try {
@@ -316,6 +369,22 @@ const Dashboard = () => {
     }
     
     setViewerCount(prev => prev + count);
+    setBotViewerCount(prev => prev + count);
+
+    // Update viewer history with new data point
+    const now = new Date();
+    const timeStr = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
+    
+    setViewerHistory(prev => {
+      const newHistory = [...prev];
+      if (newHistory.length > 0) {
+        // Update the last entry
+        const lastEntry = newHistory[newHistory.length - 1];
+        lastEntry.botViewers = botViewerCount + count;
+        lastEntry.total = lastEntry.botViewers + lastEntry.actualViewers;
+      }
+      return newHistory;
+    });
   };
 
   const addChatters = (count: number) => {
@@ -341,6 +410,9 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
+      {/* Include the Onboarding component */}
+      <Onboarding />
+      
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-gradient">Dashboard</h1>
         <div className="flex items-center gap-2">
@@ -354,38 +426,56 @@ const Dashboard = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatsCard
-          title="Total Viewers"
-          value={viewerCount}
-          change={`${viewerGrowth}% from first stream`}
-          icon={Users}
-          limit={profile?.viewer_limit || 4}
-        />
-        <StatsCard
-          title="Chat Messages"
-          value={chatterCount}
-          subtitle="Last 10 minutes"
-          change="Calculating..."
-          icon={MessageSquare}
-          limit={profile?.plan ? 
-            (profile?.subscription_status === 'active' ?
-              PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
-              PLAN_CHATTER_LIMITS.Free) :
-            PLAN_CHATTER_LIMITS.Free}
-        />
-        <StatsCard
-          title="Stream Health"
-          value={`${streamHealth.percentage}%`}
-          change={streamHealth.status}
-          icon={Activity}
-        />
-      </div>
+      <OnboardingTooltip
+        id="stats-cards-tooltip"
+        content={{
+          en: "These cards show your stream's key performance metrics at a glance.",
+          de: "Diese Karten zeigen die wichtigsten Leistungskennzahlen deines Streams auf einen Blick."
+        }}
+        position="bottom"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatsCard
+            title="Total Viewers"
+            value={viewerCount}
+            change={`${viewerGrowth}% from first stream`}
+            icon={Users}
+            limit={profile?.viewer_limit || 4}
+          />
+          <StatsCard
+            title="Chat Messages"
+            value={chatterCount}
+            subtitle="Last 10 minutes"
+            change="Calculating..."
+            icon={MessageSquare}
+            limit={profile?.plan ? 
+              (profile?.subscription_status === 'active' ?
+                PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
+                PLAN_CHATTER_LIMITS.Free) :
+              PLAN_CHATTER_LIMITS.Free}
+          />
+          <StatsCard
+            title="Stream Health"
+            value={`${streamHealth.percentage}%`}
+            change={streamHealth.status}
+            icon={Activity}
+          />
+        </div>
+      </OnboardingTooltip>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <StreamPreview
-          twitchChannel={twitchChannel}
-        />
+        <OnboardingTooltip
+          id="stream-preview-tooltip"
+          content={{
+            en: "This is a live preview of your stream. Make sure your stream is running for accurate statistics.",
+            de: "Dies ist eine Live-Vorschau deines Streams. Stelle sicher, dass dein Stream läuft, um genaue Statistiken zu erhalten."
+          }}
+          position="top"
+        >
+          <StreamPreview
+            twitchChannel={twitchChannel}
+          />
+        </OnboardingTooltip>
         <StreamSettings
           streamUrl={streamUrl}
           setStreamUrl={setStreamUrl}
@@ -394,18 +484,31 @@ const Dashboard = () => {
         />
       </div>
 
+      {/* Viewer History Graph */}
+      <div className="mb-8">
+        <ViewerHistoryGraph viewerData={viewerHistory} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <BotControls
+        <ViewerControls
           title="Viewer Controls"
           onAdd={addViewers}
           type="viewer"
           streamUrl={streamUrl}
+          viewerCount={viewerCount}
+          viewerLimit={profile?.viewer_limit || 4}
         />
-        <BotControls
+        <ViewerControls
           title="Chatter Controls"
           onAdd={addChatters}
           type="chatter"
           streamUrl={streamUrl}
+          viewerCount={chatterCount}
+          viewerLimit={profile?.plan ? 
+            (profile?.subscription_status === 'active' ?
+              PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
+              PLAN_CHATTER_LIMITS.Free) :
+            PLAN_CHATTER_LIMITS.Free}
         />
       </div>
 
