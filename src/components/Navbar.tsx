@@ -166,21 +166,34 @@ const Navbar = () => {
     </>
   );
 
+  const renderLoginButtons = (inMobileMenu = false) => (
+    <div className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}>
+      <Button 
+        variant={inMobileMenu ? "outline" : "ghost"} 
+        className={inMobileMenu ? "w-full justify-start" : ""}
+        onClick={() => {
+          if (inMobileMenu) closeSheet();
+          navigate("/login");
+        }}
+      >
+        {t.login}
+      </Button>
+      <Button 
+        className={inMobileMenu ? "w-full justify-start" : ""} 
+        onClick={() => {
+          if (inMobileMenu) closeSheet();
+          navigate("/register");
+        }}
+      >
+        {t.register}
+      </Button>
+    </div>
+  );
+
   const AuthButtons = ({ inMobileMenu = false }) => (
     <>
       {!user ? (
-        <div className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}>
-          <Link to="/login">
-            <Button variant={inMobileMenu ? "outline" : "ghost"} className={inMobileMenu ? "w-full justify-start" : ""}>
-              {t.login}
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button className={inMobileMenu ? "w-full justify-start" : ""}>
-              {t.register}
-            </Button>
-          </Link>
-        </div>
+        renderLoginButtons(inMobileMenu)
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
