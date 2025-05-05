@@ -37,7 +37,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected Route Component
+// Protected Route Component mit verbesserte Fehlertoleranz
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, loadError, retryLoading } = useUser();
   
@@ -46,9 +46,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <LoadingOverlay 
         isLoading={true} 
         fullScreen 
-        text="Loading your profile..." 
+        text="Ihr Profil wird geladen..." 
         onRetry={retryLoading}
-        loadingTimeout={4000} // Faster timeout for better UX
+        loadingTimeout={3000} // Schnellerer Timeout für bessere UX
       />
     );
   }
@@ -64,6 +64,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
+  // Auch wenn es ein Problem mit dem Profil gab, aber User vorhanden ist,
+  // erlauben wir trotzdem den Zugriff
   if (!user) {
     return <Navigate to="/login" />;
   }

@@ -1,5 +1,4 @@
 import { supabase } from './supabaseClient';
-import { useToast } from "@/hooks/use-toast";
 
 /**
  * Optimierte Datenbankdienste mit Caching und Fehlerbehandlung
@@ -25,74 +24,48 @@ export const databaseService = {
     try {
       console.log(`Hole Profildaten für Benutzer: ${userId}`);
       
-      // STRATEGIE 1: Zuerst sicherstellen, dass das Profil überhaupt existiert
-      // mit minimalen, garantiert existierenden Feldern
-      let profileExists = false;
-      try {
-        const { data: basicProfile, error: basicError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', userId)
-          .single();
-          
-        profileExists = !basicError && !!basicProfile;
-      } catch (basicError) {
-        console.warn("Fehler bei Profilprüfung:", basicError);
-        // Wir gehen weiter und versuchen trotzdem, ein Profil zu erstellen
-      }
-      
-      // STRATEGIE 2: Grundfelder abrufen, ohne viewers_active
-      // Vorsichtiges Abrufen von Grundfeldern, die existieren sollten
-      const { data: baseData, error: baseError } = await supabase
+      // VEREINFACHTER ANSATZ: Direkt Default-Profil erstellen, wenn keins existiert
+      // Dies reduziert die Anzahl der DB-Anfragen erheblich
+      const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id, plan, subscription_status')
+        .select('id, plan, subscription_status, viewers_active')
         .eq('id', userId)
         .single();
 
-      if (baseError) {
-        console.error("Fehler beim Abrufen von Grundfeldern:", baseError);
+      // Bei jedem Fehler oder fehlendem Profil, erstellen wir ein Default-Profil
+      if (error || !profile) {
+        console.log("Profil nicht gefunden oder Fehler, erstelle ein Standard-Profil");
         
-        // Wenn das Profil nicht existiert, erstellen wir es neu
-        if (!profileExists || baseError.message.includes('not found') || baseError.code === 'PGRST116') {
-          console.log("Profil existiert nicht, erstelle ein neues");
-          
-          try {
-            // Einfaches Profil erstellen
-            const { data: createData, error: createError } = await supabase
-              .from('profiles')
-              .insert([{ 
-                id: userId, 
-                plan: 'Free', 
-                subscription_status: 'inactive',
-                viewers_active: 0
-              }])
-              .select();
-              
-            if (createError) {
-              console.error("Fehler beim Erstellen des Profils:", createError);
-              throw createError;
-            }
+        try {
+          // Versuchen, ein neues Profil zu erstellen
+          const { data: createData, error: createError } = await supabase
+            .from('profiles')
+            .upsert([{ 
+              id: userId, 
+              plan: 'Free', 
+              subscription_status: 'inactive',
+              viewers_active: 0
+            }])
+            .select();
             
-            // Wenn Erstellung erfolgreich, neues Profil verwenden
-            if (createData && createData.length > 0) {
-              const newProfile = {
-                ...createData[0],
-                viewer_limit: this.calculateViewerLimit(createData[0].plan, createData[0].subscription_status)
-              };
-              
-              this.cache.set(cacheKey, {
-                data: newProfile,
-                timestamp: Date.now()
-              });
-              
-              return { data: newProfile, error: null, source: 'created' };
-            }
-          } catch (createError) {
-            console.error("Fehler bei der Profilerstellung:", createError);
+          if (!createError && createData && createData.length > 0) {
+            const newProfile = {
+              ...createData[0],
+              viewer_limit: this.calculateViewerLimit(createData[0].plan, createData[0].subscription_status)
+            };
+            
+            this.cache.set(cacheKey, {
+              data: newProfile,
+              timestamp: Date.now()
+            });
+            
+            return { data: newProfile, error: null, source: 'created' };
           }
+        } catch (createError) {
+          console.warn("Fehler bei der Profilerstellung:", createError);
         }
         
-        // Standardwerte als Fallback verwenden
+        // Standardwerte als Fallback verwenden, wenn alles fehlschlägt
         const defaultProfile = {
           id: userId,
           plan: 'Free',
@@ -109,50 +82,21 @@ export const databaseService = {
         return { data: defaultProfile, error: null, source: 'default' };
       }
       
-      // STRATEGIE 3: Wenn Grundfelder erfolgreich, viewers_active separat abrufen
-      let viewersActive = 0;
-      try {
-        const { data: viewersData, error: viewersError } = await supabase
-          .from('profiles')
-          .select('viewers_active')
-          .eq('id', userId)
-          .single();
-          
-        if (!viewersError && viewersData) {
-          viewersActive = viewersData.viewers_active || 0;
-        } else {
-          console.log("viewers_active nicht verfügbar oder konnte nicht abgerufen werden");
-          
-          // Versuchen, viewers_active durch Update auf 0 zu erstellen
-          try {
-            await supabase
-              .from('profiles')
-              .update({ viewers_active: 0 })
-              .eq('id', userId);
-          } catch (updateError) {
-            console.warn("Konnte viewers_active nicht aktualisieren:", updateError);
-          }
-        }
-      } catch (viewersError) {
-        console.warn("Nicht kritischer Fehler beim Abrufen von viewers_active:", viewersError);
-        // Wir setzen den Standardwert weiterhin auf 0
-      }
-      
-      // Vollständiges Profil zusammenstellen
-      const profileData = {
-        ...baseData,
-        viewers_active: viewersActive,
-        viewer_limit: this.calculateViewerLimit(baseData.plan, baseData.subscription_status)
+      // Wenn wir ein Profil erfolgreich laden konnten
+      const completeProfile = {
+        ...profile,
+        viewer_limit: this.calculateViewerLimit(profile.plan, profile.subscription_status),
+        viewers_active: profile.viewers_active || 0
       };
-
+      
       // Cache aktualisieren
       this.cache.set(cacheKey, {
-        data: profileData,
+        data: completeProfile,
         timestamp: Date.now()
       });
 
-      return { data: profileData, error: null, source: 'database' };
-    } catch (error: any) {
+      return { data: completeProfile, error: null, source: 'database' };
+    } catch (error) {
       console.error("Fehler beim Abrufen des Profils:", error);
       
       // Standardprofil als letzten Ausweg verwenden
@@ -164,7 +108,6 @@ export const databaseService = {
         viewer_limit: 4
       };
       
-      // Cache mit Standardprofil aktualisieren
       this.cache.set(cacheKey, {
         data: defaultProfile,
         timestamp: Date.now() 

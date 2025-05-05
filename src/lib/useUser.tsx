@@ -19,27 +19,24 @@ export const useUser = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const { toast } = useToast();
-  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxRetries = 2;
   const retryRef = useRef(0);
   const abortControllerRef = useRef(new AbortController());
 
-  // Profile loading method with abort capability
+  // Verbesserte Profilladefunktion mit schnellerer Fehlerbehandlung
   const fetchProfile = useCallback(async (userId: string) => {
     try {
       console.log(`Loading profile for user: ${userId}`);
-      // Use signal for abortable requests
-      const signal = abortControllerRef.current.signal;
       
-      // Timeout for this specific request
-      const fetchTimeout = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 4000);
+      // Gleichzeitig einen Timer starten, der nach 3 Sekunden abbricht
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout when retrieving profile')), 3000);
       });
       
-      // Race between the actual request and the timeout
+      // Race zwischen tatsächlicher Anfrage und Timeout
       const result = await Promise.race([
         databaseService.getProfile(userId),
-        fetchTimeout
+        timeoutPromise
       ]);
       
       if (!result) {
@@ -50,174 +47,86 @@ export const useUser = () => {
       return result.data;
     } catch (error) {
       console.error('Error loading profile:', error);
+      
+      // Sofort ein Default-Profil zurückgeben
       if (error instanceof Error) {
-        // Only throw if it wasn't an abort
-        if (error.name !== 'AbortError') {
-          setLoadError(error);
-        }
-      } else {
-        setLoadError(new Error('Unknown error'));
+        // Errors loggen, aber immer ein Default-Profil zurückgeben
+        console.log("Using fallback profile due to error:", error.message);
+        return {
+          id: userId,
+          plan: 'Free',
+          subscription_status: 'inactive',
+          viewers_active: 0,
+          viewer_limit: 4
+        };
       }
-      toast({
-        title: "Error loading profile",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive"
-      });
       return null;
     }
-  }, [toast]);
+  }, []);
 
-  // Main loading function with additional error handling
+  // Hauptladefunktion mit Fehlerbehandlung
   const fetchUserProfile = useCallback(async () => {
     try {
-      // Create new AbortController for this request
       abortControllerRef.current = new AbortController();
-      
       setIsLoading(true);
+      setLoadError(null);
+      
       console.log('Loading user session...');
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error('Session error:', error);
-        toast({
-          title: "Authentication error",
-          description: "There was a problem with your session",
-          variant: "destructive"
-        });
-        
-        // Sign out when session error occurs
-        await supabase.auth.signOut();
-        setUser(null);
-        setProfile(null);
-        setLoadError(error);
-        setIsLoading(false); // Important: End status
-        return false;
+        throw error;
       }
       
-      console.log("Session data:", session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
       if (currentUser?.id) {
+        // Profil laden mit Fallback
         const userProfile = await fetchProfile(currentUser.id);
-        
-        if (!userProfile) {
-          // On null, try once more with default profile
-          console.log("Creating default profile since none could be loaded");
-          const defaultProfile = {
-            id: currentUser.id,
-            plan: 'Free',
-            subscription_status: 'inactive',
-            viewers_active: 0,
-            viewer_limit: 4
-          };
-          setProfile(defaultProfile);
-        } else {
-          setProfile(userProfile);
-        }
+        setProfile(userProfile);
+      } else {
+        setProfile(null);
       }
-      
-      // In all cases end loading
-      setIsLoading(false);
-      return true;
     } catch (error) {
-      console.error('Error loading session:', error);
-      setLoadError(error instanceof Error ? error : new Error('Unknown error'));
-      toast({
-        title: "System error",
-        description: "There was a problem loading your data",
-        variant: "destructive"
-      });
+      console.error('Error in fetchUserProfile:', error);
+      setLoadError(error instanceof Error ? error : new Error('Unknown error loading profile'));
       
-      // Delete session and reset status in case of error
-      try {
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error('Error signing out:', signOutError);
+      // Bei Session-Fehlern automatisch abmelden
+      if (error instanceof Error && error.message.includes('session')) {
+        await supabase.auth.signOut().catch(e => console.error('Error signing out:', e));
+        setUser(null);
+        setProfile(null);
       }
-      
-      setUser(null);
-      setProfile(null);
-      setIsLoading(false); // Important: Always end loading status
-      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [fetchProfile, toast]);
+  }, [fetchProfile]);
 
-  // Function to cancel current loading and restart
-  const handleRetry = useCallback(() => {
-    console.log("Restarting profile loading...");
+  // Funktion zum Neuladen bei Fehlern
+  const retryLoading = useCallback(() => {
+    console.log("Retrying profile loading...");
+    retryRef.current += 1;
     
-    // Cancel current requests
+    // Aktuelle Anfragen abbrechen
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     
-    // Delete timer
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    
-    // Reset error
+    // Fehler zurücksetzen
     setLoadError(null);
     
-    // Reload
-    retryRef.current += 1;
+    // Neu laden
     fetchUserProfile();
   }, [fetchUserProfile]);
 
-  // Timeout for loading process
-  useEffect(() => {
-    // Only set timeout if still loading
-    if (isLoading) {
-      loadingTimeoutRef.current = setTimeout(() => {
-        console.error('Profile loading exceeded timeout');
-        toast({
-          title: "Loading error",
-          description: "Loading your profile is taking unusually long. We're trying again.",
-          variant: "destructive"
-        });
-        
-        // Retry or abort
-        if (retryRef.current < maxRetries) {
-          handleRetry();
-        } else {
-          setIsLoading(false);
-          setLoadError(new Error("Timeout loading profile"));
-          toast({
-            title: "Profile loading failed",
-            description: "Please reload the page or contact support.",
-            variant: "destructive"
-          });
-          
-          // Set default profile after too many errors
-          if (user?.id) {
-            const defaultProfile = {
-              id: user.id,
-              plan: 'Free',
-              subscription_status: 'inactive',
-              viewers_active: 0,
-              viewer_limit: 4
-            };
-            setProfile(defaultProfile);
-          }
-        }
-      }, 5000); // 5 seconds timeout
-    }
-    
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-    };
-  }, [isLoading, toast, handleRetry, user]);
-
-  // Function to update enhanced viewer count in the database
+  // Funktion zum Aktualisieren der Zuschauerzahl
   const updateUserEnhancedViewers = useCallback(async (count: number) => {
     if (!user?.id || !profile) return false;
     
     try {
-      // First update local state
+      // Lokalen State aktualisieren
       setProfile(prev => {
         if (!prev) return prev;
         return {
@@ -226,45 +135,39 @@ export const useUser = () => {
         };
       });
       
-      // Then update in database
+      // Datenbank aktualisieren
       const result = await databaseService.updateViewersActive(user.id, count);
       return result.success;
     } catch (error) {
-      console.error('Error updating enhanced viewers:', error);
+      console.error('Error updating viewers:', error);
       return false;
     }
   }, [user?.id, profile]);
 
+  // Initiales Laden und Auth-Listener
   useEffect(() => {
-    // Initial user loading
     fetchUserProfile();
 
-    // Listen for authentication changes
+    // Auth-Änderungen überwachen
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Authentication status changed:", event, session?.user?.id);
+      
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
-        // Clear cached data
         databaseService.clearCache();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null);
         
         if (session?.user?.id) {
-          setIsLoading(true);
           const userProfile = await fetchProfile(session.user.id);
           setProfile(userProfile);
-          setIsLoading(false);
         }
       }
     });
 
     return () => {
       subscription.unsubscribe();
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-      // Abort requests on unmount
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -276,7 +179,7 @@ export const useUser = () => {
     profile, 
     isLoading, 
     loadError, 
-    retryLoading: handleRetry,
+    retryLoading,
     updateUserEnhancedViewers
   };
 };
