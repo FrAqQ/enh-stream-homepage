@@ -11,6 +11,7 @@ export const databaseService = {
 
   /**
    * Profildaten mit Caching-Unterstützung abrufen - optimiert für schnelle Antwortzeiten
+   * Mit automatischer Profil-Erstellung falls nicht vorhanden
    */
   async getProfile(userId: string) {
     const cacheKey = `profile-${userId}`;
@@ -25,7 +26,35 @@ export const databaseService = {
     try {
       console.log(`Hole Profildaten für Benutzer: ${userId}`);
       
-      // Verwende die neue View profiles_with_limit statt der Tabelle profiles
+      // Prüfen, ob bereits ein Profil für den Benutzer existiert
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      // Wenn kein Profil existiert, erstelle ein Standard-Profil
+      if (!existingProfile) {
+        console.warn("Profil nicht vorhanden, lege Standard-Profil an...");
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            plan: 'Free',
+            subscription_status: 'inactive',
+            viewers_active: 0,
+            chatters_active: 0
+          });
+
+        if (insertError) {
+          console.error("Fehler beim Anlegen des Profils:", insertError);
+          return { data: null, error: insertError };
+        }
+
+        console.log("Standard-Profil erfolgreich erstellt.");
+      }
+      
+      // Jetzt von der View profiles_with_limit laden (immer NACH der Profilprüfung)
       const { data, error } = await supabase
         .from('profiles_with_limit')
         .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
@@ -33,8 +62,8 @@ export const databaseService = {
         .single();
 
       if (error) {
-        console.error("Fehler beim Abrufen des Profils:", error);
-        throw error;
+        console.error("Fehler beim Abrufen aus View:", error);
+        return { data: null, error };
       }
       
       if (!data) {
@@ -57,7 +86,7 @@ export const databaseService = {
 
       return { data: completeProfile, error: null };
     } catch (error) {
-      console.error("Fehler beim Abrufen des Profils:", error);
+      console.error("Unbekannter Fehler in getProfile:", error);
       return { data: null, error };
     }
   },
