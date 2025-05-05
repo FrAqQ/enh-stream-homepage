@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { Menu, Settings, X } from "lucide-react";
+import { Menu, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PersonalizationPanel } from "./PersonalizationPanel";
@@ -36,17 +37,26 @@ const Navbar = () => {
   const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
 
+  // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
       
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-      
-      setIsAdmin(profile?.is_admin || false);
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+        
+        setIsAdmin(profile?.is_admin || false);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
+      }
     };
 
     checkAdminStatus();
@@ -73,7 +83,6 @@ const Navbar = () => {
     }
   };
 
-  // Verbesserte Logout-Funktion mit Feedback, Weiterleitung und Forced Reload
   const handleLogout = async () => {
     try {
       console.log("[Logout] Vor logout", user);
@@ -86,10 +95,8 @@ const Navbar = () => {
         return;
       }
       
-      // Erfolgsmeldung anzeigen
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       
-      // Zur Startseite navigieren mit erzwungenem Reload
       navigate('/');
       setTimeout(() => {
         window.location.reload();
@@ -163,12 +170,12 @@ const Navbar = () => {
     <>
       {!user ? (
         <div className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}>
-          <Link to="/login" onClick={inMobileMenu ? closeSheet : undefined}>
+          <Link to="/login">
             <Button variant={inMobileMenu ? "outline" : "ghost"} className={inMobileMenu ? "w-full justify-start" : ""}>
               {t.login}
             </Button>
           </Link>
-          <Link to="/register" onClick={inMobileMenu ? closeSheet : undefined}>
+          <Link to="/register">
             <Button className={inMobileMenu ? "w-full justify-start" : ""}>
               {t.register}
             </Button>
@@ -179,9 +186,9 @@ const Navbar = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={user.user_metadata.avatar_url} />
+                <AvatarImage src={user.user_metadata?.avatar_url} />
                 <AvatarFallback>
-                  {user.email?.charAt(0).toUpperCase()}
+                  {user.email?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
