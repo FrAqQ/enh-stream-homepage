@@ -38,6 +38,17 @@ export const useUser = () => {
   });
   const { toast } = useToast();
 
+  // DEBUG: Session-Tracking für Login-Button-Problem
+  const [sessionTracking, setSessionTracking] = useState<{
+    initialized: boolean;
+    sessionChecks: number;
+    lastStatus: string;
+  }>({
+    initialized: false,
+    sessionChecks: 0,
+    lastStatus: "Not checked yet"
+  });
+
   // Fetch user profile from the database
   const fetchProfile = useCallback(async (userId: string) => {
     console.time('Profilabruf-Gesamt');
@@ -53,6 +64,31 @@ export const useUser = () => {
       throw error;
     } finally {
       console.timeEnd('Profilabruf-Gesamt');
+    }
+  }, []);
+
+  // Direkte Session-Prüfung für Debugging
+  const checkSession = useCallback(async () => {
+    try {
+      console.log('[DEBUG] Manuelle Session-Prüfung...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      setSessionTracking(prev => ({
+        initialized: true,
+        sessionChecks: prev.sessionChecks + 1,
+        lastStatus: session ? 'Aktiv' : error ? 'Fehler: ' + error.message : 'Keine aktive Session'
+      }));
+      
+      console.log('[DEBUG] Session-Status:', session ? 'Aktiv' : 'Inaktiv', error ? `(Fehler: ${error.message})` : '');
+      return session;
+    } catch (e) {
+      console.error('[DEBUG] Session-Prüfung fehlgeschlagen:', e);
+      setSessionTracking(prev => ({
+        ...prev,
+        sessionChecks: prev.sessionChecks + 1,
+        lastStatus: 'Fehler bei Prüfung: ' + (e instanceof Error ? e.message : String(e))
+      }));
+      return null;
     }
   }, []);
 
@@ -74,47 +110,57 @@ export const useUser = () => {
       setIsLoading(true);
       setLoadError(null);
       
-      console.log('Loading user session...');
+      console.log('[DEBUG] Loading user session with localStorage auth...');
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Session error:', error);
+        console.error('[DEBUG] Session error:', error);
         throw error;
       }
       
-      console.log('Session geladen:', session?.user ? 'Benutzer vorhanden' : 'Kein Benutzer');
+      console.log('[DEBUG] Session geladen:', session?.user ? 'Benutzer vorhanden' : 'Kein Benutzer');
+      console.log('[DEBUG] Session-Objekt:', JSON.stringify(session?.user?.app_metadata || {}, null, 2));
+      
+      // Wichtig: User-State aktualisieren
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
+      // Session-Tracking aktualisieren
+      setSessionTracking(prev => ({
+        initialized: true,
+        sessionChecks: prev.sessionChecks + 1,
+        lastStatus: currentUser ? 'Benutzer aktiv' : 'Kein Benutzer'
+      }));
+      
       if (currentUser?.id) {
         try {
-          console.log('Erster Versuch: Profil laden');
+          console.log('[DEBUG] Erster Versuch: Profil laden');
           // Performance-Messung
           console.time('Profilabruf-Gesamt');
           const userProfile = await fetchProfile(currentUser.id);
           console.timeEnd('Profilabruf-Gesamt');
           setProfile(userProfile);
         } catch (profileError) {
-          console.warn("1. Versuch fehlgeschlagen, versuche erneut...");
+          console.warn("[DEBUG] 1. Versuch fehlgeschlagen, versuche erneut...");
           
           // Prüfen, ob die Anfrage abgebrochen wurde
           if (abortControllerRef.current?.signal.aborted) {
-            console.log('Anfrage wurde abgebrochen, breche Retry ab');
+            console.log('[DEBUG] Anfrage wurde abgebrochen, breche Retry ab');
             return;
           }
           
           try {
             // Automatischer zweiter Versuch nach kurzer Pause
             await new Promise(resolve => setTimeout(resolve, 500));
-            console.log('Zweiter Versuch: Profil laden');
+            console.log('[DEBUG] Zweiter Versuch: Profil laden');
             
             const retryProfile = await fetchProfile(currentUser.id);
             setProfile(retryProfile);
-            console.log('Zweiter Versuch erfolgreich!');
+            console.log('[DEBUG] Zweiter Versuch erfolgreich!');
           } catch (retryError) {
             // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
             if (!abortControllerRef.current?.signal.aborted) {
-              console.error("2. Versuch fehlgeschlagen:", retryError);
+              console.error("[DEBUG] 2. Versuch fehlgeschlagen:", retryError);
               setLoadError(retryError instanceof Error ? retryError : new Error('Unknown error loading profile'));
               setProfile(null);
               
@@ -133,7 +179,7 @@ export const useUser = () => {
     } catch (error) {
       // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
       if (!abortControllerRef.current?.signal.aborted) {
-        console.error('Error in fetchUserProfile:', error);
+        console.error('[DEBUG] Error in fetchUserProfile:', error);
         setLoadError(error instanceof Error ? error : new Error('Unknown error loading profile'));
         
         // Bei Session-Fehlern automatisch abmelden
@@ -298,13 +344,28 @@ export const useUser = () => {
 
   // Retry loading function for the LoadingOverlay component
   const retryLoading = useCallback(() => {
-    console.log("Manual retry loading triggered");
+    console.log("[DEBUG] Manual retry loading triggered");
     fetchUserProfile();
   }, [fetchUserProfile]);
 
+  // Manual session check function for debugging
+  const debugSession = useCallback(async () => {
+    console.log("[DEBUG] Manual session check...");
+    await checkSession();
+  }, [checkSession]);
+
   // Effect to load user on mount and set up auth state listener
   useEffect(() => {
-    console.log("useUser Hook initialisiert");
+    console.log("[DEBUG] useUser Hook initialisiert");
+    
+    // DEBUG: Setze localStorage-Einträge für aktive Sitzungen
+    const localStorageItems = Object.keys(localStorage)
+      .filter(key => key.includes('supabase') || key.includes('auth'))
+      .reduce((obj, key) => {
+        return { ...obj, [key]: localStorage.getItem(key) ? "Vorhanden" : "Nicht vorhanden" };
+      }, {});
+    
+    console.log("[DEBUG] localStorage Status:", localStorageItems);
     
     // Load user profile immediately
     fetchUserProfile();
@@ -312,7 +373,7 @@ export const useUser = () => {
     // Set up subscription to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('[DEBUG] Auth state changed:', event, session?.user?.id);
         
         if (event === 'SIGNED_IN') {
           fetchUserProfile();
@@ -320,15 +381,22 @@ export const useUser = () => {
           setUser(null);
           setProfile(null);
           setChatterStats({ enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 });
+          console.log('[DEBUG] Nutzer abgemeldet - States zurückgesetzt');
         }
       }
     );
 
+    // DEBUG: Regelmäßiger Session-Check
+    const sessionCheckInterval = setInterval(() => {
+      checkSession();
+    }, 10000); // Alle 10 Sekunden prüfen
+
     // Clean up subscription on unmount
     return () => {
       subscription.unsubscribe();
+      clearInterval(sessionCheckInterval);
     };
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile, checkSession]);
 
   return {
     user,
@@ -340,6 +408,8 @@ export const useUser = () => {
     chatterStats,
     setChatterStats,
     loadChatterStats,
-    updateUserChatters
+    updateUserChatters,
+    debugSession, // Neue Funktion für Debug-Zwecke
+    sessionTracking, // Neuer State für Debug-Zwecke
   };
 };
