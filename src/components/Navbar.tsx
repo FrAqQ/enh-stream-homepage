@@ -106,13 +106,11 @@ const Navbar = () => {
 
   // Login handler
   const handleLogin = () => {
-    console.log("[DEBUG] Login Button geklickt");
     navigate("/login");
   };
 
   // Register handler
   const handleRegister = () => {
-    console.log("[DEBUG] Register Button geklickt");
     navigate("/register");
   };
 
