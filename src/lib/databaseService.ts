@@ -28,7 +28,7 @@ export const databaseService = {
       // Verwende die neue View profiles_with_limit statt der Tabelle profiles
       const { data, error } = await supabase
         .from('profiles_with_limit')
-        .select('id, plan, subscription_status, viewers_active, computed_viewer_limit')
+        .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
         .eq('id', userId)
         .single();
 
@@ -45,7 +45,8 @@ export const databaseService = {
       const completeProfile = {
         ...data,
         viewer_limit: data.computed_viewer_limit,  // Wir behalten den Namen viewer_limit für Abwärtskompatibilität
-        viewers_active: data.viewers_active || 0
+        viewers_active: data.viewers_active || 0,
+        chatters_active: data.chatters_active || 0
       };
       
       // Cache aktualisieren
@@ -109,6 +110,42 @@ export const databaseService = {
       return { success: true, data };
     } catch (error) {
       console.error("Fehler in updateViewersActive:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Aktive Chatterzahl aktualisieren
+   */
+  async updateChattersActive(userId: string, count: number) {
+    try {
+      // Cache aktualisieren, unabhängig vom Datenbankstatus
+      const cacheKey = `profile-${userId}`;
+      if (this.cache.has(cacheKey)) {
+        const cachedData = this.cache.get(cacheKey);
+        if (cachedData) {
+          this.cache.set(cacheKey, {
+            data: { ...cachedData.data, chatters_active: count },
+            timestamp: Date.now()
+          });
+        }
+      }
+      
+      // Datenbank aktualisieren
+      // Hier aktualisieren wir die profiles Tabelle, nicht die View
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ chatters_active: count })
+        .eq('id', userId);
+
+      if (error) {
+        console.error("Fehler beim Aktualisieren der aktiven Chatter:", error);
+        return { success: false, error };
+      }
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error("Fehler in updateChattersActive:", error);
       return { success: false, error };
     }
   },
