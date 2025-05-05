@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -74,6 +75,9 @@ export const useUser = () => {
 
   // Komplett überarbeitete Hauptladefunktion mit verbesserter Fehlerbehandlung
   const fetchUserProfile = useCallback(async () => {
+    // Schutzbedingung: Verhindere doppelte Aufrufe während des Ladevorgangs
+    if (isLoading) return;
+    
     try {
       // Aktuelle Anfragen abbrechen, falls vorhanden
       if (abortControllerRef.current) {
@@ -167,7 +171,7 @@ export const useUser = () => {
         setIsLoading(false);
       }
     }
-  }, [fetchProfile, toast]);
+  }, [fetchProfile, toast, isLoading]);
 
   // Verbesserte Funktion zum Neuladen bei Fehlern
   const retryLoading = useCallback(() => {
@@ -187,17 +191,28 @@ export const useUser = () => {
     }, 100);
   }, [fetchUserProfile]);
 
-  // Explizite Logout-Funktion - für den direkten Aufruf
+  // Optimierte Logout-Funktion mit vollständigem State-Reset
   const logout = useCallback(async () => {
+    console.log("[Auth] Starte Logout...");
+
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("[Auth] Supabase Logout-Fehler:", error.message);
+        return { success: false, error };
+      }
+
+      // Lokalen Zustand zurücksetzen
       setUser(null);
       setProfile(null);
       setChatterStats({ enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 });
       databaseService.clearCache();
+
+      console.log("[Auth] Logout erfolgreich. Zustand zurückgesetzt.");
       return { success: true, error: null };
     } catch (error) {
-      console.error("Fehler beim Logout:", error);
+      console.error("[Auth] Unerwarteter Fehler beim Logout:", error);
       return { success: false, error };
     }
   }, []);

@@ -1,3 +1,4 @@
+
 import { supabase } from './supabaseClient';
 
 /**
@@ -16,25 +17,31 @@ export const databaseService = {
     const cacheKey = `profile-${userId}`;
     const cachedData = this.cache.get(cacheKey);
     
-    // Zwischengespeicherte Daten zurückgeben, falls gültig
+    // 1. Cache verwenden, falls gültig
     if (cachedData && (Date.now() - cachedData.timestamp < this.cacheTTL)) {
-      console.log("Verwende zwischengespeicherte Profildaten");
+      console.log("[Cache] Verwende zwischengespeicherte Profildaten");
       return { data: cachedData.data, error: null };
     }
 
     try {
-      console.log(`Hole Profildaten für Benutzer: ${userId}`);
-      
-      // Prüfen, ob bereits ein Profil für den Benutzer existiert
-      const { data: existingProfile, error: profileError } = await supabase
+      console.log(`[DB] Profildaten abrufen für user: ${userId}`);
+
+      // 2. Existenz prüfen
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', userId)
         .maybeSingle();
 
-      // Wenn kein Profil existiert, erstelle ein Standard-Profil
+      if (profileCheckError) {
+        console.error("Fehler bei Existenzprüfung:", profileCheckError);
+        return { data: null, error: profileCheckError };
+      }
+
+      // 3. Falls nicht vorhanden, neues Standardprofil anlegen
       if (!existingProfile) {
-        console.warn("Profil nicht vorhanden, lege Standard-Profil an...");
+        console.warn("[DB] Profil nicht vorhanden – lege Standardprofil an...");
+
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -50,63 +57,59 @@ export const databaseService = {
           return { data: null, error: insertError };
         }
 
-        console.log("Standard-Profil erfolgreich erstellt.");
-        
-        // Kurze Wartepause, um Sichtbarkeit in View sicherzustellen
+        // 4. Wartezeit, damit die View nach Insert verfügbar ist
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
-      
-      // Jetzt von der View profiles_with_limit laden (immer NACH der Profilprüfung)
-      let data, error;
-      let retryCount = 0;
-      const maxRetries = 1;
-      
-      while (retryCount <= maxRetries) {
+
+      // 5. Versuche, View-Daten abzurufen (mit max 3 Versuchen)
+      let data = null, error = null;
+      const maxRetries = 3;
+      const retryDelay = 150;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const result = await supabase
           .from('profiles_with_limit')
           .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
           .eq('id', userId)
-          .single();
-        
+          .maybeSingle();
+
         data = result.data;
         error = result.error;
-        
-        if (data || retryCount >= maxRetries) break;
-        
-        // Kurze Wartezeit vor dem Retry
-        console.log(`View-Abruf fehlgeschlagen, Retry ${retryCount + 1}...`);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        retryCount++;
+
+        if (data || attempt === maxRetries) break;
+
+        console.log(`[DB] View retry ${attempt}/${maxRetries}...`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
       }
 
       if (error) {
         console.error("Fehler beim Abrufen aus View:", error);
         return { data: null, error };
       }
-      
+
       if (!data) {
-        throw new Error("Kein Profil gefunden");
+        console.warn("Profil konnte auch nach Retries nicht geladen werden.");
+        return { data: null, error: new Error("Profil nicht sichtbar in View") };
       }
-      
-      // Erstelle das komplette Profil mit dem berechneten Limit aus der View
-      // Mit zusätzlicher Sicherheit durch COALESCE-ähnliche Defaultwerte
+
+      // 6. Zusammenführen & Rückgabe
       const completeProfile = {
         ...data,
-        viewer_limit: data.computed_viewer_limit,  // Wir behalten den Namen viewer_limit für Abwärtskompatibilität
-        viewers_active: data.viewers_active || 0,
-        chatters_active: data.chatters_active || 0
+        viewer_limit: data.computed_viewer_limit,
+        viewers_active: data.viewers_active ?? 0,
+        chatters_active: data.chatters_active ?? 0
       };
-      
-      // Cache aktualisieren
+
+      // 7. In Cache speichern
       this.cache.set(cacheKey, {
         data: completeProfile,
         timestamp: Date.now()
       });
 
       return { data: completeProfile, error: null };
-    } catch (error) {
-      console.error("Unbekannter Fehler in getProfile:", error);
-      return { data: null, error };
+    } catch (unknownError) {
+      console.error("Unbekannter Fehler in getProfile:", unknownError);
+      return { data: null, error: unknownError };
     }
   },
 
