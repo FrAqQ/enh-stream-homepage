@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -64,8 +63,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // Auch wenn es ein Problem mit dem Profil gab, aber User vorhanden ist,
-  // erlauben wir trotzdem den Zugriff
+  // Ohne Profil oder User können wir nicht fortfahren
   if (!user) {
     return <Navigate to="/login" />;
   }

@@ -19,16 +19,14 @@ export const useUser = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const { toast } = useToast();
-  const maxRetries = 2;
-  const retryRef = useRef(0);
   const abortControllerRef = useRef(new AbortController());
 
-  // Verbesserte Profilladefunktion mit schnellerer Fehlerbehandlung
+  // Verbesserte Profilladefunktion ohne Fallbacks
   const fetchProfile = useCallback(async (userId: string) => {
     try {
       console.log(`Loading profile for user: ${userId}`);
       
-      // Gleichzeitig einen Timer starten, der nach 3 Sekunden abbricht
+      // Timeout nach 3 Sekunden
       const timeoutPromise = new Promise<null>((_, reject) => {
         setTimeout(() => reject(new Error('Timeout when retrieving profile')), 3000);
       });
@@ -39,7 +37,7 @@ export const useUser = () => {
         timeoutPromise
       ]);
       
-      if (!result) {
+      if (!result || !result.data) {
         throw new Error('Profile could not be loaded');
       }
       
@@ -47,24 +45,11 @@ export const useUser = () => {
       return result.data;
     } catch (error) {
       console.error('Error loading profile:', error);
-      
-      // Sofort ein Default-Profil zurückgeben
-      if (error instanceof Error) {
-        // Errors loggen, aber immer ein Default-Profil zurückgeben
-        console.log("Using fallback profile due to error:", error.message);
-        return {
-          id: userId,
-          plan: 'Free',
-          subscription_status: 'inactive',
-          viewers_active: 0,
-          viewer_limit: 4
-        };
-      }
-      return null;
+      throw error; // Fehler weitergeben statt unterdrücken
     }
   }, []);
 
-  // Hauptladefunktion mit Fehlerbehandlung
+  // Hauptladefunktion mit verbesserter Fehlerbehandlung
   const fetchUserProfile = useCallback(async () => {
     try {
       abortControllerRef.current = new AbortController();
@@ -83,9 +68,15 @@ export const useUser = () => {
       setUser(currentUser);
       
       if (currentUser?.id) {
-        // Profil laden mit Fallback
-        const userProfile = await fetchProfile(currentUser.id);
-        setProfile(userProfile);
+        try {
+          const userProfile = await fetchProfile(currentUser.id);
+          setProfile(userProfile);
+        } catch (profileError) {
+          console.error("Failed to load profile:", profileError);
+          setLoadError(profileError instanceof Error ? profileError : new Error('Unknown error loading profile'));
+          // Wichtig: kein Fallback-Profil mehr setzen
+          setProfile(null);
+        }
       } else {
         setProfile(null);
       }
@@ -107,7 +98,6 @@ export const useUser = () => {
   // Funktion zum Neuladen bei Fehlern
   const retryLoading = useCallback(() => {
     console.log("Retrying profile loading...");
-    retryRef.current += 1;
     
     // Aktuelle Anfragen abbrechen
     if (abortControllerRef.current) {
@@ -160,8 +150,14 @@ export const useUser = () => {
         setUser(session?.user ?? null);
         
         if (session?.user?.id) {
-          const userProfile = await fetchProfile(session.user.id);
-          setProfile(userProfile);
+          try {
+            const userProfile = await fetchProfile(session.user.id);
+            setProfile(userProfile);
+          } catch (profileError) {
+            console.error("Failed to load profile on auth change:", profileError);
+            setLoadError(profileError instanceof Error ? profileError : new Error('Unknown error loading profile'));
+            setProfile(null);
+          }
         }
       }
     });
