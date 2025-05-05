@@ -73,10 +73,12 @@ const Navbar = () => {
     }
   };
 
-  // Verbesserte Logout-Funktion mit Feedback und Weiterleitung
+  // Verbesserte Logout-Funktion mit Feedback, Weiterleitung und Forced Reload
   const handleLogout = async () => {
     try {
+      console.log("[Logout] Vor logout", user);
       const { success, error } = await logout();
+      console.log("[Logout] Nach logout", user);
       
       if (!success) {
         console.error("Logout error:", error);
@@ -87,8 +89,11 @@ const Navbar = () => {
       // Erfolgsmeldung anzeigen
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       
-      // Zur Startseite navigieren
+      // Zur Startseite navigieren mit erzwungenem Reload
       navigate('/');
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (error) {
       console.error("Unexpected logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
