@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
 import { databaseService } from './databaseService';
@@ -22,74 +22,57 @@ export const useUser = () => {
   const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxRetries = 2;
   const retryRef = useRef(0);
+  const abortControllerRef = useRef(new AbortController());
 
-  // Timeout für Ladeprozess
-  useEffect(() => {
-    // Nur Timeout setzen, wenn noch geladen wird
-    if (isLoading) {
-      loadingTimeoutRef.current = setTimeout(() => {
-        console.error('Profilladung hat das Timeout überschritten');
-        toast({
-          title: "Ladefehler",
-          description: "Das Laden deines Profils dauert ungewöhnlich lange. Wir versuchen es erneut.",
-          variant: "destructive"
-        });
-        
-        // Erneuter Versuch oder Abbruch
-        if (retryRef.current < maxRetries) {
-          retryRef.current += 1;
-          fetchUserProfile();
-        } else {
-          setIsLoading(false);
-          setLoadError(new Error("Timeout beim Laden des Profils"));
-          toast({
-            title: "Profilladung fehlgeschlagen",
-            description: "Bitte lade die Seite neu oder kontaktiere den Support.",
-            variant: "destructive"
-          });
-        }
-      }, 5000); // 5 Sekunden Timeout
-    }
-    
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-    };
-  }, [isLoading, toast]);
-
-  const fetchProfile = async (userId: string) => {
+  // Profillademethode mit Abbruchmöglichkeit
+  const fetchProfile = useCallback(async (userId: string) => {
     try {
       console.log(`Lade Profil für Benutzer: ${userId}`);
-      const { data, error } = await databaseService.getProfile(userId);
+      // Verwende Signal für abbrechbare Anfragen
+      const signal = abortControllerRef.current.signal;
       
-      if (error) {
-        console.error('Fehler beim Laden des Profils:', error);
-        toast({
-          title: "Fehler beim Laden des Profils",
-          description: "Wir konnten deine Profilinformationen nicht laden",
-          variant: "destructive"
-        });
-        setLoadError(error);
-        return null;
+      // Timeout für diese spezifische Anfrage setzen
+      const fetchTimeout = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Zeitüberschreitung beim Abrufen des Profils')), 4000);
+      });
+      
+      // Race zwischen der tatsächlichen Anfrage und dem Timeout
+      const result = await Promise.race([
+        databaseService.getProfile(userId),
+        fetchTimeout
+      ]);
+      
+      if (!result) {
+        throw new Error('Profil konnte nicht geladen werden');
       }
       
-      console.log('Profil erfolgreich geladen:', data);
-      return data;
+      console.log('Profil erfolgreich geladen:', result.data);
+      return result.data;
     } catch (error) {
-      console.error('Unerwarteter Fehler beim Laden des Profils:', error);
-      setLoadError(error instanceof Error ? error : new Error('Unbekannter Fehler'));
+      console.error('Fehler beim Laden des Profils:', error);
+      if (error instanceof Error) {
+        // Nur neu werfen, wenn es kein Abbruch war
+        if (error.name !== 'AbortError') {
+          setLoadError(error);
+        }
+      } else {
+        setLoadError(new Error('Unbekannter Fehler'));
+      }
       toast({
         title: "Fehler beim Laden des Profils",
-        description: "Ein unerwarteter Fehler ist aufgetreten",
+        description: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten",
         variant: "destructive"
       });
       return null;
     }
-  };
+  }, [toast]);
 
-  const fetchUserProfile = async () => {
+  // Haupt-Ladefunktion mit zusätzlicher Fehlerbehandlung
+  const fetchUserProfile = useCallback(async () => {
     try {
+      // Neuen AbortController erstellen für diese Anfrage
+      abortControllerRef.current = new AbortController();
+      
       setIsLoading(true);
       console.log('Lade Benutzersitzung...');
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -107,16 +90,36 @@ export const useUser = () => {
         setUser(null);
         setProfile(null);
         setLoadError(error);
-      } else {
-        console.log("Sitzungsdaten:", session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
+        setIsLoading(false); // Wichtig: Status beenden
+        return false;
+      }
+      
+      console.log("Sitzungsdaten:", session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (currentUser?.id) {
+        const userProfile = await fetchProfile(currentUser.id);
         
-        if (currentUser?.id) {
-          const userProfile = await fetchProfile(currentUser.id);
+        if (!userProfile) {
+          // Bei null noch einen zweiten Versuch mit Standardprofil
+          console.log("Erstelle Standardprofil, da keins geladen werden konnte");
+          const defaultProfile = {
+            id: currentUser.id,
+            plan: 'Free',
+            subscription_status: 'inactive',
+            viewers_active: 0,
+            viewer_limit: 4
+          };
+          setProfile(defaultProfile);
+        } else {
           setProfile(userProfile);
         }
       }
+      
+      // In allen Fällen Ladevorgang beenden
+      setIsLoading(false);
+      return true;
     } catch (error) {
       console.error('Fehler beim Laden der Sitzung:', error);
       setLoadError(error instanceof Error ? error : new Error('Unbekannter Fehler'));
@@ -126,14 +129,88 @@ export const useUser = () => {
         variant: "destructive"
       });
       
-      // Bei Fehler Sitzung löschen
-      await supabase.auth.signOut();
+      // Bei Fehler Sitzung löschen und Status zurücksetzen
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error('Fehler beim Abmelden:', signOutError);
+      }
+      
       setUser(null);
       setProfile(null);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Wichtig: Immer Loading-Status beenden
+      return false;
     }
-  };
+  }, [fetchProfile, toast]);
+
+  // Funktion zum Abbrechen des aktuellen Ladevorgangs und Neustart
+  const handleRetry = useCallback(() => {
+    console.log("Starte Profilladen neu...");
+    
+    // Aktuelle Anfragen abbrechen
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Timer löschen
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    
+    // Fehler zurücksetzen
+    setLoadError(null);
+    
+    // Neu laden
+    retryRef.current += 1;
+    fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  // Timeout für Ladeprozess
+  useEffect(() => {
+    // Nur Timeout setzen, wenn noch geladen wird
+    if (isLoading) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.error('Profilladung hat das Timeout überschritten');
+        toast({
+          title: "Ladefehler",
+          description: "Das Laden deines Profils dauert ungewöhnlich lange. Wir versuchen es erneut.",
+          variant: "destructive"
+        });
+        
+        // Erneuter Versuch oder Abbruch
+        if (retryRef.current < maxRetries) {
+          handleRetry();
+        } else {
+          setIsLoading(false);
+          setLoadError(new Error("Timeout beim Laden des Profils"));
+          toast({
+            title: "Profilladung fehlgeschlagen",
+            description: "Bitte lade die Seite neu oder kontaktiere den Support.",
+            variant: "destructive"
+          });
+          
+          // Standardprofil bei zu vielen Fehlern setzen
+          if (user?.id) {
+            const defaultProfile = {
+              id: user.id,
+              plan: 'Free',
+              subscription_status: 'inactive',
+              viewers_active: 0,
+              viewer_limit: 4
+            };
+            setProfile(defaultProfile);
+          }
+        }
+      }, 5000); // 5 Sekunden Timeout
+    }
+    
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, [isLoading, toast, handleRetry, user]);
 
   useEffect(() => {
     // Initiale Benutzerladung
@@ -164,8 +241,12 @@ export const useUser = () => {
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
       }
+      // Anfragen beim Unmount abbrechen
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, []);
+  }, [fetchProfile, fetchUserProfile]);
 
-  return { user, profile, isLoading, loadError };
+  return { user, profile, isLoading, loadError, retryLoading: handleRetry };
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from './supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,20 +24,92 @@ export const databaseService = {
 
     try {
       console.log(`Hole Profildaten für Benutzer: ${userId}`);
+      
+      // STRATEGIE 1: Zuerst sicherstellen, dass das Profil überhaupt existiert
+      // mit minimalen, garantiert existierenden Feldern
+      let profileExists = false;
+      try {
+        const { data: basicProfile, error: basicError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .single();
+          
+        profileExists = !basicError && !!basicProfile;
+      } catch (basicError) {
+        console.warn("Fehler bei Profilprüfung:", basicError);
+        // Wir gehen weiter und versuchen trotzdem, ein Profil zu erstellen
+      }
+      
+      // STRATEGIE 2: Grundfelder abrufen, ohne viewers_active
       // Vorsichtiges Abrufen von Grundfeldern, die existieren sollten
-      // Zuerst versuchen wir nur die grundlegenden, sicheren Felder abzurufen
-      const { data, error } = await supabase
+      const { data: baseData, error: baseError } = await supabase
         .from('profiles')
         .select('id, plan, subscription_status')
         .eq('id', userId)
         .single();
 
-      if (error) {
-        console.error("Fehler beim Abrufen von Grundfeldern:", error);
-        throw error;
+      if (baseError) {
+        console.error("Fehler beim Abrufen von Grundfeldern:", baseError);
+        
+        // Wenn das Profil nicht existiert, erstellen wir es neu
+        if (!profileExists || baseError.message.includes('not found') || baseError.code === 'PGRST116') {
+          console.log("Profil existiert nicht, erstelle ein neues");
+          
+          try {
+            // Einfaches Profil erstellen
+            const { data: createData, error: createError } = await supabase
+              .from('profiles')
+              .insert([{ 
+                id: userId, 
+                plan: 'Free', 
+                subscription_status: 'inactive',
+                viewers_active: 0
+              }])
+              .select();
+              
+            if (createError) {
+              console.error("Fehler beim Erstellen des Profils:", createError);
+              throw createError;
+            }
+            
+            // Wenn Erstellung erfolgreich, neues Profil verwenden
+            if (createData && createData.length > 0) {
+              const newProfile = {
+                ...createData[0],
+                viewer_limit: this.calculateViewerLimit(createData[0].plan, createData[0].subscription_status)
+              };
+              
+              this.cache.set(cacheKey, {
+                data: newProfile,
+                timestamp: Date.now()
+              });
+              
+              return { data: newProfile, error: null, source: 'created' };
+            }
+          } catch (createError) {
+            console.error("Fehler bei der Profilerstellung:", createError);
+          }
+        }
+        
+        // Standardwerte als Fallback verwenden
+        const defaultProfile = {
+          id: userId,
+          plan: 'Free',
+          subscription_status: 'inactive',
+          viewers_active: 0,
+          viewer_limit: 4
+        };
+        
+        this.cache.set(cacheKey, {
+          data: defaultProfile,
+          timestamp: Date.now()
+        });
+        
+        return { data: defaultProfile, error: null, source: 'default' };
       }
       
-      // Versuchen wir jetzt, viewers_active separat abzurufen (falls vorhanden)
+      // STRATEGIE 3: Wenn Grundfelder erfolgreich, viewers_active separat abrufen
       let viewersActive = 0;
       try {
         const { data: viewersData, error: viewersError } = await supabase
@@ -50,18 +121,28 @@ export const databaseService = {
         if (!viewersError && viewersData) {
           viewersActive = viewersData.viewers_active || 0;
         } else {
-          console.log("viewers_active nicht verfügbar, Standardwert wird verwendet");
+          console.log("viewers_active nicht verfügbar oder konnte nicht abgerufen werden");
+          
+          // Versuchen, viewers_active durch Update auf 0 zu erstellen
+          try {
+            await supabase
+              .from('profiles')
+              .update({ viewers_active: 0 })
+              .eq('id', userId);
+          } catch (updateError) {
+            console.warn("Konnte viewers_active nicht aktualisieren:", updateError);
+          }
         }
       } catch (viewersError) {
         console.warn("Nicht kritischer Fehler beim Abrufen von viewers_active:", viewersError);
         // Wir setzen den Standardwert weiterhin auf 0
       }
       
-      // Standardwerte für potenziell fehlende Felder setzen
+      // Vollständiges Profil zusammenstellen
       const profileData = {
-        ...data,
+        ...baseData,
         viewers_active: viewersActive,
-        viewer_limit: this.calculateViewerLimit(data.plan, data.subscription_status)
+        viewer_limit: this.calculateViewerLimit(baseData.plan, baseData.subscription_status)
       };
 
       // Cache aktualisieren
@@ -74,59 +155,22 @@ export const databaseService = {
     } catch (error: any) {
       console.error("Fehler beim Abrufen des Profils:", error);
       
-      // Wenn es sich um einen neuen Benutzer handelt, ein Standardprofil erstellen
-      if (error.message && (
-          error.message.includes('does not exist') || 
-          error.message.includes('nicht existiert') ||
-          error.code === '42P01' || // Tabelle existiert nicht
-          error.code === '42703'    // Spalte existiert nicht
-      )) {
-        try {
-          console.log("Erstelle Standardprofil für neuen Benutzer");
-          // Standardprofil mit Standardwerten erstellen
-          const defaultProfile = {
-            id: userId,
-            plan: 'Free',
-            subscription_status: 'inactive',
-            viewers_active: 0,
-            viewer_limit: 4
-          };
-          
-          // Versuchen, das Standardprofil in der Datenbank zu speichern
-          try {
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert([{ 
-                id: userId, 
-                plan: 'Free', 
-                subscription_status: 'inactive',
-                viewers_active: 0
-              }]);
-              
-            if (insertError) {
-              console.warn("Nicht kritischer Fehler beim Erstellen des Standardprofils:", insertError);
-            } else {
-              console.log("Standardprofil erfolgreich in der Datenbank erstellt");
-            }
-          } catch (insertError) {
-            console.warn("Fehler beim Erstellen des Standardprofils:", insertError);
-            // Wir setzen den Cache trotzdem, auch wenn das Einfügen fehlschlägt
-          }
-          
-          // Cache auf jeden Fall aktualisieren
-          this.cache.set(cacheKey, {
-            data: defaultProfile,
-            timestamp: Date.now()
-          });
-          
-          return { data: defaultProfile, error: null, source: 'default' };
-        } catch (createError) {
-          console.error("Fehler beim Erstellen des Standardprofils:", createError);
-          return { data: null, error: createError, source: null };
-        }
-      }
+      // Standardprofil als letzten Ausweg verwenden
+      const defaultProfile = {
+        id: userId,
+        plan: 'Free',
+        subscription_status: 'inactive',
+        viewers_active: 0,
+        viewer_limit: 4
+      };
       
-      return { data: null, error, source: null };
+      // Cache mit Standardprofil aktualisieren
+      this.cache.set(cacheKey, {
+        data: defaultProfile,
+        timestamp: Date.now() 
+      });
+      
+      return { data: defaultProfile, error, source: 'error-fallback' };
     }
   },
 

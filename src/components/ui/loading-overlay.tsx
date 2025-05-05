@@ -23,24 +23,33 @@ export function LoadingOverlay({
   children,
   error,
   onRetry,
-  loadingTimeout = 8000 // 8 Sekunden Standardtimeout
+  loadingTimeout = 5000 // 5 Sekunden Standardtimeout
 }: LoadingOverlayProps) {
   const [showTimeout, setShowTimeout] = React.useState(false);
+  const [secondsWaiting, setSecondsWaiting] = React.useState(0);
   
   React.useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
+    let secondsTimer: ReturnType<typeof setInterval>;
     
     if (isLoading) {
       // Timer starten, nach dem die Timeout-UI angezeigt wird
       timer = setTimeout(() => {
         setShowTimeout(true);
       }, loadingTimeout);
+      
+      // Sekunden-Counter aktualisieren
+      secondsTimer = setInterval(() => {
+        setSecondsWaiting(prev => prev + 1);
+      }, 1000);
     } else {
       setShowTimeout(false);
+      setSecondsWaiting(0);
     }
     
     return () => {
       if (timer) clearTimeout(timer);
+      if (secondsTimer) clearInterval(secondsTimer);
     };
   }, [isLoading, loadingTimeout]);
   
@@ -68,8 +77,8 @@ export function LoadingOverlay({
                 {error.message || "Beim Laden der Daten gab es ein Problem."}
               </p>
               {onRetry && (
-                <Button onClick={onRetry} className="mt-2" variant="outline">
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                <Button onClick={onRetry} className="mt-2 gap-2" variant="outline">
+                  <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                   Erneut versuchen
                 </Button>
               )}
@@ -80,14 +89,24 @@ export function LoadingOverlay({
               <div className="flex flex-col items-center">
                 <p className="text-foreground">{text}</p>
                 {showTimeout && (
-                  <p className="text-muted-foreground text-sm mt-2">
-                    Das dauert länger als erwartet...
-                  </p>
+                  <div className="flex flex-col items-center mt-2">
+                    <p className="text-muted-foreground text-sm">
+                      Das dauert länger als erwartet...
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      (Warte seit {secondsWaiting}s)
+                    </p>
+                  </div>
                 )}
               </div>
               {showTimeout && onRetry && (
-                <Button onClick={onRetry} className="mt-2" variant="outline" size="sm">
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                <Button 
+                  onClick={onRetry} 
+                  className="mt-2 gap-2" 
+                  variant="outline" 
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
                   Neu laden
                 </Button>
               )}

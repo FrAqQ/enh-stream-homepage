@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,13 +39,7 @@ const queryClient = new QueryClient({
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, loadError } = useUser();
-  
-  // Behandlung für erneutes Laden bei Timeout
-  const handleRetry = useCallback(() => {
-    // Seite neu laden um Sitzung und Benutzerdaten neu zu initialisieren
-    window.location.reload();
-  }, []);
+  const { user, isLoading, loadError, retryLoading } = useUser();
   
   if (isLoading) {
     return (
@@ -54,7 +47,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         isLoading={true} 
         fullScreen 
         text="Loading your profile..." 
-        onRetry={handleRetry}
+        onRetry={retryLoading}
+        loadingTimeout={4000} // Schnelleres Timeout für bessere UX
       />
     );
   }
@@ -65,7 +59,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         isLoading={false}
         error={loadError}
         fullScreen
-        onRetry={handleRetry}
+        onRetry={retryLoading}
       />
     );
   }
