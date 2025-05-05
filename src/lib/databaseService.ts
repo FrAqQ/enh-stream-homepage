@@ -52,14 +52,33 @@ export const databaseService = {
         }
 
         console.log("Standard-Profil erfolgreich erstellt.");
+        
+        // Kurze Wartepause, um Sichtbarkeit in View sicherzustellen
+        await new Promise((resolve) => setTimeout(resolve, 150));
       }
       
       // Jetzt von der View profiles_with_limit laden (immer NACH der Profilprüfung)
-      const { data, error } = await supabase
-        .from('profiles_with_limit')
-        .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
-        .eq('id', userId)
-        .single();
+      let data, error;
+      let retryCount = 0;
+      const maxRetries = 1;
+      
+      while (retryCount <= maxRetries) {
+        const result = await supabase
+          .from('profiles_with_limit')
+          .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
+          .eq('id', userId)
+          .single();
+        
+        data = result.data;
+        error = result.error;
+        
+        if (data || retryCount >= maxRetries) break;
+        
+        // Kurze Wartezeit vor dem Retry
+        console.log(`View-Abruf fehlgeschlagen, Retry ${retryCount + 1}...`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retryCount++;
+      }
 
       if (error) {
         console.error("Fehler beim Abrufen aus View:", error);
@@ -71,6 +90,7 @@ export const databaseService = {
       }
       
       // Erstelle das komplette Profil mit dem berechneten Limit aus der View
+      // Mit zusätzlicher Sicherheit durch COALESCE-ähnliche Defaultwerte
       const completeProfile = {
         ...data,
         viewer_limit: data.computed_viewer_limit,  // Wir behalten den Namen viewer_limit für Abwärtskompatibilität

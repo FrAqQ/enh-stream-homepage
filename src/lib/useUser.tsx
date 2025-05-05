@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -37,9 +38,11 @@ export const useUser = () => {
   const fetchProfile = useCallback(async (userId: string) => {
     try {
       console.log(`Loading profile for user: ${userId}`);
+      console.time('Profilabruf');
       
-      // Erhöhter Timeout auf 10 Sekunden (direkte Promise, ohne Race)
+      // Direkte Promise ohne Timeout-Race
       const result = await databaseService.getProfile(userId);
+      console.timeEnd('Profilabruf');
       
       if (!result || !result.data) {
         throw new Error('Profile could not be loaded');
@@ -91,7 +94,10 @@ export const useUser = () => {
       if (currentUser?.id) {
         try {
           console.log('Erster Versuch: Profil laden');
+          // Performance-Messung
+          console.time('Profilabruf-Gesamt');
           const userProfile = await fetchProfile(currentUser.id);
+          console.timeEnd('Profilabruf-Gesamt');
           setProfile(userProfile);
         } catch (profileError) {
           console.warn("1. Versuch fehlgeschlagen, versuche erneut...");
