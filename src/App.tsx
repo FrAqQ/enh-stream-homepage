@@ -25,6 +25,7 @@ import Privacy from "./pages/Legal/Privacy";
 import Cancellation from "./pages/Legal/Cancellation";
 import Imprint from "./pages/Legal/Imprint";
 import { CookieManager } from "./components/CookieManager";
+import { useCallback } from "react";
 
 // Create React Query client with optimized settings
 const queryClient = new QueryClient({
@@ -39,10 +40,34 @@ const queryClient = new QueryClient({
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, loadError } = useUser();
+  
+  // Behandlung für erneutes Laden bei Timeout
+  const handleRetry = useCallback(() => {
+    // Seite neu laden um Sitzung und Benutzerdaten neu zu initialisieren
+    window.location.reload();
+  }, []);
   
   if (isLoading) {
-    return <LoadingOverlay isLoading={true} fullScreen text="Loading your profile..." />;
+    return (
+      <LoadingOverlay 
+        isLoading={true} 
+        fullScreen 
+        text="Loading your profile..." 
+        onRetry={handleRetry}
+      />
+    );
+  }
+  
+  if (loadError) {
+    return (
+      <LoadingOverlay 
+        isLoading={false}
+        error={loadError}
+        fullScreen
+        onRetry={handleRetry}
+      />
+    );
   }
   
   if (!user) {
