@@ -25,6 +25,7 @@ import Privacy from "./pages/Legal/Privacy";
 import Cancellation from "./pages/Legal/Cancellation";
 import Imprint from "./pages/Legal/Imprint";
 import { CookieManager } from "./components/CookieManager";
+import { Button } from "./components/ui/button";
 
 // Create React Query client with optimized settings
 const queryClient = new QueryClient({
@@ -36,6 +37,55 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Debugging-Komponente für UI-Tests
+const TestNavigationButtons = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div style={{
+      position: "fixed",
+      bottom: "20px",
+      right: "20px",
+      zIndex: 10000,
+      background: "#333",
+      padding: "10px",
+      borderRadius: "5px",
+      display: "flex",
+      flexDirection: "column",
+      gap: "10px"
+    }}>
+      <h3 style={{ color: "white", margin: "0 0 10px 0" }}>Navigation Tester</h3>
+      <Button 
+        onClick={() => {
+          console.log("Test Login Navigation");
+          navigate("/login");
+        }}
+        style={{ background: "#f00" }}
+      >
+        TEST LOGIN
+      </Button>
+      <Button 
+        onClick={() => {
+          console.log("Test Register Navigation");
+          navigate("/register");
+        }}
+        style={{ background: "#0f0", color: "#000" }}
+      >
+        TEST REGISTER
+      </Button>
+      <Button 
+        onClick={() => {
+          console.log("Return Home");
+          navigate("/");
+        }}
+        style={{ background: "#00f" }}
+      >
+        TEST HOME
+      </Button>
+    </div>
+  );
+};
 
 // Verbesserte Protected Route Komponente mit direkter Fehlerbehebung
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -49,6 +99,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         fullScreen 
         text="Ihr Profil wird geladen..." 
         onRetry={() => {
+          console.log("LoadingOverlay retry triggered");
           retryLoading();
         }}
         loadingTimeout={3000} // Schnellerer Timeout, angepasst an den Datenbank-Timeout
@@ -64,6 +115,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         error={loadError}
         fullScreen
         onRetry={() => {
+          console.log("LoadingOverlay error retry triggered");
           retryLoading();
         }}
       />
@@ -72,6 +124,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   // Ohne Profil oder User können wir nicht fortfahren
   if (!user) {
+    console.log("No user, redirecting to login");
     return <Navigate to="/login" />;
   }
 
@@ -79,6 +132,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
+  // Debug: CSS-Check für globale Styles die Klicks behindern könnten
+  console.log("[DEBUG] App rendering - Checking global CSS");
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -118,6 +174,9 @@ const App = () => {
                       </Routes>
                     </div>
                     <Footer />
+                    
+                    {/* Debugging UI für Navigations-Tests */}
+                    <TestNavigationButtons />
                   </div>
                   <Toaster />
                   <Sonner />
