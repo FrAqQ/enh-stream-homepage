@@ -37,35 +37,44 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected Route Component mit verbesserte Fehlertoleranz
+// Verbesserte Protected Route Komponente mit direkter Fehlerbehebung
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, loadError, retryLoading } = useUser();
   
+  // Behandle explizit den Lade-Zustand
   if (isLoading) {
     return (
       <LoadingOverlay 
         isLoading={true} 
         fullScreen 
         text="Ihr Profil wird geladen..." 
-        onRetry={retryLoading}
+        onRetry={() => {
+          console.log("LoadingOverlay retry triggered");
+          retryLoading();
+        }}
         loadingTimeout={3000} // Schnellerer Timeout, angepasst an den Datenbank-Timeout
       />
     );
   }
   
+  // Behandle explizit den Fehler-Zustand
   if (loadError) {
     return (
       <LoadingOverlay 
         isLoading={false}
         error={loadError}
         fullScreen
-        onRetry={retryLoading}
+        onRetry={() => {
+          console.log("LoadingOverlay error retry triggered");
+          retryLoading();
+        }}
       />
     );
   }
   
   // Ohne Profil oder User können wir nicht fortfahren
   if (!user) {
+    console.log("No user, redirecting to login");
     return <Navigate to="/login" />;
   }
 

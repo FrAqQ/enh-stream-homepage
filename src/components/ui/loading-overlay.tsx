@@ -55,6 +55,16 @@ export function LoadingOverlay({
   
   if (!isLoading && !error) return <>{children}</>;
 
+  // Funktion, die garantiert, dass onRetry aufgerufen wird
+  const handleRetry = () => {
+    if (onRetry) {
+      console.log("Retry button clicked, calling onRetry function");
+      onRetry();
+    } else {
+      console.warn("Retry button clicked, but no onRetry function provided");
+    }
+  };
+
   return (
     <div className={cn(
       "relative",
@@ -77,8 +87,8 @@ export function LoadingOverlay({
                 {error.message || "Beim Laden der Daten gab es ein Problem."}
               </p>
               {onRetry && (
-                <Button onClick={onRetry} className="mt-2 gap-2" variant="outline">
-                  <RefreshCw className="h-4 w-4 animate-spin mr-1" />
+                <Button onClick={handleRetry} className="mt-2 gap-2" variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-1" />
                   Erneut versuchen
                 </Button>
               )}
@@ -101,7 +111,7 @@ export function LoadingOverlay({
               </div>
               {showTimeout && onRetry && (
                 <Button 
-                  onClick={onRetry} 
+                  onClick={handleRetry}
                   className="mt-2 gap-2" 
                   variant="outline" 
                   size="sm"

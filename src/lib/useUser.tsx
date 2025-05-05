@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -34,7 +33,7 @@ export const useUser = () => {
   const { toast } = useToast();
   const abortControllerRef = useRef(new AbortController());
 
-  // Verbesserte Profilladefunktion ohne Fallbacks
+  // Verbesserte Profilladefunktion mit besserem Error Handling
   const fetchProfile = useCallback(async (userId: string) => {
     try {
       console.log(`Loading profile for user: ${userId}`);
@@ -73,10 +72,18 @@ export const useUser = () => {
     }
   }, []);
 
-  // Hauptladefunktion mit verbesserter Fehlerbehandlung
+  // Komplett überarbeitete Hauptladefunktion mit verbesserter Fehlerbehandlung
   const fetchUserProfile = useCallback(async () => {
     try {
+      // Aktuelle Anfragen abbrechen, falls vorhanden
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort('Neue Anfrage gestartet');
+      }
+      
+      // Neuen AbortController erstellen
       abortControllerRef.current = new AbortController();
+      
+      // Status zurücksetzen
       setIsLoading(true);
       setLoadError(null);
       
@@ -102,6 +109,12 @@ export const useUser = () => {
         } catch (profileError) {
           console.warn("1. Versuch fehlgeschlagen, versuche erneut...");
           
+          // Prüfen, ob die Anfrage abgebrochen wurde
+          if (abortControllerRef.current.signal.aborted) {
+            console.log('Anfrage wurde abgebrochen, breche Retry ab');
+            return;
+          }
+          
           try {
             // Automatischer zweiter Versuch nach kurzer Pause
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -111,56 +124,67 @@ export const useUser = () => {
             setProfile(retryProfile);
             console.log('Zweiter Versuch erfolgreich!');
           } catch (retryError) {
-            console.error("2. Versuch fehlgeschlagen:", retryError);
-            setLoadError(retryError instanceof Error ? retryError : new Error('Unknown error loading profile'));
-            setProfile(null);
-            
-            // Fehler anzeigen
-            toast({
-              title: "Fehler beim Laden des Profils",
-              description: retryError instanceof Error ? retryError.message : "Unbekannter Fehler",
-              variant: "destructive"
-            });
+            // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
+            if (!abortControllerRef.current.signal.aborted) {
+              console.error("2. Versuch fehlgeschlagen:", retryError);
+              setLoadError(retryError instanceof Error ? retryError : new Error('Unknown error loading profile'));
+              setProfile(null);
+              
+              // Fehler anzeigen
+              toast({
+                title: "Fehler beim Laden des Profils",
+                description: retryError instanceof Error ? retryError.message : "Unbekannter Fehler",
+                variant: "destructive"
+              });
+            }
           }
         }
       } else {
         setProfile(null);
       }
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      setLoadError(error instanceof Error ? error : new Error('Unknown error loading profile'));
-      
-      // Bei Session-Fehlern automatisch abmelden
-      if (error instanceof Error && error.message.includes('session')) {
-        await supabase.auth.signOut().catch(e => console.error('Error signing out:', e));
-        setUser(null);
-        setProfile(null);
+      // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
+      if (!abortControllerRef.current.signal.aborted) {
+        console.error('Error in fetchUserProfile:', error);
+        setLoadError(error instanceof Error ? error : new Error('Unknown error loading profile'));
         
-        toast({
-          title: "Sitzungsfehler",
-          description: "Bitte melden Sie sich erneut an",
-          variant: "destructive"
-        });
+        // Bei Session-Fehlern automatisch abmelden
+        if (error instanceof Error && error.message.includes('session')) {
+          await supabase.auth.signOut().catch(e => console.error('Error signing out:', e));
+          setUser(null);
+          setProfile(null);
+          
+          toast({
+            title: "Sitzungsfehler",
+            description: "Bitte melden Sie sich erneut an",
+            variant: "destructive"
+          });
+        }
       }
     } finally {
-      setIsLoading(false);
+      // Ladezustand nur zurücksetzen, wenn die Anfrage nicht abgebrochen wurde
+      if (!abortControllerRef.current.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [fetchProfile, toast]);
 
-  // Funktion zum Neuladen bei Fehlern
+  // Verbesserte Funktion zum Neuladen bei Fehlern
   const retryLoading = useCallback(() => {
     console.log("Retrying profile loading...");
     
     // Aktuelle Anfragen abbrechen
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      abortControllerRef.current.abort('Retry ausgelöst');
     }
     
     // Fehler zurücksetzen
     setLoadError(null);
     
-    // Neu laden
-    fetchUserProfile();
+    // Neu laden mit verzögertem Start
+    setTimeout(() => {
+      fetchUserProfile();
+    }, 100);
   }, [fetchUserProfile]);
 
   // Funktion zum Aktualisieren der Zuschauerzahl
@@ -207,8 +231,9 @@ export const useUser = () => {
     }
   }, [user?.id, profile, fetchChatterStats]);
 
-  // Initiales Laden und Auth-Listener
+  // Optimiertes Auth-Listener-Setup
   useEffect(() => {
+    console.log("Setting up auth listener and loading initial profile");
     fetchUserProfile();
 
     // Auth-Änderungen überwachen
@@ -220,16 +245,24 @@ export const useUser = () => {
         setProfile(null);
         databaseService.clearCache();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Aktuelle Anfragen abbrechen
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort('Auth state changed');
+        }
+        
         setUser(session?.user ?? null);
         
         if (session?.user?.id) {
           try {
+            setIsLoading(true);
             const userProfile = await fetchProfile(session.user.id);
             setProfile(userProfile);
           } catch (profileError) {
             console.error("Failed to load profile on auth change:", profileError);
             setLoadError(profileError instanceof Error ? profileError : new Error('Unknown error loading profile'));
             setProfile(null);
+          } finally {
+            setIsLoading(false);
           }
         }
       }
@@ -238,7 +271,7 @@ export const useUser = () => {
     return () => {
       subscription.unsubscribe();
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+        abortControllerRef.current.abort('Component unmounted');
       }
     };
   }, [fetchProfile, fetchUserProfile]);
