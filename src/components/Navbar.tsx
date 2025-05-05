@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -23,7 +23,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PersonalizationPanel } from "./PersonalizationPanel";
 import { useOnboarding } from "@/lib/OnboardingContext";
 import { OnboardingTooltip } from "./ui/onboarding-tooltip";
-import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const { user, logout } = useUser();
@@ -36,6 +35,11 @@ const Navbar = () => {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
   const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
+
+  // Debug-Logs für Benutzerprobleme
+  useEffect(() => {
+    console.log("Navbar gerendert - User-Status:", !!user);
+  }, [user]);
 
   // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
   useEffect(() => {
@@ -107,6 +111,18 @@ const Navbar = () => {
     }
   };
 
+  // Explicit login handler
+  const handleLogin = () => {
+    console.log("Login-Button geklickt");
+    navigate("/login");
+  };
+
+  // Explicit register handler
+  const handleRegister = () => {
+    console.log("Register-Button geklickt");
+    navigate("/register");
+  };
+
   const translations = {
     en: {
       dashboard: "Dashboard",
@@ -166,65 +182,73 @@ const Navbar = () => {
     </>
   );
 
-  const renderLoginButtons = (inMobileMenu = false) => (
-    <div className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}>
-      <Button 
-        variant={inMobileMenu ? "outline" : "ghost"} 
-        className={inMobileMenu ? "w-full justify-start" : ""}
-        onClick={() => {
-          if (inMobileMenu) closeSheet();
-          navigate("/login");
-        }}
-      >
-        {t.login}
-      </Button>
-      <Button 
-        className={inMobileMenu ? "w-full justify-start" : ""} 
-        onClick={() => {
-          if (inMobileMenu) closeSheet();
-          navigate("/register");
-        }}
-      >
-        {t.register}
-      </Button>
-    </div>
-  );
+  const renderLoginButtons = (inMobileMenu = false) => {
+    console.log("Rendering login buttons, user status:", !!user);
+    
+    return (
+      <div className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}>
+        <Button 
+          variant={inMobileMenu ? "outline" : "ghost"} 
+          className={inMobileMenu ? "w-full justify-start" : ""}
+          onClick={() => {
+            console.log("Login button clicked");
+            if (inMobileMenu) closeSheet();
+            handleLogin();
+          }}
+        >
+          {t.login}
+        </Button>
+        <Button 
+          className={inMobileMenu ? "w-full justify-start" : ""} 
+          onClick={() => {
+            console.log("Register button clicked");
+            if (inMobileMenu) closeSheet();
+            handleRegister();
+          }}
+        >
+          {t.register}
+        </Button>
+      </div>
+    );
+  };
 
-  const AuthButtons = ({ inMobileMenu = false }) => (
-    <>
-      {!user ? (
-        renderLoginButtons(inMobileMenu)
-      ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user.user_metadata?.avatar_url} />
-                <AvatarFallback>
-                  {user.email?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link to="/profile">{t.profile}</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
-              {t.personalize}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={resetOnboarding}>
-              {t.restartOnboarding}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              {t.logout}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </>
-  );
+  const AuthButtons = ({ inMobileMenu = false }) => {
+    console.log("Auth rendering, user:", !!user);
+    
+    if (!user) {
+      return renderLoginButtons(inMobileMenu);
+    }
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user.user_metadata?.avatar_url} />
+              <AvatarFallback>
+                {user.email?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link to="/profile">{t.profile}</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
+            {t.personalize}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={resetOnboarding}>
+            {t.restartOnboarding}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            {t.logout}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">

@@ -82,6 +82,7 @@ export const useUser = () => {
         throw error;
       }
       
+      console.log('Session geladen:', session?.user ? 'Benutzer vorhanden' : 'Kein Benutzer');
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
@@ -303,6 +304,8 @@ export const useUser = () => {
 
   // Effect to load user on mount and set up auth state listener
   useEffect(() => {
+    console.log("useUser Hook initialisiert");
+    
     // Load user profile immediately
     fetchUserProfile();
 
