@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -35,13 +36,7 @@ const Navbar = () => {
   const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
 
-  // Debug-Ausgabe beim Rendern
-  useEffect(() => {
-    console.log("Navbar gerendert - User-Status:", !!user);
-    console.log("Navigate Funktion verfügbar:", !!navigate);
-  }, [user, navigate]);
-
-  // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
+  // Admin-Status-Prüfung mit Abhängigkeit von user
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
@@ -89,9 +84,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      console.log("[Logout] Vor logout", user);
       const { success, error } = await logout();
-      console.log("[Logout] Nach logout", user);
       
       if (!success) {
         console.error("Logout error:", error);
@@ -111,19 +104,13 @@ const Navbar = () => {
     }
   };
 
-  // Explicit login handler mit Debug-Ausgabe
+  // Login handler
   const handleLogin = () => {
-    console.log("Login-Button geklickt - Event ausgelöst");
-    // Test-Alert zur Überprüfung der UI-Interaktion
-    alert("Login-Button wurde geklickt!");
     navigate("/login");
   };
 
-  // Explicit register handler mit Debug-Ausgabe
+  // Register handler
   const handleRegister = () => {
-    console.log("Register-Button geklickt - Event ausgelöst");
-    // Test-Alert zur Überprüfung der UI-Interaktion
-    alert("Register-Button wurde geklickt!");
     navigate("/register");
   };
 
@@ -187,11 +174,6 @@ const Navbar = () => {
   );
 
   const renderLoginButtons = (inMobileMenu = false) => {
-    console.log("Rendering login buttons - Aktiver Render-Durchlauf");
-    
-    // Wichtig: Wir setzen explizit hohe z-index und aktivieren pointer-events
-    const buttonStyle = { position: "relative", zIndex: 9999, pointerEvents: "auto" };
-    
     return (
       <div 
         className={`flex ${inMobileMenu ? "flex-col w-full gap-3" : "items-center gap-2"}`}
@@ -201,14 +183,12 @@ const Navbar = () => {
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
           onClick={handleLogin}
-          style={buttonStyle}
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
           onClick={handleRegister}
-          style={buttonStyle}
         >
           {t.register}
         </Button>
@@ -217,8 +197,6 @@ const Navbar = () => {
   };
 
   const AuthButtons = ({ inMobileMenu = false }) => {
-    console.log("AuthButtons Rendering - User:", !!user);
-    
     if (!user) {
       return renderLoginButtons(inMobileMenu);
     }
@@ -253,32 +231,6 @@ const Navbar = () => {
       </DropdownMenu>
     );
   };
-
-  // Test-Button außerhalb der normalen Navigation
-  const TestLoginButton = () => (
-    <div 
-      style={{ 
-        position: "fixed", 
-        top: "100px", 
-        right: "20px", 
-        zIndex: 10000,
-        background: "red",
-        padding: "10px", 
-        borderRadius: "5px",
-        color: "white" 
-      }}
-    >
-      <button 
-        onClick={() => {
-          console.log("Test-Button geklickt");
-          alert("Test-Button funktioniert!");
-          navigate("/login");
-        }}
-      >
-        TEST LOGIN
-      </button>
-    </div>
-  );
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -373,9 +325,6 @@ const Navbar = () => {
           </Sheet>
         </div>
       </div>
-
-      {/* Test-Button für Debug-Zwecke */}
-      <TestLoginButton />
 
       {/* Chat Dialog */}
       <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
