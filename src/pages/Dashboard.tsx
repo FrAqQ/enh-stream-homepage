@@ -19,8 +19,11 @@ const Dashboard = () => {
   const { user, profile } = useUser();
   const { toast } = useToast();
   const [streamUrl, setStreamUrl] = useState("");
-  const [viewerCount, setViewerCount] = useState(0);
+  // Enhanced viewers and chatters (the ones we add)
+  const [enhancedViewerCount, setEnhancedViewerCount] = useState(0);  
   const [chatterCount, setChatterCount] = useState(0);
+  // Actual Twitch stats
+  const [actualViewerCount, setActualViewerCount] = useState(0);
   const [viewerGrowth, setViewerGrowth] = useState("0");
   const [followerProgress, setFollowerProgress] = useState(0);
   const [followerPlan, setFollowerPlan] = useState<any>(null);
@@ -32,19 +35,20 @@ const Dashboard = () => {
   
   // Add new state for viewer history
   const [viewerHistory, setViewerHistory] = useState<any[]>([]);
-  const [botViewerCount, setBotViewerCount] = useState(0);
-  const [actualViewerCount, setActualViewerCount] = useState(0);
+  
+  // Calculate total viewers (actual + enhanced)
+  const totalViewerCount = actualViewerCount + enhancedViewerCount;
 
   useEffect(() => {
     if (profile) {
-      setViewerCount(profile.viewers_active || 0);
+      // Set enhanced viewer count from profile
+      setEnhancedViewerCount(profile.viewers_active || 0);
       setUserPlan(profile.plan || "Free");
       setSubscriptionStatus(profile.subscription_status || "inactive");
     }
   }, [profile]);
 
-  // Generate random viewer history data for demo purposes
-  // In a real application, this would be fetched from your database
+  // Generate viewer history data
   useEffect(() => {
     // Generate past 24 hours of data
     const generateHistory = () => {
@@ -56,7 +60,7 @@ const Dashboard = () => {
         time.setHours(time.getHours() - (23 - i));
         
         // Generate some random but sensible data
-        const botCount = i < 12 ? Math.floor(Math.random() * 10) : botViewerCount;
+        const botCount = i < 12 ? Math.floor(Math.random() * 10) : enhancedViewerCount;
         const actualCount = Math.floor(Math.random() * 15) + 5;
         const totalCount = botCount + actualCount;
         
@@ -72,22 +76,7 @@ const Dashboard = () => {
     };
     
     setViewerHistory(generateHistory());
-  }, [botViewerCount]);
-
-  // Update actual and bot viewer counts
-  useEffect(() => {
-    if (viewerCount > 0) {
-      // Assuming botViewerCount is the number added through our interface
-      setBotViewerCount(viewerCount);
-      
-      // Actual viewers would typically come from the Twitch API
-      // For demo purposes, we'll simulate it
-      if (streamUrl) {
-        const randomActualViewers = Math.floor(Math.random() * 10) + 1;
-        setActualViewerCount(randomActualViewers);
-      }
-    }
-  }, [viewerCount, streamUrl]);
+  }, [enhancedViewerCount]);
 
   const handleSaveUrl = () => {
     try {
@@ -114,7 +103,7 @@ const Dashboard = () => {
     if (streamUrl) {
       try {
         const count = await getViewerCount(streamUrl);
-        setViewerCount(count);
+        setActualViewerCount(count);
         return count;
       } catch (error) {
         console.error("Error updating viewer count:", error);
@@ -310,9 +299,9 @@ const Dashboard = () => {
   };
 
   const calculateStreamHealth = () => {
-    if (viewerCount === 0) return { percentage: 0, status: "No viewers" };
+    if (actualViewerCount === 0) return { percentage: 0, status: "No viewers" };
     
-    const targetChatterCount = viewerCount * 0.45;
+    const targetChatterCount = actualViewerCount * 0.45;
     const healthPercentage = Math.min(100, (chatterCount / targetChatterCount) * 100);
     
     let status = "Needs improvement";
@@ -359,17 +348,16 @@ const Dashboard = () => {
     
     const viewerLimit = profile.viewer_limit || 4;
     
-    if (viewerCount + count > viewerLimit) {
+    if (enhancedViewerCount + count > viewerLimit) {
       toast({
         title: "Plan Limit Reached",
-        description: `Your ${userPlan} plan allows a maximum of ${viewerLimit} viewers`,
+        description: `Your ${userPlan} plan allows a maximum of ${viewerLimit} enhanced viewers`,
         variant: "destructive",
       });
       return;
     }
     
-    setViewerCount(prev => prev + count);
-    setBotViewerCount(prev => prev + count);
+    setEnhancedViewerCount(prev => prev + count);
 
     // Update viewer history with new data point
     const now = new Date();
@@ -380,7 +368,7 @@ const Dashboard = () => {
       if (newHistory.length > 0) {
         // Update the last entry
         const lastEntry = newHistory[newHistory.length - 1];
-        lastEntry.botViewers = botViewerCount + count;
+        lastEntry.botViewers = enhancedViewerCount + count;
         lastEntry.total = lastEntry.botViewers + lastEntry.actualViewers;
       }
       return newHistory;
@@ -436,23 +424,18 @@ const Dashboard = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
-            title="Total Viewers"
-            value={viewerCount}
+            title="Twitch Viewers"
+            value={actualViewerCount}
+            subtitle="Real viewers from Twitch"
             change={`${viewerGrowth}% from first stream`}
             icon={Users}
-            limit={profile?.viewer_limit || 4}
           />
           <StatsCard
-            title="Chat Messages"
-            value={chatterCount}
-            subtitle="Last 10 minutes"
-            change="Calculating..."
-            icon={MessageSquare}
-            limit={profile?.plan ? 
-              (profile?.subscription_status === 'active' ?
-                PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
-                PLAN_CHATTER_LIMITS.Free) :
-              PLAN_CHATTER_LIMITS.Free}
+            title="Enhanced Viewers"
+            value={enhancedViewerCount}
+            subtitle="Added by you"
+            icon={Users}
+            limit={profile?.viewer_limit || 4}
           />
           <StatsCard
             title="Stream Health"
@@ -495,8 +478,9 @@ const Dashboard = () => {
           onAdd={addViewers}
           type="viewer"
           streamUrl={streamUrl}
-          viewerCount={viewerCount}
+          viewerCount={enhancedViewerCount}
           viewerLimit={profile?.viewer_limit || 4}
+          actualStreamCount={actualViewerCount}
         />
         <ViewerControls
           title="Chatter Controls"

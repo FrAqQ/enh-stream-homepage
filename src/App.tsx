@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,7 +25,6 @@ import Privacy from "./pages/Legal/Privacy";
 import Cancellation from "./pages/Legal/Cancellation";
 import Imprint from "./pages/Legal/Imprint";
 import { CookieManager } from "./components/CookieManager";
-import { useCallback } from "react";
 
 // Create React Query client with optimized settings
 const queryClient = new QueryClient({
@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         fullScreen 
         text="Loading your profile..." 
         onRetry={retryLoading}
-        loadingTimeout={4000} // Schnelleres Timeout für bessere UX
+        loadingTimeout={4000} // Faster timeout for better UX
       />
     );
   }

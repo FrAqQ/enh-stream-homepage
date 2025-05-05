@@ -14,8 +14,9 @@ interface ViewerControlsProps {
   onAdd: (count: number) => void;
   type: "viewer" | "chatter";
   streamUrl: string;
-  viewerCount: number;
+  viewerCount: number; // This is the enhanced/bot viewers or chatters
   viewerLimit: number;
+  actualStreamCount?: number; // This is the actual Twitch stream count (only relevant for viewers)
 }
 
 const ViewerControls = ({
@@ -24,7 +25,8 @@ const ViewerControls = ({
   type,
   streamUrl,
   viewerCount,
-  viewerLimit
+  viewerLimit,
+  actualStreamCount
 }: ViewerControlsProps) => {
   const { toast } = useToast();
   const [amount, setAmount] = useState(1);
@@ -81,7 +83,7 @@ const ViewerControls = ({
     if (isLimitReached) {
       toast({
         title: "Limit Reached",
-        description: `Your current plan allows a maximum of ${viewerLimit} viewers`,
+        description: `Your current plan allows a maximum of ${viewerLimit} ${type === "viewer" ? "viewers" : "chatters"}`,
         variant: "destructive",
       });
       return;
@@ -211,9 +213,20 @@ const ViewerControls = ({
                 </div>
               </div>
               <div className="absolute bottom-0 text-xs text-muted-foreground w-full text-center">
-                {viewerCount} of {viewerLimit} active
+                {viewerCount} of {viewerLimit} {type === "viewer" ? "enhanced viewers" : "chatters"} active
               </div>
             </div>
+            
+            {type === "viewer" && actualStreamCount !== undefined && (
+              <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Current Twitch viewers:</span> {actualStreamCount}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Total viewers:</span> {actualStreamCount + viewerCount}
+                </p>
+              </div>
+            )}
             
             <div className="flex gap-2 mt-2">
               <Button 
