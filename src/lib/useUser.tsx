@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -14,9 +15,20 @@ export interface UserProfile {
   chatter_limit: number;
 }
 
+export interface ChatterStats {
+  enhanced_chatters: number;
+  total_chatters: number;
+  natural_chatters: number;
+}
+
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [chatterStats, setChatterStats] = useState<ChatterStats>({
+    enhanced_chatters: 0,
+    total_chatters: 0,
+    natural_chatters: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const { toast } = useToast();
@@ -47,6 +59,23 @@ export const useUser = () => {
     } catch (error) {
       console.error('Error loading profile:', error);
       throw error; // Fehler weitergeben statt unterdrücken
+    }
+  }, []);
+
+  // Funktion zum Laden der Chatter-Statistiken
+  const fetchChatterStats = useCallback(async (userId: string, streamUrl: string) => {
+    if (!streamUrl) return;
+    
+    try {
+      const { data, error } = await databaseService.getChatterStats(userId, streamUrl);
+      if (error) {
+        console.error('Error loading chatter stats:', error);
+        return;
+      }
+      
+      setChatterStats(data);
+    } catch (error) {
+      console.error('Error in fetchChatterStats:', error);
     }
   }, []);
 
@@ -160,28 +189,26 @@ export const useUser = () => {
     }
   }, [user?.id, profile]);
 
-  // Neue Funktion zum Aktualisieren der Chatterzahl
-  const updateUserChatters = useCallback(async (count: number) => {
-    if (!user?.id || !profile) return false;
+  // Funktion zum Aktualisieren der Chatterzahl und Chatter-Statistiken
+  const updateUserChatters = useCallback(async (streamUrl: string, count: number) => {
+    if (!user?.id || !profile || !streamUrl) return false;
     
     try {
-      // Lokalen State aktualisieren
-      setProfile(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          chatters_active: count
-        };
-      });
+      // Neue Chatter zur Datenbank hinzufügen
+      const result = await databaseService.addChatters(user.id, streamUrl, count);
+      if (!result.success) {
+        return false;
+      }
       
-      // Datenbank aktualisieren
-      const result = await databaseService.updateChattersActive(user.id, count);
-      return result.success;
+      // Chatter-Statistiken neu laden
+      await fetchChatterStats(user.id, streamUrl);
+      
+      return true;
     } catch (error) {
       console.error('Error updating chatters:', error);
       return false;
     }
-  }, [user?.id, profile]);
+  }, [user?.id, profile, fetchChatterStats]);
 
   // Initiales Laden und Auth-Listener
   useEffect(() => {
@@ -219,6 +246,13 @@ export const useUser = () => {
     };
   }, [fetchProfile, fetchUserProfile]);
 
+  // Funktion zum Laden von Chatter-Statistiken für einen bestimmten Stream
+  const loadChatterStats = useCallback((streamUrl: string) => {
+    if (user?.id && streamUrl) {
+      fetchChatterStats(user.id, streamUrl);
+    }
+  }, [user?.id, fetchChatterStats]);
+
   return { 
     user, 
     profile, 
@@ -226,6 +260,8 @@ export const useUser = () => {
     loadError, 
     retryLoading,
     updateUserEnhancedViewers,
-    updateUserChatters
+    updateUserChatters,
+    chatterStats,
+    loadChatterStats
   };
 };

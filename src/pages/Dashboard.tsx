@@ -1,3 +1,4 @@
+
 import { Users, MessageSquare, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -16,7 +17,7 @@ import ViewerHistoryGraph from "@/components/dashboard/ViewerHistoryGraph"
 import { Onboarding } from "@/components/Onboarding"
 
 const Dashboard = () => {
-  const { user, profile } = useUser();
+  const { user, profile, chatterStats, loadChatterStats, updateUserChatters } = useUser();
   const { toast } = useToast();
   const [streamUrl, setStreamUrl] = useState("");
   // Enhanced viewers and chatters (the ones we add)
@@ -47,6 +48,13 @@ const Dashboard = () => {
       setSubscriptionStatus(profile.subscription_status || "inactive");
     }
   }, [profile]);
+
+  // Lade Chatter-Statistiken, wenn sich die Stream-URL ändert
+  useEffect(() => {
+    if (streamUrl && user?.id) {
+      loadChatterStats(streamUrl);
+    }
+  }, [streamUrl, user?.id, loadChatterStats]);
 
   // Generate viewer history data
   useEffect(() => {
@@ -88,6 +96,11 @@ const Dashboard = () => {
           title: "Success",
           description: "Stream URL saved successfully",
         });
+        
+        // Lade Chatter-Statistiken nach dem Speichern der URL
+        if (user?.id) {
+          loadChatterStats(streamUrl);
+        }
       }
     } catch (error) {
       console.error("Invalid URL:", error);
@@ -375,8 +388,8 @@ const Dashboard = () => {
     });
   };
 
-  const addChatters = (count: number) => {
-    if (!profile) return;
+  const addChatters = async (count: number) => {
+    if (!profile || !streamUrl || !user) return;
     
     const chatterLimit = profile.plan ? 
       (profile.subscription_status === 'active' ?
@@ -384,16 +397,33 @@ const Dashboard = () => {
         PLAN_CHATTER_LIMITS.Free) :
       PLAN_CHATTER_LIMITS.Free;
     
-    if (chatterCount + count > chatterLimit) {
+    // Prüfe, ob das Hinzufügen das Limit überschreiten würde
+    const currentChatters = chatterStats?.enhanced_chatters || 0;
+    
+    if (currentChatters + count > chatterLimit) {
       toast({
         title: "Plan Limit Reached",
-        description: `Your ${userPlan} plan allows a maximum of ${chatterLimit} chatters`,
+        description: `Your ${userPlan} plan allows a maximum of ${chatterLimit} enhanced chatters`,
         variant: "destructive",
       });
       return;
     }
     
-    setChatterCount(prev => prev + count);
+    // Nutze die neue Funktion im useUser hook
+    const success = await updateUserChatters(streamUrl, count);
+    
+    if (success) {
+      toast({
+        title: "Success",
+        description: `Added ${count} chatters to your stream`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add chatters",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -493,6 +523,7 @@ const Dashboard = () => {
               PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
               PLAN_CHATTER_LIMITS.Free) :
             PLAN_CHATTER_LIMITS.Free}
+          chatterStats={chatterStats}
         />
       </div>
 

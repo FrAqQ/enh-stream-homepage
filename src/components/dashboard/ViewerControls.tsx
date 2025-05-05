@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip";
 import { PLAN_VIEWER_LIMITS } from "@/lib/constants"
+import { ChatterStats } from "@/lib/useUser";
 
 interface ViewerControlsProps {
   title: string;
@@ -17,6 +18,7 @@ interface ViewerControlsProps {
   viewerCount: number; // This is the enhanced/bot viewers or chatters
   viewerLimit: number;
   actualStreamCount?: number; // This is the actual Twitch stream count (only relevant for viewers)
+  chatterStats?: ChatterStats; // Neue Statistiken für Chatter
 }
 
 const ViewerControls = ({
@@ -26,7 +28,8 @@ const ViewerControls = ({
   streamUrl,
   viewerCount,
   viewerLimit,
-  actualStreamCount
+  actualStreamCount,
+  chatterStats
 }: ViewerControlsProps) => {
   const { toast } = useToast();
   const [amount, setAmount] = useState(1);
@@ -147,6 +150,18 @@ const ViewerControls = ({
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
+  // Bestimme die anzuzeigende Zahl basierend auf dem Typ
+  const getDisplayedCount = () => {
+    if (type === "chatter" && chatterStats) {
+      // Für Chatter zeigen wir die erweiterten (hinzugefügten) Chatter an
+      return chatterStats.enhanced_chatters;
+    }
+    // Für Viewer oder wenn keine Chatter-Statistiken verfügbar sind
+    return viewerCount;
+  };
+
+  const displayedCount = getDisplayedCount();
+
   return (
     <OnboardingTooltip
       id={`${type}-controls-tooltip`}
@@ -213,7 +228,19 @@ const ViewerControls = ({
                 </div>
               </div>
               <div className="absolute bottom-0 text-xs text-muted-foreground w-full text-center">
-                {viewerCount} of {viewerLimit} {type === "viewer" ? "enhanced viewers" : "chatters"} active
+                {/* Hier Anzeige je nach Typ anpassen */}
+                {type === "viewer" ? (
+                  <span>{displayedCount} of {viewerLimit} enhanced viewers active</span>
+                ) : (
+                  <span>
+                    {displayedCount} of {viewerLimit} enhanced chatters active
+                    {chatterStats && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        (Total: {chatterStats.total_chatters}, Natural: {chatterStats.natural_chatters})
+                      </span>
+                    )}
+                  </span>
+                )}
               </div>
             </div>
             
@@ -223,7 +250,21 @@ const ViewerControls = ({
                   <span className="font-medium">Current Twitch viewers:</span> {actualStreamCount}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Total viewers:</span> {actualStreamCount + viewerCount}
+                  <span className="font-medium">Total viewers:</span> {actualStreamCount + displayedCount}
+                </p>
+              </div>
+            )}
+            
+            {type === "chatter" && chatterStats && (
+              <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Enhanced chatters:</span> {chatterStats.enhanced_chatters}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Natural chatters:</span> {chatterStats.natural_chatters}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Total chatters:</span> {chatterStats.total_chatters}
                 </p>
               </div>
             )}
@@ -315,7 +356,7 @@ const ViewerControls = ({
           <Button 
             variant="outline" 
             onClick={handleResetViewers}
-            disabled={viewerCount === 0}
+            disabled={displayedCount === 0}
           >
             Reset {type === "viewer" ? "Viewers" : "Chatters"}
           </Button>

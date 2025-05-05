@@ -180,6 +180,71 @@ export const databaseService = {
   },
 
   /**
+   * Holt die erweiterten Chatter-Daten aus der chatter_history_last24h View
+   * Teilt in natürliche und hinzugefügte Chatter auf
+   */
+  async getChatterStats(userId: string, streamUrl: string) {
+    try {
+      // Von der View chatter_history_last24h laden
+      const { data, error } = await supabase
+        .from('chatter_history_last24h')
+        .select('enhanced_chatters, total_chatters, natural_chatters')
+        .eq('user_id', userId)
+        .eq('stream_url', streamUrl)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Fehler beim Abrufen der Chatter-Statistiken:", error);
+        return { 
+          data: { enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 }, 
+          error 
+        };
+      }
+      
+      // Wenn keine Daten gefunden wurden, gib Standardwerte zurück
+      if (!data) {
+        return { 
+          data: { enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 }, 
+          error: null 
+        };
+      }
+      
+      return { data, error: null };
+    } catch (error) {
+      console.error("Unbekannter Fehler in getChatterStats:", error);
+      return { 
+        data: { enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 }, 
+        error 
+      };
+    }
+  },
+
+  /**
+   * Hinzufügen eines neuen Chatters zur chatter_sessions Tabelle
+   */
+  async addChatters(userId: string, streamUrl: string, count: number) {
+    try {
+      // Verwende die neue RPC-Funktion zum Hochzählen
+      for (let i = 0; i < count; i++) {
+        const { error } = await supabase.rpc('increment_chatter_count', {
+          user_id: userId,
+          stream_url: streamUrl
+        });
+        
+        if (error) {
+          console.error("Fehler beim Hinzufügen eines Chatters:", error);
+          return { success: false, error };
+        }
+      }
+      
+      return { success: true, error: null };
+    } catch (error) {
+      console.error("Fehler in addChatters:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
    * Cache oder einen bestimmten Cache-Eintrag löschen
    */
   clearCache(key?: string) {
