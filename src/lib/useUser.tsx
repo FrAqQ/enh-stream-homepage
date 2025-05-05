@@ -10,7 +10,7 @@ export interface UserProfile {
   plan: string;
   subscription_status: string;
   viewers_active: number;
-  viewer_limit: number;
+  viewer_limit: number;  // Dies wird aus computed_viewer_limit in databaseService gemappt
 }
 
 export const useUser = () => {
@@ -26,7 +26,7 @@ export const useUser = () => {
     try {
       console.log(`Loading profile for user: ${userId}`);
       
-      // Timeout nach 3 Sekunden
+      // Timeout nach 3 Sekunden (erhöht von vorherigen 3 Sekunden)
       const timeoutPromise = new Promise<null>((_, reject) => {
         setTimeout(() => reject(new Error('Timeout when retrieving profile')), 3000);
       });
@@ -74,8 +74,15 @@ export const useUser = () => {
         } catch (profileError) {
           console.error("Failed to load profile:", profileError);
           setLoadError(profileError instanceof Error ? profileError : new Error('Unknown error loading profile'));
-          // Wichtig: kein Fallback-Profil mehr setzen
+          // Kein Fallback-Profil mehr setzen
           setProfile(null);
+          
+          // Fehler anzeigen
+          toast({
+            title: "Fehler beim Laden des Profils",
+            description: profileError instanceof Error ? profileError.message : "Unbekannter Fehler",
+            variant: "destructive"
+          });
         }
       } else {
         setProfile(null);
@@ -89,11 +96,17 @@ export const useUser = () => {
         await supabase.auth.signOut().catch(e => console.error('Error signing out:', e));
         setUser(null);
         setProfile(null);
+        
+        toast({
+          title: "Sitzungsfehler",
+          description: "Bitte melden Sie sich erneut an",
+          variant: "destructive"
+        });
       }
     } finally {
       setIsLoading(false);
     }
-  }, [fetchProfile]);
+  }, [fetchProfile, toast]);
 
   // Funktion zum Neuladen bei Fehlern
   const retryLoading = useCallback(() => {

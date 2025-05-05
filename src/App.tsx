@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,7 +48,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         fullScreen 
         text="Ihr Profil wird geladen..." 
         onRetry={retryLoading}
-        loadingTimeout={3000} // Schnellerer Timeout für bessere UX
+        loadingTimeout={3000} // Schnellerer Timeout, angepasst an den Datenbank-Timeout
       />
     );
   }

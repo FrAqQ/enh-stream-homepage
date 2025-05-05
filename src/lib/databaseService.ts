@@ -25,10 +25,10 @@ export const databaseService = {
     try {
       console.log(`Hole Profildaten für Benutzer: ${userId}`);
       
-      // VEREINFACHTER ANSATZ: Ein einziger direkter Aufruf ohne komplexe Logik
+      // Verwende die neue View profiles_with_limit statt der Tabelle profiles
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, plan, subscription_status, viewers_active')
+        .from('profiles_with_limit')
+        .select('id, plan, subscription_status, viewers_active, computed_viewer_limit')
         .eq('id', userId)
         .single();
 
@@ -41,10 +41,10 @@ export const databaseService = {
         throw new Error("Kein Profil gefunden");
       }
       
-      // Wenn wir ein Profil erfolgreich laden konnten
+      // Erstelle das komplette Profil mit dem berechneten Limit aus der View
       const completeProfile = {
         ...data,
-        viewer_limit: this.calculateViewerLimit(data.plan, data.subscription_status),
+        viewer_limit: data.computed_viewer_limit,  // Wir behalten den Namen viewer_limit für Abwärtskompatibilität
         viewers_active: data.viewers_active || 0
       };
       
@@ -61,9 +61,8 @@ export const databaseService = {
     }
   },
 
-  /**
-   * Zuschauerlimit auf Basis von Plan und Status berechnen
-   */
+  // Diese Methode ist jetzt überflüssig, da das Limit in der View berechnet wird
+  // Wir behalten sie für den Fall, dass wir sie woanders noch brauchen
   calculateViewerLimit(plan: string | null | undefined, status: string | null | undefined) {
     if (!plan) return 4;
     
@@ -96,6 +95,7 @@ export const databaseService = {
       }
       
       // Datenbank aktualisieren
+      // Hier aktualisieren wir immer noch die profiles Tabelle, nicht die View
       const { data, error } = await supabase
         .from('profiles')
         .update({ viewers_active: count })
