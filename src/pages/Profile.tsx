@@ -1,19 +1,31 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/useUser";
+import { toast } from "sonner";
 
 const Profile = () => {
   const { user } = useUser();
-  const [email, setEmail] = useState(user?.email || "");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { toast } = useToast();
 
+  // Daten aus dem User-Objekt laden, sobald es verfügbar ist
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+      console.log("[Profile] User data loaded:", user.email);
+    }
+  }, [user]);
+
   const handleUpdateProfile = async () => {
+    console.log("[Profile] Updating profile");
+    
     try {
       const updates: any = {};
 
@@ -30,18 +42,26 @@ const Profile = () => {
           });
           return;
         }
+        
+        console.log("[Profile] Updating password");
         await supabase.auth.updateUser({ password });
       }
 
-      const { error } = await supabase.auth.updateUser(updates);
+      // Falls E-Mail-Updates vorhanden sind
+      if (Object.keys(updates).length > 0) {
+        console.log("[Profile] Updating user data:", updates);
+        const { error } = await supabase.auth.updateUser(updates);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
 
       toast({
         title: "Success",
         description: "Profile updated successfully",
       });
     } catch (error) {
+      console.error("[Profile] Profile update error:", error);
+      
       toast({
         variant: "destructive",
         title: "Error",
@@ -91,7 +111,7 @@ const Profile = () => {
               </div>
             </div>
 
-            <Button onClick={handleUpdateProfile}>
+            <Button onClick={handleUpdateProfile} type="button">
               Save Changes
             </Button>
           </CardContent>

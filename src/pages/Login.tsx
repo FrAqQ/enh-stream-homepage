@@ -71,6 +71,7 @@ const Login = () => {
             description: t.confirmEmail,
             variant: "destructive"
           });
+          setIsLoading(false);
           return;
         }
 
@@ -80,25 +81,26 @@ const Login = () => {
           description: t.checkCredentials,
           variant: "destructive"
         });
+        setIsLoading(false);
         return;
       }
 
       console.log("[Login] Login successful, user data:", data);
+      
+      // Erfolgsmeldung anzeigen
       toast({
         title: "Success",
         description: t.loginSuccess,
       });
       
-      // Warten auf eindeutige Authentifizierung, bevor wir weiterleiten
+      // Wir setzen isLoading auf false, bevor wir weiterleiten
+      setIsLoading(false);
+      
+      // Kurze Verzögerung vor der Weiterleitung
       setTimeout(() => {
-        console.log("[Login] Navigating to dashboard after successful login with delay");
-        try {
-          navigate("/dashboard");
-          console.log("[Login] Navigation completed");
-        } catch (navError) {
-          console.error("[Login] Navigation error:", navError);
-        }
-      }, 500); // Längere Verzögerung für zuverlässigere Navigation
+        console.log("[Login] Navigating to dashboard");
+        navigate("/dashboard", { replace: true });
+      }, 1000);
       
     } catch (error) {
       console.error("[Login] Unexpected login error:", error);
@@ -107,7 +109,6 @@ const Login = () => {
         description: t.checkCredentials,
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };

@@ -44,26 +44,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
-    // Debug Log für Click Events hinzugefügt
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      console.log("Button clicked, props:", props);
-      console.log("Event:", e);
-      
-      if (props.onClick) {
-        props.onClick(e);
-      }
-    };
-
-    // Filtere onClick aus props, da wir es selbst verwalten
-    const { onClick, ...restProps } = props;
-    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         type={props.type || "button"}
-        onClick={handleClick}
-        {...restProps}
+        {...props}
       />
     )
   }

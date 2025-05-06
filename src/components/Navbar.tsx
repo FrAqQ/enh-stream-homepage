@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -39,9 +39,8 @@ const Navbar = () => {
   // Debug-Ausgabe beim Rendern
   useEffect(() => {
     console.log("[Navbar] Gerendert - User-Status:", !!user);
-    console.log("[Navbar] Navigate Funktion verfügbar:", !!navigate);
     console.log("[Navbar] User-Objekt:", user);
-  }, [user, navigate]);
+  }, [user]);
 
   // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
   useEffect(() => {
@@ -90,58 +89,32 @@ const Navbar = () => {
     }
   };
 
-  // Direkte Navigation mit festen Callback-Funktionen
+  // Logout mit Redirect zur Startseite
   const handleLogout = async () => {
     try {
-      console.log("[Navbar] Logout Funktion gestartet");
+      console.log("[Navbar] Logout gestartet");
       await logout();
-      console.log("[Navbar] Logout erfolgreich, navigiere zur Startseite");
+      console.log("[Navbar] Logout erfolgreich");
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
-      navigate('/');
+      
+      // Navigate mit replace um History zu überschreiben
+      navigate('/', { replace: true });
     } catch (error) {
       console.error("[Navbar] Logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
     }
   };
 
-  // Direkte Navigation für alle Bereiche
-  const handleLoginClick = () => {
-    console.log("[Navbar] Navigation zu /login");
-    navigate("/login");
-  };
-
-  const handleRegisterClick = () => {
-    console.log("[Navbar] Navigation zu /register");
-    navigate("/register");
-  };
-  
-  const handleProfileClick = () => {
-    console.log("[Navbar] Navigation zu /profile");
-    navigate("/profile");
-  };
-
-  const handleDashboardClick = () => {
-    console.log("[Navbar] Navigation zu /dashboard");
-    navigate("/dashboard");
-  };
-
-  const handlePricingClick = () => {
-    console.log("[Navbar] Navigation zu /pricing");
-    navigate("/pricing");
-  };
-
-  const handleAdminClick = () => {
-    console.log("[Navbar] Navigation zu /admin");
-    navigate("/admin");
-  };
-
-  const handleHomeClick = () => {
-    console.log("[Navbar] Navigation zur Startseite");
-    navigate("/");
-  };
-
-  const closeSheet = () => {
-    setIsSheetOpen(false);
+  // Verbesserte Navigation mit direktem Event-Handler
+  const handleNavigation = (path: string) => (event: React.MouseEvent) => {
+    event.preventDefault();
+    console.log(`[Navbar] Navigation zu: ${path}`);
+    navigate(path);
+    
+    // Mobile Menü schließen, falls geöffnet
+    if (isSheetOpen) {
+      setIsSheetOpen(false);
+    }
   };
 
   const translations = {
@@ -181,12 +154,12 @@ const Navbar = () => {
 
   const t = translations[language];
 
-  // Navigations-Links mit direkten Klick-Handlern
+  // Navigations-Links mit optimierten Click-Handlern
   const NavLinks = () => (
     <>
       <Button 
         variant="ghost" 
-        onClick={handleDashboardClick}
+        onClick={handleNavigation('/dashboard')}
         className="text-foreground/80 hover:text-foreground"
         type="button"
       >
@@ -196,7 +169,7 @@ const Navbar = () => {
       {isAdmin && (
         <Button 
           variant="ghost" 
-          onClick={handleAdminClick} 
+          onClick={handleNavigation('/admin')}
           className="text-foreground/80 hover:text-foreground"
           type="button"
         >
@@ -206,7 +179,7 @@ const Navbar = () => {
       
       <Button 
         variant="ghost" 
-        onClick={handlePricingClick} 
+        onClick={handleNavigation('/pricing')}
         className="text-foreground/80 hover:text-foreground"
         type="button"
       >
@@ -215,7 +188,7 @@ const Navbar = () => {
     </>
   );
 
-  // Login/Register Buttons mit expliziten Handlern
+  // Login/Register Buttons mit verbesserten Handlern
   const renderLoginButtons = (inMobileMenu = false) => {
     return (
       <div 
@@ -224,14 +197,14 @@ const Navbar = () => {
         <Button 
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
-          onClick={handleLoginClick}
+          onClick={handleNavigation('/login')}
           type="button"
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
-          onClick={handleRegisterClick}
+          onClick={handleNavigation('/register')}
           type="button"
         >
           {t.register}
@@ -240,7 +213,7 @@ const Navbar = () => {
     );
   };
 
-  // Profilmenü mit expliziten Handlern
+  // Profilmenü mit verbesserten Handlern
   const AuthButtons = ({ inMobileMenu = false }) => {
     if (!user) {
       return renderLoginButtons(inMobileMenu);
@@ -259,17 +232,17 @@ const Navbar = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => handleProfileClick()}>
+          <DropdownMenuItem onClick={handleNavigation('/profile')}>
             {t.profile}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setIsPersonalizationOpen(true)}>
+          <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
             {t.personalize}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => resetOnboarding()}>
+          <DropdownMenuItem onClick={() => resetOnboarding()}>
             {t.restartOnboarding}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => handleLogout()}>
+          <DropdownMenuItem onClick={() => handleLogout()}>
             {t.logout}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -282,7 +255,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Button 
           variant="ghost" 
-          onClick={handleHomeClick} 
+          onClick={handleNavigation('/')}
           className="text-xl font-bold text-primary p-0"
           type="button"
         >
@@ -293,7 +266,11 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-6">
           <NavLinks />
           
-          <Button variant="outline" onClick={() => setIsChatOpen(true)} type="button">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsChatOpen(true)} 
+            type="button"
+          >
             {t.chatWithUs}
           </Button>
 
@@ -342,10 +319,7 @@ const Navbar = () => {
                 <div className="flex flex-col gap-4">
                   <Button 
                     variant="ghost" 
-                    onClick={() => {
-                      closeSheet();
-                      handleDashboardClick();
-                    }} 
+                    onClick={handleNavigation('/dashboard')}
                     className="justify-start"
                     type="button"
                   >
@@ -355,10 +329,7 @@ const Navbar = () => {
                   {isAdmin && (
                     <Button 
                       variant="ghost" 
-                      onClick={() => {
-                        closeSheet();
-                        handleAdminClick();
-                      }} 
+                      onClick={handleNavigation('/admin')}
                       className="justify-start"
                       type="button"
                     >
@@ -368,10 +339,7 @@ const Navbar = () => {
                   
                   <Button 
                     variant="ghost" 
-                    onClick={() => {
-                      closeSheet();
-                      handlePricingClick();
-                    }} 
+                    onClick={handleNavigation('/pricing')}
                     className="justify-start"
                     type="button"
                   >
@@ -381,7 +349,7 @@ const Navbar = () => {
                   <Button 
                     variant="outline" 
                     onClick={() => {
-                      closeSheet();
+                      setIsSheetOpen(false);
                       setIsChatOpen(true);
                     }}
                     className="justify-start"
@@ -394,7 +362,7 @@ const Navbar = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => {
-                        closeSheet();
+                        setIsSheetOpen(false);
                         setIsPersonalizationOpen(true);
                       }}
                       className="justify-start"
