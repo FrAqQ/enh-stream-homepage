@@ -55,14 +55,14 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting login for:", email);
+      console.log("[Login] Attempting login for:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("Login error:", error);
+        console.error("[Login] Login error:", error);
         
         // Specific message for unconfirmed email
         if (error.message === "Email not confirmed") {
@@ -83,19 +83,25 @@ const Login = () => {
         return;
       }
 
-      console.log("Login successful:", data);
+      console.log("[Login] Login successful, user data:", data);
       toast({
         title: "Success",
         description: t.loginSuccess,
       });
       
-      // Verzögerung für zuverlässigere Navigation nach Login
+      // Warten auf eindeutige Authentifizierung, bevor wir weiterleiten
       setTimeout(() => {
-        console.log("Navigating to dashboard after successful login");
-        navigate("/dashboard");
-      }, 100);
+        console.log("[Login] Navigating to dashboard after successful login with delay");
+        try {
+          navigate("/dashboard");
+          console.log("[Login] Navigation completed");
+        } catch (navError) {
+          console.error("[Login] Navigation error:", navError);
+        }
+      }, 500); // Längere Verzögerung für zuverlässigere Navigation
+      
     } catch (error) {
-      console.error("Unexpected login error:", error);
+      console.error("[Login] Unexpected login error:", error);
       toast({
         title: t.loginFailed,
         description: t.checkCredentials,

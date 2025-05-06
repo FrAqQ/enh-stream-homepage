@@ -38,8 +38,9 @@ const Navbar = () => {
 
   // Debug-Ausgabe beim Rendern
   useEffect(() => {
-    console.log("Navbar gerendert - User-Status:", !!user);
-    console.log("Navigate Funktion verfügbar:", !!navigate);
+    console.log("[Navbar] Gerendert - User-Status:", !!user);
+    console.log("[Navbar] Navigate Funktion verfügbar:", !!navigate);
+    console.log("[Navbar] User-Objekt:", user);
   }, [user, navigate]);
 
   // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
@@ -57,9 +58,10 @@ const Navbar = () => {
           .eq('id', user.id)
           .single();
         
+        console.log("[Navbar] Admin-Status geprüft:", profile?.is_admin || false);
         setIsAdmin(profile?.is_admin || false);
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error("[Navbar] Error checking admin status:", error);
         setIsAdmin(false);
       }
     };
@@ -88,53 +90,53 @@ const Navbar = () => {
     }
   };
 
-  // VERBESSERT: Logout mit direktem Callback und Fehlerbehandlung
+  // Direkte Navigation mit festen Callback-Funktionen
   const handleLogout = async () => {
     try {
-      console.log("Logout Funktion gestartet");
+      console.log("[Navbar] Logout Funktion gestartet");
       await logout();
-      console.log("Logout erfolgreich, navigiere zur Startseite");
+      console.log("[Navbar] Logout erfolgreich, navigiere zur Startseite");
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       navigate('/');
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("[Navbar] Logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
     }
   };
 
-  // DIREKTE NAVIGATION: Einfache Funktionen ohne komplexe Logik
+  // Direkte Navigation für alle Bereiche
   const handleLoginClick = () => {
-    console.log("Login-Button geklickt, navigiere zu /login");
+    console.log("[Navbar] Navigation zu /login");
     navigate("/login");
   };
 
   const handleRegisterClick = () => {
-    console.log("Register-Button geklickt, navigiere zu /register");
+    console.log("[Navbar] Navigation zu /register");
     navigate("/register");
   };
   
   const handleProfileClick = () => {
-    console.log("Profil-Button geklickt, navigiere zu /profile");
+    console.log("[Navbar] Navigation zu /profile");
     navigate("/profile");
   };
 
   const handleDashboardClick = () => {
-    console.log("Dashboard-Button geklickt, navigiere zu /dashboard");
+    console.log("[Navbar] Navigation zu /dashboard");
     navigate("/dashboard");
   };
 
   const handlePricingClick = () => {
-    console.log("Pricing-Button geklickt, navigiere zu /pricing");
+    console.log("[Navbar] Navigation zu /pricing");
     navigate("/pricing");
   };
 
   const handleAdminClick = () => {
-    console.log("Admin-Button geklickt, navigiere zu /admin");
+    console.log("[Navbar] Navigation zu /admin");
     navigate("/admin");
   };
 
   const handleHomeClick = () => {
-    console.log("Home-Button geklickt, navigiere zur Startseite");
+    console.log("[Navbar] Navigation zur Startseite");
     navigate("/");
   };
 
@@ -179,13 +181,14 @@ const Navbar = () => {
 
   const t = translations[language];
 
-  // Navigations-Links mit Klick-Handlern 
+  // Navigations-Links mit direkten Klick-Handlern
   const NavLinks = () => (
     <>
       <Button 
         variant="ghost" 
         onClick={handleDashboardClick}
         className="text-foreground/80 hover:text-foreground"
+        type="button"
       >
         {t.dashboard}
       </Button>
@@ -195,6 +198,7 @@ const Navbar = () => {
           variant="ghost" 
           onClick={handleAdminClick} 
           className="text-foreground/80 hover:text-foreground"
+          type="button"
         >
           {t.admin}
         </Button>
@@ -204,13 +208,14 @@ const Navbar = () => {
         variant="ghost" 
         onClick={handlePricingClick} 
         className="text-foreground/80 hover:text-foreground"
+        type="button"
       >
         {t.pricing}
       </Button>
     </>
   );
 
-  // Login/Register Buttons mit expliziten Handlefunktionen
+  // Login/Register Buttons mit expliziten Handlern
   const renderLoginButtons = (inMobileMenu = false) => {
     return (
       <div 
@@ -220,12 +225,14 @@ const Navbar = () => {
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
           onClick={handleLoginClick}
+          type="button"
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
           onClick={handleRegisterClick}
+          type="button"
         >
           {t.register}
         </Button>
@@ -242,7 +249,7 @@ const Navbar = () => {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full" type="button">
             <Avatar className="h-10 w-10">
               <AvatarImage src={user.user_metadata?.avatar_url} />
               <AvatarFallback>
@@ -252,17 +259,17 @@ const Navbar = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleProfileClick}>
+          <DropdownMenuItem onSelect={() => handleProfileClick()}>
             {t.profile}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
+          <DropdownMenuItem onSelect={() => setIsPersonalizationOpen(true)}>
             {t.personalize}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={resetOnboarding}>
+          <DropdownMenuItem onSelect={() => resetOnboarding()}>
             {t.restartOnboarding}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem onSelect={() => handleLogout()}>
             {t.logout}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -277,6 +284,7 @@ const Navbar = () => {
           variant="ghost" 
           onClick={handleHomeClick} 
           className="text-xl font-bold text-primary p-0"
+          type="button"
         >
           Enhance Stream
         </Button>
@@ -285,7 +293,7 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-6">
           <NavLinks />
           
-          <Button variant="outline" onClick={() => setIsChatOpen(true)}>
+          <Button variant="outline" onClick={() => setIsChatOpen(true)} type="button">
             {t.chatWithUs}
           </Button>
 
@@ -303,6 +311,7 @@ const Navbar = () => {
                 size="icon" 
                 onClick={() => setIsPersonalizationOpen(true)}
                 className="relative"
+                type="button"
               >
                 <Settings className="h-5 w-5" />
                 <span className="sr-only">{t.personalize}</span>
@@ -323,7 +332,7 @@ const Navbar = () => {
           
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="icon" variant="outline">
+              <Button size="icon" variant="outline" type="button">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">{t.menu}</span>
               </Button>
@@ -334,10 +343,11 @@ const Navbar = () => {
                   <Button 
                     variant="ghost" 
                     onClick={() => {
-                      handleDashboardClick();
                       closeSheet();
+                      handleDashboardClick();
                     }} 
                     className="justify-start"
+                    type="button"
                   >
                     {t.dashboard}
                   </Button>
@@ -346,10 +356,11 @@ const Navbar = () => {
                     <Button 
                       variant="ghost" 
                       onClick={() => {
-                        handleAdminClick();
                         closeSheet();
+                        handleAdminClick();
                       }} 
                       className="justify-start"
+                      type="button"
                     >
                       {t.admin}
                     </Button>
@@ -358,10 +369,11 @@ const Navbar = () => {
                   <Button 
                     variant="ghost" 
                     onClick={() => {
-                      handlePricingClick();
                       closeSheet();
+                      handlePricingClick();
                     }} 
                     className="justify-start"
+                    type="button"
                   >
                     {t.pricing}
                   </Button>
@@ -369,10 +381,11 @@ const Navbar = () => {
                   <Button 
                     variant="outline" 
                     onClick={() => {
-                      setIsChatOpen(true);
                       closeSheet();
+                      setIsChatOpen(true);
                     }}
                     className="justify-start"
+                    type="button"
                   >
                     {t.chatWithUs}
                   </Button>
@@ -381,10 +394,11 @@ const Navbar = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => {
-                        setIsPersonalizationOpen(true);
                         closeSheet();
+                        setIsPersonalizationOpen(true);
                       }}
                       className="justify-start"
+                      type="button"
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       {t.personalize}
@@ -413,7 +427,7 @@ const Navbar = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
-            <Button onClick={handleChatRequest}>{t.sendRequest}</Button>
+            <Button onClick={handleChatRequest} type="button">{t.sendRequest}</Button>
           </div>
         </DialogContent>
       </Dialog>
