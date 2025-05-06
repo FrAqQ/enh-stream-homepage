@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,20 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
+
+  // DEBUG: Überprüfe auf bestehende Session beim Laden
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      console.log("[Login] Prüfe auf bestehende Session...");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log("[Login] Bereits eingeloggt, leite weiter...");
+        navigate("/dashboard", { replace: true });
+      }
+    };
+    
+    checkExistingSession();
+  }, [navigate]);
 
   const translations = {
     en: {
@@ -52,6 +66,7 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[Login] Login-Formular gesendet");
     setIsLoading(true);
 
     try {
@@ -85,7 +100,7 @@ const Login = () => {
         return;
       }
 
-      console.log("[Login] Login successful, user data:", data);
+      console.log("[Login] Login erfolgreich, Nutzerdaten:", data);
       
       // Erfolgsmeldung anzeigen
       toast({
@@ -93,15 +108,14 @@ const Login = () => {
         description: t.loginSuccess,
       });
       
-      // Wir setzen isLoading auf false, bevor wir weiterleiten
+      // Wir setzen isLoading auf false
       setIsLoading(false);
       
-      // Kurze Verzögerung vor der Weiterleitung
+      // Verzögerung für stabilere Navigation nach Login
       setTimeout(() => {
-        console.log("[Login] Navigating to dashboard");
+        console.log("[Login] Navigiere zum Dashboard mit replace:true");
         navigate("/dashboard", { replace: true });
-      }, 1000);
-      
+      }, 500);
     } catch (error) {
       console.error("[Login] Unexpected login error:", error);
       toast({

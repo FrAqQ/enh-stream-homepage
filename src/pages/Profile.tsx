@@ -13,18 +13,23 @@ const Profile = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
+
+  // Debug-Ausgabe
+  useEffect(() => {
+    console.log("[Profile] Component mounted, user:", user?.email);
+  }, []);
 
   // Daten aus dem User-Objekt laden, sobald es verfügbar ist
   useEffect(() => {
     if (user?.email) {
+      console.log("[Profile] Setting email from user object:", user.email);
       setEmail(user.email);
-      console.log("[Profile] User data loaded:", user.email);
     }
   }, [user]);
 
-  const handleUpdateProfile = async () => {
-    console.log("[Profile] Updating profile");
+  const handleUpdateProfile = async (e: React.MouseEvent) => {
+    console.log("[Profile] handleUpdateProfile triggered");
     
     try {
       const updates: any = {};
@@ -35,7 +40,7 @@ const Profile = () => {
 
       if (password) {
         if (password !== confirmPassword) {
-          toast({
+          uiToast({
             title: "Error",
             description: "Passwords do not match",
             variant: "destructive"
@@ -55,18 +60,11 @@ const Profile = () => {
         if (error) throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
+      toast("Profile updated successfully");
     } catch (error) {
       console.error("[Profile] Profile update error:", error);
       
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Profile could not be updated",
-      });
+      toast("Profile could not be updated");
     }
   };
 
@@ -111,7 +109,10 @@ const Profile = () => {
               </div>
             </div>
 
-            <Button onClick={handleUpdateProfile} type="button">
+            <Button 
+              onClick={handleUpdateProfile} 
+              type="button"
+            >
               Save Changes
             </Button>
           </CardContent>
@@ -126,14 +127,14 @@ const Profile = () => {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
               <div>
                 <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-sm text-muted-foreground">{user?.email || "Loading..."}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
               <div>
                 <p className="text-sm font-medium">User ID</p>
-                <p className="text-sm text-muted-foreground">{user?.id}</p>
+                <p className="text-sm text-muted-foreground">{user?.id || "Loading..."}</p>
               </div>
             </div>
 

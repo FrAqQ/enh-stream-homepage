@@ -39,7 +39,9 @@ const Navbar = () => {
   // Debug-Ausgabe beim Rendern
   useEffect(() => {
     console.log("[Navbar] Gerendert - User-Status:", !!user);
-    console.log("[Navbar] User-Objekt:", user);
+    if (user) {
+      console.log("[Navbar] User-Objekt verfügbar:", user.email);
+    }
   }, [user]);
 
   // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
@@ -97,7 +99,8 @@ const Navbar = () => {
       console.log("[Navbar] Logout erfolgreich");
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       
-      // Navigate mit replace um History zu überschreiben
+      // Explizite Navigation mit replace und Console Output
+      console.log("[Navbar] Navigiere zur Startseite nach Logout");
       navigate('/', { replace: true });
     } catch (error) {
       console.error("[Navbar] Logout error:", error);
@@ -105,11 +108,13 @@ const Navbar = () => {
     }
   };
 
-  // Verbesserte Navigation mit direktem Event-Handler
+  // Verbesserte Navigation mit expliziter Ereignisbehandlung
   const handleNavigation = (path: string) => (event: React.MouseEvent) => {
-    event.preventDefault();
+    event.preventDefault();  // Verhindert Standard-Verhalten
     console.log(`[Navbar] Navigation zu: ${path}`);
-    navigate(path);
+    
+    // Stellen Sie sicher, dass wir immer mit replace navigieren
+    navigate(path, { replace: true });
     
     // Mobile Menü schließen, falls geöffnet
     if (isSheetOpen) {
