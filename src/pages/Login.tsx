@@ -89,7 +89,18 @@ const Login = () => {
         description: t.loginSuccess,
       });
       
-      navigate("/dashboard");
+      // Verzögerung für zuverlässigere Navigation nach Login
+      setTimeout(() => {
+        console.log("Navigating to dashboard after successful login");
+        navigate("/dashboard");
+      }, 100);
+    } catch (error) {
+      console.error("Unexpected login error:", error);
+      toast({
+        title: t.loginFailed,
+        description: t.checkCredentials,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }

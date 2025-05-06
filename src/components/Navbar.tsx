@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -88,56 +88,54 @@ const Navbar = () => {
     }
   };
 
+  // VERBESSERT: Logout mit direktem Callback und Fehlerbehandlung
   const handleLogout = async () => {
     try {
       console.log("Logout Funktion gestartet");
-      const { success, error } = await logout();
-      
-      if (!success) {
-        console.error("Logout error:", error);
-        toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
-        return;
-      }
-      
+      await logout();
+      console.log("Logout erfolgreich, navigiere zur Startseite");
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
-      
-      // Navigation nach Logout
       navigate('/');
     } catch (error) {
-      console.error("Unexpected logout error:", error);
+      console.error("Logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
     }
   };
 
-  // Navigations-Funktionen - explizit definiert für besseres Debugging
+  // DIREKTE NAVIGATION: Einfache Funktionen ohne komplexe Logik
   const handleLoginClick = () => {
-    console.log("handleLoginClick aufgerufen");
+    console.log("Login-Button geklickt, navigiere zu /login");
     navigate("/login");
   };
 
   const handleRegisterClick = () => {
-    console.log("handleRegisterClick aufgerufen");
+    console.log("Register-Button geklickt, navigiere zu /register");
     navigate("/register");
   };
   
   const handleProfileClick = () => {
-    console.log("handleProfileClick aufgerufen");
+    console.log("Profil-Button geklickt, navigiere zu /profile");
     navigate("/profile");
   };
 
   const handleDashboardClick = () => {
-    console.log("handleDashboardClick aufgerufen");
+    console.log("Dashboard-Button geklickt, navigiere zu /dashboard");
     navigate("/dashboard");
   };
 
   const handlePricingClick = () => {
-    console.log("handlePricingClick aufgerufen");
+    console.log("Pricing-Button geklickt, navigiere zu /pricing");
     navigate("/pricing");
   };
 
   const handleAdminClick = () => {
-    console.log("handleAdminClick aufgerufen");
+    console.log("Admin-Button geklickt, navigiere zu /admin");
     navigate("/admin");
+  };
+
+  const handleHomeClick = () => {
+    console.log("Home-Button geklickt, navigiere zur Startseite");
+    navigate("/");
   };
 
   const closeSheet = () => {
@@ -181,12 +179,12 @@ const Navbar = () => {
 
   const t = translations[language];
 
-  // Navigations-Links mit Klick-Handlern statt React Router Links
+  // Navigations-Links mit Klick-Handlern 
   const NavLinks = () => (
     <>
       <Button 
         variant="ghost" 
-        onClick={handleDashboardClick} 
+        onClick={handleDashboardClick}
         className="text-foreground/80 hover:text-foreground"
       >
         {t.dashboard}
@@ -241,7 +239,6 @@ const Navbar = () => {
       return renderLoginButtons(inMobileMenu);
     }
     
-    // Mit direkten Event-Handlern statt Links
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -276,7 +273,11 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate("/")} className="text-xl font-bold text-primary p-0">
+        <Button 
+          variant="ghost" 
+          onClick={handleHomeClick} 
+          className="text-xl font-bold text-primary p-0"
+        >
           Enhance Stream
         </Button>
         
@@ -332,7 +333,10 @@ const Navbar = () => {
                 <div className="flex flex-col gap-4">
                   <Button 
                     variant="ghost" 
-                    onClick={handleDashboardClick} 
+                    onClick={() => {
+                      handleDashboardClick();
+                      closeSheet();
+                    }} 
                     className="justify-start"
                   >
                     {t.dashboard}
@@ -341,7 +345,10 @@ const Navbar = () => {
                   {isAdmin && (
                     <Button 
                       variant="ghost" 
-                      onClick={handleAdminClick} 
+                      onClick={() => {
+                        handleAdminClick();
+                        closeSheet();
+                      }} 
                       className="justify-start"
                     >
                       {t.admin}
@@ -350,7 +357,10 @@ const Navbar = () => {
                   
                   <Button 
                     variant="ghost" 
-                    onClick={handlePricingClick} 
+                    onClick={() => {
+                      handlePricingClick();
+                      closeSheet();
+                    }} 
                     className="justify-start"
                   >
                     {t.pricing}
