@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,7 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         console.log("[Login] Bereits eingeloggt, leite weiter...");
-        navigate("/dashboard", { replace: true });
+        navigate("/dashboard");
       }
     };
     
@@ -108,14 +107,10 @@ const Login = () => {
         description: t.loginSuccess,
       });
       
-      // Wir setzen isLoading auf false
       setIsLoading(false);
       
-      // Verzögerung für stabilere Navigation nach Login
-      setTimeout(() => {
-        console.log("[Login] Navigiere zum Dashboard mit replace:true");
-        navigate("/dashboard", { replace: true });
-      }, 500);
+      // Hard redirect zum Dashboard
+      window.location.href = "/dashboard";
     } catch (error) {
       console.error("[Login] Unexpected login error:", error);
       toast({

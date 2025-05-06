@@ -28,7 +28,7 @@ const Profile = () => {
     }
   }, [user]);
 
-  const handleUpdateProfile = async (e: React.MouseEvent) => {
+  const handleUpdateProfile = async () => {
     console.log("[Profile] handleUpdateProfile triggered");
     
     try {
@@ -109,10 +109,7 @@ const Profile = () => {
               </div>
             </div>
 
-            <Button 
-              onClick={handleUpdateProfile} 
-              type="button"
-            >
+            <Button onClick={handleUpdateProfile}>
               Save Changes
             </Button>
           </CardContent>

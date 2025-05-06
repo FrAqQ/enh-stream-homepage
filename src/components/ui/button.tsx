@@ -41,31 +41,14 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
-    
-    // Expliziter Event-Handler für Debugging und Fehlerbehebung
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-      console.log("[Button] Click event triggered", event.type);
-      
-      // Stoppe Event-Propagation nur wenn onClick definiert ist
-      if (onClick) {
-        // Prevent default nur bei Link-Buttons ohne href
-        if (props.type !== "submit") {
-          event.preventDefault();
-        }
-        
-        // Rufe den übergebenen Handler auf
-        onClick(event);
-      }
-    };
     
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         type={props.type || "button"}
-        onClick={handleClick}
         {...props}
       />
     )
