@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -109,8 +110,8 @@ const Login = () => {
       
       setIsLoading(false);
       
-      // Hard redirect zum Dashboard
-      window.location.href = "/dashboard";
+      // Redirect zum Dashboard nach erfolgreicher Anmeldung
+      navigate("/dashboard");
     } catch (error) {
       console.error("[Login] Unexpected login error:", error);
       toast({

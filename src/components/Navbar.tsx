@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -90,10 +91,10 @@ const Navbar = () => {
     }
   };
 
-  // Navigation ohne Event-Handler-Probleme
+  // Verbesserte Navigation mit direkter Weiterleitung
   const handleDirectNavigation = (path: string) => {
     console.log(`[Navbar] Direkte Navigation zu: ${path}`);
-    window.location.href = path;
+    navigate(path);
   };
 
   // Logout mit Redirect zur Startseite
@@ -104,8 +105,8 @@ const Navbar = () => {
       console.log("[Navbar] Logout erfolgreich");
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       
-      // Direkte Navigation
-      window.location.href = '/';
+      // Direkte Navigation nach Logout
+      navigate("/");
     } catch (error) {
       console.error("[Navbar] Logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
@@ -149,22 +150,26 @@ const Navbar = () => {
 
   const t = translations[language];
 
-  // Navigations-Links mit direkter Navigation
+  // Navigations-Links mit verbesserter Navigation
   const NavLinks = () => (
     <>
-      <Button 
-        variant="ghost" 
-        onClick={() => handleDirectNavigation('/dashboard')}
-        className="text-foreground/80 hover:text-foreground"
-      >
-        {t.dashboard}
-      </Button>
+      {user && (
+        <Button 
+          variant="ghost" 
+          onClick={() => handleDirectNavigation('/dashboard')}
+          className="text-foreground/80 hover:text-foreground"
+          type="button"
+        >
+          {t.dashboard}
+        </Button>
+      )}
       
       {isAdmin && (
         <Button 
           variant="ghost" 
           onClick={() => handleDirectNavigation('/admin')}
           className="text-foreground/80 hover:text-foreground"
+          type="button"
         >
           {t.admin}
         </Button>
@@ -174,13 +179,14 @@ const Navbar = () => {
         variant="ghost" 
         onClick={() => handleDirectNavigation('/pricing')}
         className="text-foreground/80 hover:text-foreground"
+        type="button"
       >
         {t.pricing}
       </Button>
     </>
   );
 
-  // Login/Register Buttons mit direkter Navigation
+  // Login/Register Buttons mit verbesseter Navigation
   const renderLoginButtons = (inMobileMenu = false) => {
     return (
       <div 
@@ -190,12 +196,14 @@ const Navbar = () => {
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
           onClick={() => handleDirectNavigation('/login')}
+          type="button"
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
           onClick={() => handleDirectNavigation('/register')}
+          type="button"
         >
           {t.register}
         </Button>
@@ -247,6 +255,7 @@ const Navbar = () => {
           variant="ghost" 
           onClick={() => handleDirectNavigation('/')}
           className="text-xl font-bold text-primary p-0"
+          type="button"
         >
           Enhance Stream
         </Button>
@@ -258,6 +267,7 @@ const Navbar = () => {
           <Button 
             variant="outline" 
             onClick={() => setIsChatOpen(true)}
+            type="button"
           >
             {t.chatWithUs}
           </Button>
@@ -276,6 +286,7 @@ const Navbar = () => {
                 size="icon" 
                 onClick={() => setIsPersonalizationOpen(true)}
                 className="relative"
+                type="button"
               >
                 <Settings className="h-5 w-5" />
                 <span className="sr-only">{t.personalize}</span>
@@ -296,7 +307,7 @@ const Navbar = () => {
           
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="icon" variant="outline">
+              <Button size="icon" variant="outline" type="button">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">{t.menu}</span>
               </Button>
@@ -304,16 +315,19 @@ const Navbar = () => {
             <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <div className="flex flex-col gap-6 py-6">
                 <div className="flex flex-col gap-4">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => {
-                      setIsSheetOpen(false);
-                      handleDirectNavigation('/dashboard');
-                    }}
-                    className="justify-start"
-                  >
-                    {t.dashboard}
-                  </Button>
+                  {user && (
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => {
+                        setIsSheetOpen(false);
+                        handleDirectNavigation('/dashboard');
+                      }}
+                      className="justify-start"
+                      type="button"
+                    >
+                      {t.dashboard}
+                    </Button>
+                  )}
                   
                   {isAdmin && (
                     <Button 
@@ -323,6 +337,7 @@ const Navbar = () => {
                         handleDirectNavigation('/admin');
                       }}
                       className="justify-start"
+                      type="button"
                     >
                       {t.admin}
                     </Button>
@@ -335,6 +350,7 @@ const Navbar = () => {
                       handleDirectNavigation('/pricing');
                     }}
                     className="justify-start"
+                    type="button"
                   >
                     {t.pricing}
                   </Button>
@@ -346,6 +362,7 @@ const Navbar = () => {
                       setIsChatOpen(true);
                     }}
                     className="justify-start"
+                    type="button"
                   >
                     {t.chatWithUs}
                   </Button>
@@ -358,6 +375,7 @@ const Navbar = () => {
                         setIsPersonalizationOpen(true);
                       }}
                       className="justify-start"
+                      type="button"
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       {t.personalize}

@@ -37,9 +37,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Verbesserte Protected Route Komponente mit direkter Fehlerbehebung
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, loadError, retryLoading } = useUser();
+// Überarbeiteter ProtectedRoute mit verbesserter Zugriffskontrolle
+const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
+  const { user, isLoading, loadError, retryLoading, profile } = useUser();
   
   // Behandle explizit den Lade-Zustand
   if (isLoading) {
@@ -78,6 +78,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
 
+  // Wenn Admin-Zugriff erforderlich ist, prüfen
+  if (requireAdmin && (!profile || !profile.is_admin)) {
+    console.log("Admin access required but user is not admin");
+    return <Navigate to="/dashboard" />;
+  }
+
   return <>{children}</>;
 };
 
@@ -105,7 +111,7 @@ const App = () => {
                           </ProtectedRoute>
                         } />
                         <Route path="/admin" element={
-                          <ProtectedRoute>
+                          <ProtectedRoute requireAdmin={true}>
                             <AdminDashboard />
                           </ProtectedRoute>
                         } />
