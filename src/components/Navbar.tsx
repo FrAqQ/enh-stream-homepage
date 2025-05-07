@@ -25,9 +25,8 @@ import { useOnboarding } from "@/lib/OnboardingContext";
 import { OnboardingTooltip } from "./ui/onboarding-tooltip";
 
 const Navbar = () => {
-  const { user, logout } = useUser();
+  const { user, logout, profile } = useUser();
   const { language } = useLanguage();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState("");
   const isMobile = useIsMobile();
@@ -44,31 +43,14 @@ const Navbar = () => {
     }
   }, [user]);
 
-  // Überarbeitete Admin-Status-Prüfung mit Abhängigkeit von user
+  // Admin-Status aus dem Profil abrufen
+  const isAdmin = profile?.is_admin || false;
+  
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-      
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user.id)
-          .single();
-        
-        console.log("[Navbar] Admin-Status geprüft:", profile?.is_admin || false);
-        setIsAdmin(profile?.is_admin || false);
-      } catch (error) {
-        console.error("[Navbar] Error checking admin status:", error);
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user]);
+    if (profile) {
+      console.log("[Navbar] Admin-Status aus Profil:", profile.is_admin || false);
+    }
+  }, [profile]);
 
   const handleChatRequest = async () => {
     if (!user) {
@@ -91,9 +73,10 @@ const Navbar = () => {
     }
   };
 
-  // Verbesserte Navigation mit direkter Weiterleitung
-  const handleDirectNavigation = (path: string) => {
-    console.log(`[Navbar] Direkte Navigation zu: ${path}`);
+  // Verbesserte Navigation mit korrekter Weiterleitung
+  const handleNavigation = (path: string) => {
+    console.log(`[Navbar] Navigation zu: ${path}`);
+    setIsSheetOpen(false); // Schließt mobile Menü
     navigate(path);
   };
 
@@ -156,7 +139,7 @@ const Navbar = () => {
       {user && (
         <Button 
           variant="ghost" 
-          onClick={() => handleDirectNavigation('/dashboard')}
+          onClick={() => handleNavigation('/dashboard')}
           className="text-foreground/80 hover:text-foreground"
           type="button"
         >
@@ -167,7 +150,7 @@ const Navbar = () => {
       {isAdmin && (
         <Button 
           variant="ghost" 
-          onClick={() => handleDirectNavigation('/admin')}
+          onClick={() => handleNavigation('/admin')}
           className="text-foreground/80 hover:text-foreground"
           type="button"
         >
@@ -177,7 +160,7 @@ const Navbar = () => {
       
       <Button 
         variant="ghost" 
-        onClick={() => handleDirectNavigation('/pricing')}
+        onClick={() => handleNavigation('/pricing')}
         className="text-foreground/80 hover:text-foreground"
         type="button"
       >
@@ -195,14 +178,14 @@ const Navbar = () => {
         <Button 
           variant={inMobileMenu ? "outline" : "ghost"} 
           className={inMobileMenu ? "w-full justify-start" : ""}
-          onClick={() => handleDirectNavigation('/login')}
+          onClick={() => handleNavigation('/login')}
           type="button"
         >
           {t.login}
         </Button>
         <Button 
           className={inMobileMenu ? "w-full justify-start" : ""} 
-          onClick={() => handleDirectNavigation('/register')}
+          onClick={() => handleNavigation('/register')}
           type="button"
         >
           {t.register}
@@ -220,7 +203,7 @@ const Navbar = () => {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full" type="button">
             <Avatar className="h-10 w-10">
               <AvatarImage src={user.user_metadata?.avatar_url} />
               <AvatarFallback>
@@ -230,7 +213,7 @@ const Navbar = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleDirectNavigation('/profile')}>
+          <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
             {t.profile}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsPersonalizationOpen(true)}>
@@ -240,7 +223,7 @@ const Navbar = () => {
             {t.restartOnboarding}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleLogout()}>
+          <DropdownMenuItem onClick={handleLogout}>
             {t.logout}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -253,7 +236,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Button 
           variant="ghost" 
-          onClick={() => handleDirectNavigation('/')}
+          onClick={() => handleNavigation('/')}
           className="text-xl font-bold text-primary p-0"
           type="button"
         >
@@ -320,7 +303,7 @@ const Navbar = () => {
                       variant="ghost" 
                       onClick={() => {
                         setIsSheetOpen(false);
-                        handleDirectNavigation('/dashboard');
+                        handleNavigation('/dashboard');
                       }}
                       className="justify-start"
                       type="button"
@@ -334,7 +317,7 @@ const Navbar = () => {
                       variant="ghost" 
                       onClick={() => {
                         setIsSheetOpen(false);
-                        handleDirectNavigation('/admin');
+                        handleNavigation('/admin');
                       }}
                       className="justify-start"
                       type="button"
@@ -347,7 +330,7 @@ const Navbar = () => {
                     variant="ghost" 
                     onClick={() => {
                       setIsSheetOpen(false);
-                      handleDirectNavigation('/pricing');
+                      handleNavigation('/pricing');
                     }}
                     className="justify-start"
                     type="button"

@@ -8,28 +8,56 @@ import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip";
+import { useUser } from "@/lib/useUser";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { user } = useUser();
 
-  // DEBUG: Überprüfe auf bestehende Session beim Laden
+  // Überarbeitete Session-Prüfung um Endlosschleifen zu vermeiden
   useEffect(() => {
     const checkExistingSession = async () => {
       console.log("[Login] Prüfe auf bestehende Session...");
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log("[Login] Bereits eingeloggt, leite weiter...");
-        navigate("/dashboard");
+      
+      // Wenn wir bereits eine Weiterleitung versucht haben oder der User bereits geladen wurde, beenden
+      if (redirectAttempted) {
+        setCheckingSession(false);
+        return;
+      }
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session && !redirectAttempted) {
+          console.log("[Login] Bereits eingeloggt, leite weiter...");
+          setRedirectAttempted(true);
+          navigate("/dashboard", { replace: true });
+        }
+      } catch (error) {
+        console.error("[Login] Session check error:", error);
+      } finally {
+        setCheckingSession(false);
       }
     };
     
     checkExistingSession();
-  }, [navigate]);
+  }, [navigate, redirectAttempted]);
+
+  // Zusätzliche Prüfung basierend auf dem useUser-Ergebnis
+  useEffect(() => {
+    if (user && !redirectAttempted) {
+      console.log("[Login] User aus useUser geladen, leite weiter...");
+      setRedirectAttempted(true);
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate, redirectAttempted]);
 
   const translations = {
     en: {
@@ -110,8 +138,11 @@ const Login = () => {
       
       setIsLoading(false);
       
+      // Markieren, dass wir eine Weiterleitung versucht haben
+      setRedirectAttempted(true);
+      
       // Redirect zum Dashboard nach erfolgreicher Anmeldung
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("[Login] Unexpected login error:", error);
       toast({
@@ -122,6 +153,15 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  // Wenn die Sitzung noch geprüft wird, zeigen wir einen Ladeindikator
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Lädt...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-16 md:pt-24 flex items-center justify-center px-4">

@@ -72,16 +72,32 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
     );
   }
   
+  // Debug: Print profile details
+  console.log("[ProtectedRoute] User:", user?.email, "Profile:", profile);
+  
   // Ohne Profil oder User können wir nicht fortfahren
   if (!user) {
-    console.log("No user, redirecting to login");
-    return <Navigate to="/login" />;
+    console.log("[ProtectedRoute] No user, redirecting to login");
+    return <Navigate to="/login" replace />;
   }
 
   // Wenn Admin-Zugriff erforderlich ist, prüfen
-  if (requireAdmin && (!profile || !profile.is_admin)) {
-    console.log("Admin access required but user is not admin");
-    return <Navigate to="/dashboard" />;
+  if (requireAdmin) {
+    if (!profile) {
+      console.log("[ProtectedRoute] Waiting for profile to load");
+      return (
+        <LoadingOverlay 
+          isLoading={true} 
+          fullScreen 
+          text="Prüfe Berechtigungen..." 
+        />
+      );
+    }
+    
+    if (!profile.is_admin) {
+      console.log("[ProtectedRoute] Admin access required but user is not admin");
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;
