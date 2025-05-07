@@ -21,43 +21,54 @@ const Login = () => {
   const { language } = useLanguage();
   const { user } = useUser();
 
-  // Überarbeitete Session-Prüfung um Endlosschleifen zu vermeiden
+  // Überarbeitete Session-Prüfung mit Schutz vor Endlosschleifen
   useEffect(() => {
+    let isMounted = true;
+    
     const checkExistingSession = async () => {
       console.log("[Login] Prüfe auf bestehende Session...");
       
-      // Wenn wir bereits eine Weiterleitung versucht haben oder der User bereits geladen wurde, beenden
+      // Wenn bereits eine Weiterleitung versucht wurde, beenden
       if (redirectAttempted) {
-        setCheckingSession(false);
+        if (isMounted) setCheckingSession(false);
         return;
       }
       
       try {
+        // Wenn user bereits geladen ist (über useUser Hook)
+        if (user) {
+          console.log("[Login] Bereits eingeloggt über useUser, leite weiter...");
+          if (isMounted) {
+            setRedirectAttempted(true);
+            navigate("/dashboard", { replace: true });
+          }
+          return;
+        }
+        
+        // Manuelle Session-Prüfung
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session && !redirectAttempted) {
-          console.log("[Login] Bereits eingeloggt, leite weiter...");
-          setRedirectAttempted(true);
-          navigate("/dashboard", { replace: true });
+          console.log("[Login] Bereits eingeloggt über Session-Check, leite weiter...");
+          if (isMounted) {
+            setRedirectAttempted(true);
+            navigate("/dashboard", { replace: true });
+          }
         }
       } catch (error) {
         console.error("[Login] Session check error:", error);
       } finally {
-        setCheckingSession(false);
+        if (isMounted) setCheckingSession(false);
       }
     };
     
+    // Nur einmal beim Mounten prüfen
     checkExistingSession();
-  }, [navigate, redirectAttempted]);
-
-  // Zusätzliche Prüfung basierend auf dem useUser-Ergebnis
-  useEffect(() => {
-    if (user && !redirectAttempted) {
-      console.log("[Login] User aus useUser geladen, leite weiter...");
-      setRedirectAttempted(true);
-      navigate("/dashboard", { replace: true });
-    }
-  }, [user, navigate, redirectAttempted]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate, redirectAttempted, user]);
 
   const translations = {
     en: {
@@ -136,13 +147,13 @@ const Login = () => {
         description: t.loginSuccess,
       });
       
-      setIsLoading(false);
+      // Zeitverzögerung hinzufügen, um sicherzustellen, dass die Seite bereit ist
+      setTimeout(() => {
+        setIsLoading(false);
+        setRedirectAttempted(true);
+        navigate("/dashboard", { replace: true });
+      }, 500);
       
-      // Markieren, dass wir eine Weiterleitung versucht haben
-      setRedirectAttempted(true);
-      
-      // Redirect zum Dashboard nach erfolgreicher Anmeldung
-      navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("[Login] Unexpected login error:", error);
       toast({

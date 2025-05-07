@@ -1,4 +1,3 @@
-
 import { Users, MessageSquare, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -15,9 +14,10 @@ import { PLAN_VIEWER_LIMITS, PLAN_CHATTER_LIMITS } from "@/lib/constants"
 import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip"
 import ViewerHistoryGraph from "@/components/dashboard/ViewerHistoryGraph"
 import { Onboarding } from "@/components/Onboarding"
+import { LoadingOverlay } from "@/components/ui/loading-overlay"
 
 const Dashboard = () => {
-  const { user, profile, chatterStats, loadChatterStats, updateUserChatters } = useUser();
+  const { user, profile, chatterStats, loadChatterStats, updateUserChatters, isLoading: profileIsLoading } = useUser();
   const { toast } = useToast();
   const [streamUrl, setStreamUrl] = useState("");
   // Enhanced viewers and chatters (the ones we add)
@@ -33,6 +33,7 @@ const Dashboard = () => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [userPlan, setUserPlan] = useState("Free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
+  const [dashboardReady, setDashboardReady] = useState(false);
   
   // Add new state for viewer history
   const [viewerHistory, setViewerHistory] = useState<any[]>([]);
@@ -40,14 +41,24 @@ const Dashboard = () => {
   // Calculate total viewers (actual + enhanced)
   const totalViewerCount = actualViewerCount + enhancedViewerCount;
 
+  // Überarbeitete Logik zum Laden des Profils
   useEffect(() => {
-    if (profile) {
-      // Set enhanced viewer count from profile
+    if (!profileIsLoading && profile) {
+      // Dashboard kann jetzt gerendert werden
+      setDashboardReady(true);
+      
+      // Daten aus dem Profil übernehmen
       setEnhancedViewerCount(profile.viewers_active || 0);
       setUserPlan(profile.plan || "Free");
       setSubscriptionStatus(profile.subscription_status || "inactive");
+      
+      console.log("[Dashboard] Profil geladen:", {
+        plan: profile.plan,
+        status: profile.subscription_status,
+        viewers: profile.viewers_active
+      });
     }
-  }, [profile]);
+  }, [profile, profileIsLoading]);
 
   // Lade Chatter-Statistiken, wenn sich die Stream-URL ändert
   useEffect(() => {
@@ -425,6 +436,19 @@ const Dashboard = () => {
       });
     }
   };
+
+  // Zeige Ladebildschirm, wenn Dashboard noch nicht bereit ist
+  if (profileIsLoading || !dashboardReady) {
+    return (
+      <div className="container mx-auto px-4 pt-20 pb-8">
+        <LoadingOverlay 
+          isLoading={true}
+          text="Dashboard wird geladen..."
+          fullScreen={false}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 pt-20 pb-8">
