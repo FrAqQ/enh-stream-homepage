@@ -9,66 +9,41 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { OnboardingTooltip } from "@/components/ui/onboarding-tooltip";
 import { useUser } from "@/lib/useUser";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
   const { user } = useUser();
 
-  // Überarbeitete Session-Prüfung mit Schutz vor Endlosschleifen
+  // Check for existing session only once on mount
   useEffect(() => {
     let isMounted = true;
     
-    const checkExistingSession = async () => {
-      console.log("[Login] Prüfe auf bestehende Session...");
+    const checkSession = async () => {
+      // Prevent checking if already redirecting
+      if (isRedirecting) return;
       
-      // Wenn bereits eine Weiterleitung versucht wurde, beenden
-      if (redirectAttempted) {
-        if (isMounted) setCheckingSession(false);
+      // If we already have a user from useUser hook, redirect
+      if (user && isMounted && !isRedirecting) {
+        console.log("[Login] User already logged in, redirecting...");
+        setIsRedirecting(true);
+        navigate("/dashboard", { replace: true });
         return;
-      }
-      
-      try {
-        // Wenn user bereits geladen ist (über useUser Hook)
-        if (user) {
-          console.log("[Login] Bereits eingeloggt über useUser, leite weiter...");
-          if (isMounted) {
-            setRedirectAttempted(true);
-            navigate("/dashboard", { replace: true });
-          }
-          return;
-        }
-        
-        // Manuelle Session-Prüfung
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session && !redirectAttempted) {
-          console.log("[Login] Bereits eingeloggt über Session-Check, leite weiter...");
-          if (isMounted) {
-            setRedirectAttempted(true);
-            navigate("/dashboard", { replace: true });
-          }
-        }
-      } catch (error) {
-        console.error("[Login] Session check error:", error);
-      } finally {
-        if (isMounted) setCheckingSession(false);
       }
     };
     
-    // Nur einmal beim Mounten prüfen
-    checkExistingSession();
+    checkSession();
     
     return () => {
       isMounted = false;
     };
-  }, [navigate, redirectAttempted, user]);
+  }, [user, navigate, isRedirecting]);
 
   const translations = {
     en: {
@@ -105,11 +80,14 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Login] Login-Formular gesendet");
+    
+    // Prevent multiple login attempts
+    if (isLoading || isRedirecting) return;
+    
     setIsLoading(true);
+    console.log("[Login] Attempting login for:", email);
 
     try {
-      console.log("[Login] Attempting login for:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -119,7 +97,7 @@ const Login = () => {
         console.error("[Login] Login error:", error);
         
         // Specific message for unconfirmed email
-        if (error.message === "Email not confirmed") {
+        if (error.message.includes("Email not confirmed")) {
           toast({
             title: t.emailNotConfirmed,
             description: t.confirmEmail,
@@ -139,18 +117,20 @@ const Login = () => {
         return;
       }
 
-      console.log("[Login] Login erfolgreich, Nutzerdaten:", data);
+      console.log("[Login] Login successful:", data.user?.email);
       
-      // Erfolgsmeldung anzeigen
+      // Success message
       toast({
         title: "Success",
         description: t.loginSuccess,
       });
       
-      // Zeitverzögerung hinzufügen, um sicherzustellen, dass die Seite bereit ist
+      // Mark as redirecting to prevent double navigation
+      setIsRedirecting(true);
+      
+      // Add small delay to ensure auth state propagates
       setTimeout(() => {
         setIsLoading(false);
-        setRedirectAttempted(true);
         navigate("/dashboard", { replace: true });
       }, 500);
       
@@ -165,12 +145,14 @@ const Login = () => {
     }
   };
 
-  // Wenn die Sitzung noch geprüft wird, zeigen wir einen Ladeindikator
-  if (checkingSession) {
+  // Show loading overlay when redirecting
+  if (isRedirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Lädt...</p>
-      </div>
+      <LoadingOverlay 
+        isLoading={true} 
+        fullScreen 
+        text="Weiterleitung zum Dashboard..." 
+      />
     );
   }
 

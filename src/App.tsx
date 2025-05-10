@@ -25,7 +25,7 @@ import Privacy from "./pages/Legal/Privacy";
 import Cancellation from "./pages/Legal/Cancellation";
 import Imprint from "./pages/Legal/Imprint";
 import { CookieManager } from "./components/CookieManager";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // Create React Query client with optimized settings
 const queryClient = new QueryClient({
@@ -38,57 +38,28 @@ const queryClient = new QueryClient({
   },
 });
 
-// Überarbeiteter ProtectedRoute mit verbesserter Zugriffskontrolle
+// Optimized ProtectedRoute component
 const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
   const { user, isLoading, loadError, retryLoading } = useUser();
-  const [loadingAttempts, setLoadingAttempts] = useState(0);
-  
-  // Stellen Sie sicher, dass wir nicht in eine Endlosschleife geraten
-  useEffect(() => {
-    if (isLoading && loadingAttempts < 3) {
-      const timer = setTimeout(() => {
-        setLoadingAttempts(prev => prev + 1);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, loadingAttempts]);
-  
-  // Wenn zu viele Ladeversuche fehlschlagen, zeigen wir eine Fehlermeldung an
-  if (loadingAttempts >= 3 && isLoading) {
-    console.log("[ProtectedRoute] Zu viele Ladeversuche, zeige Fehlermeldung");
-    return (
-      <LoadingOverlay 
-        isLoading={false}
-        error={new Error("Das Profil konnte nicht geladen werden. Bitte versuchen Sie es später erneut.")}
-        fullScreen
-        onRetry={() => {
-          setLoadingAttempts(0);
-          retryLoading();
-        }}
-      />
-    );
-  }
-  
-  // Behandle explizit den Lade-Zustand
-  if (isLoading && loadingAttempts < 3) {
-    console.log(`[ProtectedRoute] Profil wird geladen... (Versuch ${loadingAttempts + 1})`);
+  const [loadAttempts, setLoadAttempts] = useState(0);
+
+  // Handle loading state
+  if (isLoading && loadAttempts < 3) {
     return (
       <LoadingOverlay 
         isLoading={true} 
         fullScreen 
         text="Ihr Profil wird geladen..." 
         onRetry={() => {
-          console.log("[ProtectedRoute] LoadingOverlay retry triggered");
-          setLoadingAttempts(0);
+          setLoadAttempts(prev => prev + 1);
           retryLoading();
         }}
-        loadingTimeout={3000}
+        loadingTimeout={5000}
       />
     );
   }
-  
-  // Behandle explizit den Fehler-Zustand
+
+  // Handle error state
   if (loadError) {
     return (
       <LoadingOverlay 
@@ -96,21 +67,20 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
         error={loadError}
         fullScreen
         onRetry={() => {
-          console.log("[ProtectedRoute] LoadingOverlay error retry triggered");
-          setLoadingAttempts(0);
+          setLoadAttempts(0);
           retryLoading();
         }}
       />
     );
   }
-  
-  // Ohne User können wir nicht fortfahren
-  if (!user) {
-    console.log("[ProtectedRoute] No user, redirecting to login");
+
+  // If no user after loading completed, redirect to login
+  if (!user && !isLoading) {
+    console.log("[ProtectedRoute] No user after loading, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
-  // Bei Admin-Seiten prüfen wir zusätzlich
+  // Check admin requirement
   if (requireAdmin) {
     const { profile } = useUser();
     
@@ -124,9 +94,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
 };
 
 const App = () => {
-  // Debug: CSS-Check für globale Styles die Klicks behindern könnten
-  console.log("[DEBUG] App rendering - Checking global CSS");
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

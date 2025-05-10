@@ -35,22 +35,8 @@ const Navbar = () => {
   const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
 
-  // Debug-Ausgabe beim Rendern
-  useEffect(() => {
-    console.log("[Navbar] Gerendert - User-Status:", !!user);
-    if (user) {
-      console.log("[Navbar] User-Objekt verfügbar:", user.email);
-    }
-  }, [user]);
-
   // Admin-Status aus dem Profil abrufen
   const isAdmin = profile?.is_admin || false;
-  
-  useEffect(() => {
-    if (profile) {
-      console.log("[Navbar] Admin-Status aus Profil:", profile.is_admin || false);
-    }
-  }, [profile]);
 
   const handleChatRequest = async () => {
     if (!user) {
@@ -73,23 +59,22 @@ const Navbar = () => {
     }
   };
 
-  // Verbesserte Navigation mit korrekter Weiterleitung
+  // Improved navigation with proper event handling
   const handleNavigation = (path: string) => {
-    console.log(`[Navbar] Navigation zu: ${path}`);
-    setIsSheetOpen(false); // Schließt mobile Menü
+    setIsSheetOpen(false); // Close mobile menu
     navigate(path);
   };
 
-  // Logout mit Redirect zur Startseite
+  // Logout with redirect to home
   const handleLogout = async () => {
     try {
-      console.log("[Navbar] Logout gestartet");
+      console.log("[Navbar] Starting logout");
       await logout();
-      console.log("[Navbar] Logout erfolgreich");
+      console.log("[Navbar] Logout successful");
       toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
       
-      // Direkte Navigation nach Logout
-      navigate("/");
+      // Direct navigation after logout
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("[Navbar] Logout error:", error);
       toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
@@ -133,7 +118,7 @@ const Navbar = () => {
 
   const t = translations[language];
 
-  // Navigations-Links mit verbesserter Navigation
+  // Navigation links with improved handling
   const NavLinks = () => (
     <>
       {user && (
@@ -169,7 +154,7 @@ const Navbar = () => {
     </>
   );
 
-  // Login/Register Buttons mit verbesseter Navigation
+  // Login/Register Buttons with improved handling
   const renderLoginButtons = (inMobileMenu = false) => {
     return (
       <div 
@@ -194,7 +179,7 @@ const Navbar = () => {
     );
   };
 
-  // Profilmenü für eingeloggte Nutzer
+  // Profile menu for logged in users
   const AuthButtons = ({ inMobileMenu = false }) => {
     if (!user) {
       return renderLoginButtons(inMobileMenu);

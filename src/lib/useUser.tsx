@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import { databaseService } from './databaseService';
@@ -28,7 +28,7 @@ export interface UserProfile {
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [chatterStats, setChatterStats] = useState<ChatterStats>({
@@ -37,22 +37,12 @@ export const useUser = () => {
     total_chatters: 0,
   });
   const { toast } = useToast();
-
-  // DEBUG: Session-Tracking für Login-Button-Problem
-  const [sessionTracking, setSessionTracking] = useState<{
-    initialized: boolean;
-    sessionChecks: number;
-    lastStatus: string;
-  }>({
-    initialized: false,
-    sessionChecks: 0,
-    lastStatus: "Not checked yet"
-  });
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   // Fetch user profile from the database
   const fetchProfile = useCallback(async (userId: string) => {
-    console.time('Profilabruf-Gesamt');
     try {
+      console.log('[useUser] Fetching profile for user:', userId);
       const { data, error } = await databaseService.getProfile(userId);
       
       if (error) throw error;
@@ -60,159 +50,75 @@ export const useUser = () => {
       
       return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('[useUser] Error fetching profile:', error);
       throw error;
-    } finally {
-      console.timeEnd('Profilabruf-Gesamt');
     }
   }, []);
 
-  // Direkte Session-Prüfung für Debugging
-  const checkSession = useCallback(async () => {
-    try {
-      console.log('[DEBUG] Manuelle Session-Prüfung...');
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      setSessionTracking(prev => ({
-        initialized: true,
-        sessionChecks: prev.sessionChecks + 1,
-        lastStatus: session ? 'Aktiv' : error ? 'Fehler: ' + error.message : 'Keine aktive Session'
-      }));
-      
-      console.log('[DEBUG] Session-Status:', session ? 'Aktiv' : 'Inaktiv', error ? `(Fehler: ${error.message})` : '');
-      return session;
-    } catch (e) {
-      console.error('[DEBUG] Session-Prüfung fehlgeschlagen:', e);
-      setSessionTracking(prev => ({
-        ...prev,
-        sessionChecks: prev.sessionChecks + 1,
-        lastStatus: 'Fehler bei Prüfung: ' + (e instanceof Error ? e.message : String(e))
-      }));
-      return null;
-    }
-  }, []);
-
-  // Komplett überarbeitete Hauptladefunktion mit verbesserter Fehlerbehandlung
+  // Main user loading function
   const fetchUserProfile = useCallback(async () => {
-    // Schutzbedingung: Verhindere doppelte Aufrufe während des Ladevorgangs
-    if (isLoading) return;
+    if (!sessionChecked) return;
     
     try {
-      // Aktuelle Anfragen abbrechen, falls vorhanden
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort('Neue Anfrage gestartet');
-      }
-      
-      // Neuen AbortController erstellen
-      abortControllerRef.current = new AbortController();
-      
-      // Status zurücksetzen
       setIsLoading(true);
       setLoadError(null);
       
-      console.log('[DEBUG] Loading user session with localStorage auth...');
+      // Create new abort controller for this request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort('Neue Anfrage gestartet');
+      }
+      abortControllerRef.current = new AbortController();
+      
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('[DEBUG] Session error:', error);
+        console.error('[useUser] Session error:', error);
         throw error;
       }
       
-      console.log('[DEBUG] Session geladen:', session?.user ? 'Benutzer vorhanden' : 'Kein Benutzer');
-      console.log('[DEBUG] Session-Objekt:', JSON.stringify(session?.user?.app_metadata || {}, null, 2));
-      
-      // Wichtig: User-State aktualisieren
+      // Update user state
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
-      // Session-Tracking aktualisieren
-      setSessionTracking(prev => ({
-        initialized: true,
-        sessionChecks: prev.sessionChecks + 1,
-        lastStatus: currentUser ? 'Benutzer aktiv' : 'Kein Benutzer'
-      }));
-      
       if (currentUser?.id) {
         try {
-          console.log('[DEBUG] Erster Versuch: Profil laden');
-          // Performance-Messung
-          console.time('Profilabruf-Gesamt');
           const userProfile = await fetchProfile(currentUser.id);
-          console.timeEnd('Profilabruf-Gesamt');
           setProfile(userProfile);
         } catch (profileError) {
-          console.warn("[DEBUG] 1. Versuch fehlgeschlagen, versuche erneut...");
+          console.warn("[useUser] Profile fetch failed:", profileError);
           
-          // Prüfen, ob die Anfrage abgebrochen wurde
-          if (abortControllerRef.current?.signal.aborted) {
-            console.log('[DEBUG] Anfrage wurde abgebrochen, breche Retry ab');
-            return;
-          }
-          
-          try {
-            // Automatischer zweiter Versuch nach kurzer Pause
-            await new Promise(resolve => setTimeout(resolve, 500));
-            console.log('[DEBUG] Zweiter Versuch: Profil laden');
-            
-            const retryProfile = await fetchProfile(currentUser.id);
-            setProfile(retryProfile);
-            console.log('[DEBUG] Zweiter Versuch erfolgreich!');
-          } catch (retryError) {
-            // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
-            if (!abortControllerRef.current?.signal.aborted) {
-              console.error("[DEBUG] 2. Versuch fehlgeschlagen:", retryError);
-              setLoadError(retryError instanceof Error ? retryError : new Error('Unknown error loading profile'));
-              setProfile(null);
-              
-              // Fehler anzeigen
-              toast({
-                title: "Fehler beim Laden des Profils",
-                description: retryError instanceof Error ? retryError.message : "Unbekannter Fehler",
-                variant: "destructive"
-              });
-            }
+          // Only set error if request wasn't aborted
+          if (!abortControllerRef.current?.signal.aborted) {
+            setLoadError(profileError instanceof Error ? profileError : new Error('Unknown error'));
+            setProfile(null);
           }
         }
       } else {
         setProfile(null);
       }
     } catch (error) {
-      // Nur Fehler setzen, wenn die Anfrage nicht abgebrochen wurde
+      // Only set error if request wasn't aborted
       if (!abortControllerRef.current?.signal.aborted) {
-        console.error('[DEBUG] Error in fetchUserProfile:', error);
-        setLoadError(error instanceof Error ? error : new Error('Unknown error loading profile'));
-        
-        // Bei Session-Fehlern automatisch abmelden
-        if (error instanceof Error && error.message.includes('session')) {
-          await supabase.auth.signOut().catch(e => console.error('Error signing out:', e));
-          setUser(null);
-          setProfile(null);
-          
-          toast({
-            title: "Sitzungsfehler",
-            description: "Bitte melden Sie sich erneut an",
-            variant: "destructive"
-          });
-        }
+        console.error('[useUser] Error in fetchUserProfile:', error);
+        setLoadError(error instanceof Error ? error : new Error('Unknown error'));
       }
     } finally {
-      // Ladezustand nur zurücksetzen, wenn die Anfrage nicht abgebrochen wurde
+      // Only update loading state if request wasn't aborted
       if (!abortControllerRef.current?.signal.aborted) {
         setIsLoading(false);
       }
     }
-  }, [fetchProfile, toast, isLoading]);
+  }, [fetchProfile, sessionChecked]);
 
-  // Improved logout function with better error handling and state reset
+  // Logout function
   const logout = useCallback(async () => {
-    console.log("[Auth] Starte Logout...");
+    console.log("[useUser] Starting logout...");
 
     try {
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error("[Auth] Supabase Logout-Fehler:", error.message);
+        console.error("[useUser] Logout error:", error.message);
         return { success: false, error };
       }
 
@@ -221,24 +127,18 @@ export const useUser = () => {
       setProfile(null);
       setChatterStats({ enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 });
       
-      // Clear any cached profile data
+      // Clear cached data
       databaseService.clearCache();
-      
-      // Remove any persistent tokens
-      localStorage.removeItem('supabase.auth.token');
-      localStorage.removeItem('sb-qdxpxqdewqrbvlsajeeo-auth-token');
 
-      console.log("[Auth] Logout erfolgreich. Zustand zurückgesetzt.");
-      
-      // Return success status
+      console.log("[useUser] Logout successful");
       return { success: true, error: null };
     } catch (error) {
-      console.error("[Auth] Unerwarteter Fehler beim Logout:", error);
+      console.error("[useUser] Unexpected logout error:", error);
       return { success: false, error };
     }
   }, []);
 
-  // Add the missing loadChatterStats function
+  // Add the loadChatterStats function
   const loadChatterStats = useCallback(async (streamUrl: string) => {
     if (!user?.id || !streamUrl) return false;
     
@@ -253,8 +153,6 @@ export const useUser = () => {
         .single();
       
       if (error) {
-        console.warn("Error loading chatter stats:", error);
-        // If no record exists, create one
         if (error.code === 'PGRST116') {
           await supabase.from('chatter_stats').insert([{
             user_id: user.id,
@@ -289,7 +187,7 @@ export const useUser = () => {
     }
   }, [user?.id]);
 
-  // Add the missing updateUserChatters function
+  // Add the updateUserChatters function
   const updateUserChatters = useCallback(async (streamUrl: string, chattersToAdd: number) => {
     if (!user?.id || !streamUrl) return false;
     
@@ -342,61 +240,57 @@ export const useUser = () => {
     }
   }, [user?.id]);
 
-  // Retry loading function for the LoadingOverlay component
+  // Retry loading function
   const retryLoading = useCallback(() => {
-    console.log("[DEBUG] Manual retry loading triggered");
+    console.log("[useUser] Manual retry loading triggered");
     fetchUserProfile();
   }, [fetchUserProfile]);
 
-  // Manual session check function for debugging
-  const debugSession = useCallback(async () => {
-    console.log("[DEBUG] Manual session check...");
-    await checkSession();
-  }, [checkSession]);
-
-  // Effect to load user on mount and set up auth state listener
+  // Effect to check session once on mount
   useEffect(() => {
-    console.log("[DEBUG] useUser Hook initialisiert");
+    const checkSession = async () => {
+      console.log("[useUser] Initial session check");
+      try {
+        const { data } = await supabase.auth.getSession();
+        console.log("[useUser] Initial session result:", !!data.session);
+        setSessionChecked(true);
+      } catch (err) {
+        console.error("[useUser] Initial session check error:", err);
+        setSessionChecked(true); // Still mark as checked even on error
+      }
+    };
     
-    // DEBUG: Setze localStorage-Einträge für aktive Sitzungen
-    const localStorageItems = Object.keys(localStorage)
-      .filter(key => key.includes('supabase') || key.includes('auth'))
-      .reduce((obj, key) => {
-        return { ...obj, [key]: localStorage.getItem(key) ? "Vorhanden" : "Nicht vorhanden" };
-      }, {});
-    
-    console.log("[DEBUG] localStorage Status:", localStorageItems);
-    
-    // Load user profile immediately
-    fetchUserProfile();
+    checkSession();
+  }, []);
 
-    // Set up subscription to auth state changes
+  // Effect to load user profile after session check
+  useEffect(() => {
+    if (sessionChecked) {
+      fetchUserProfile();
+    }
+  }, [sessionChecked, fetchUserProfile]);
+
+  // Effect to set up auth state change listener
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[DEBUG] Auth state changed:', event, session?.user?.id);
+        console.log('[useUser] Auth state changed:', event);
         
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && session?.user) {
           fetchUserProfile();
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);
           setChatterStats({ enhanced_chatters: 0, total_chatters: 0, natural_chatters: 0 });
-          console.log('[DEBUG] Nutzer abgemeldet - States zurückgesetzt');
         }
       }
     );
 
-    // DEBUG: Regelmäßiger Session-Check
-    const sessionCheckInterval = setInterval(() => {
-      checkSession();
-    }, 10000); // Alle 10 Sekunden prüfen
-
     // Clean up subscription on unmount
     return () => {
       subscription.unsubscribe();
-      clearInterval(sessionCheckInterval);
     };
-  }, [fetchUserProfile, checkSession]);
+  }, [fetchUserProfile]);
 
   return {
     user,
@@ -409,7 +303,5 @@ export const useUser = () => {
     setChatterStats,
     loadChatterStats,
     updateUserChatters,
-    debugSession, // Neue Funktion für Debug-Zwecke
-    sessionTracking, // Neuer State für Debug-Zwecke
   };
 };
