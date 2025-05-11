@@ -5,6 +5,7 @@ SELECT
   p.id,
   p.plan,
   p.subscription_status,
+  p.is_admin,
   COALESCE(p.viewers_active, 0) AS viewers_active,
   COALESCE(p.chatters_active, 0) AS chatters_active,
   -- Viewer Limit

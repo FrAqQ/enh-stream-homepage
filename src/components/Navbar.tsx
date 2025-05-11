@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -35,8 +34,12 @@ const Navbar = () => {
   const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
 
+  // Debug-Ausgabe für Profil
+  console.log("[Navbar] Profil geladen:", profile);
+
   // Admin-Status aus dem Profil abrufen
   const isAdmin = profile?.is_admin || false;
+  console.log("[Navbar] Admin-Status:", isAdmin);
 
   const handleChatRequest = async () => {
     if (!user) {

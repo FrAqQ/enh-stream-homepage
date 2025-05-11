@@ -29,7 +29,7 @@ export const databaseService = {
       // 2. Existenz prüfen
       const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, is_admin')
         .eq('id', userId)
         .maybeSingle();
 
@@ -69,7 +69,7 @@ export const databaseService = {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const result = await supabase
           .from('profiles_with_limit')
-          .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
+          .select('id, is_admin, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
           .eq('id', userId)
           .maybeSingle();
 
