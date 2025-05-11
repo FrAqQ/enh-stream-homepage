@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/LanguageContext";
-import { Link } from "react-router-dom";
 
 // Custom fallback component for API errors
 const ApiFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => {

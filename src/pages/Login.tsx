@@ -26,15 +26,19 @@ const Login = () => {
     let isMounted = true;
     
     const checkSession = async () => {
-      // Prevent checking if already redirecting
-      if (isRedirecting) return;
-      
-      // If we already have a user from useUser hook, redirect
-      if (user && isMounted && !isRedirecting) {
-        console.log("[Login] User already logged in, redirecting...");
-        setIsRedirecting(true);
-        navigate("/dashboard", { replace: true });
-        return;
+      try {
+        // Prevent checking if already redirecting
+        if (isRedirecting) return;
+        
+        // If we already have a user from useUser hook, redirect
+        if (user && isMounted && !isRedirecting) {
+          console.log("[Login] User already logged in, redirecting...");
+          setIsRedirecting(true);
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error("[Login] Error during session check:", error);
       }
     };
     
@@ -151,7 +155,7 @@ const Login = () => {
       <LoadingOverlay 
         isLoading={true} 
         fullScreen 
-        text="Weiterleitung zum Dashboard..." 
+        text={language === 'en' ? "Redirecting to dashboard..." : "Weiterleitung zum Dashboard..."} 
       />
     );
   }
@@ -204,7 +208,7 @@ const Login = () => {
           <Button 
             className="w-full transition-all hover:scale-[1.02]" 
             type="submit" 
-            disabled={isLoading}
+            disabled={isLoading || isRedirecting}
           >
             {isLoading ? t.loginLoading : t.loginButton}
           </Button>
