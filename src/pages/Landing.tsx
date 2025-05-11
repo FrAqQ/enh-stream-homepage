@@ -2,9 +2,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, MessageCircle, TrendingUp, Trophy, Zap, Heart, Target, Users2, MessagesSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useEffect } from "react";
 
 const Landing = () => {
   const { language } = useLanguage();
+  
+  // Debugging-Log hinzufügen
+  useEffect(() => {
+    console.log("Landing component rendered", { language });
+  }, [language]);
 
   const translations = {
     en: {
@@ -163,12 +169,12 @@ const Landing = () => {
         <div className="flex gap-4 justify-center">
           <Link to="/register">
             <Button size="lg" className="gap-2">
-              {t.cta.start} <ArrowRight className="h-4 w-4" />
+              {language === 'en' ? "Get Started" : "Jetzt starten"} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
           <Link to="/pricing">
             <Button size="lg" variant="outline">
-              {t.cta.pricing}
+              {language === 'en' ? "View Pricing" : "Preise ansehen"}
             </Button>
           </Link>
         </div>

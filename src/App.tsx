@@ -27,81 +27,48 @@ import Imprint from "./pages/Legal/Imprint";
 import { CookieManager } from "./components/CookieManager";
 import { useState } from "react";
 
-// Create React Query client with optimized settings
+// Einen optimierten React Query Client erstellen
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000, // 5 Minuten
     },
   },
 });
 
-// Optimized ProtectedRoute component
+// Optimierte ProtectedRoute Komponente mit weniger Komplexität
 const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
-  const { user, isLoading, loadError, retryLoading } = useUser();
-  const [loadAttempts, setLoadAttempts] = useState(0);
+  const { user, isLoading, profile } = useUser();
 
-  // Handle loading state
-  if (isLoading && loadAttempts < 3) {
-    return (
-      <LoadingOverlay 
-        isLoading={true} 
-        fullScreen 
-        text="Ihr Profil wird geladen..." 
-        onRetry={() => {
-          setLoadAttempts(prev => prev + 1);
-          retryLoading();
-        }}
-        loadingTimeout={5000}
-      />
-    );
+  if (isLoading) {
+    return <LoadingOverlay isLoading={true} fullScreen text="Ihr Profil wird geladen..." />;
   }
 
-  // Handle error state
-  if (loadError) {
-    return (
-      <LoadingOverlay 
-        isLoading={false}
-        error={loadError}
-        fullScreen
-        onRetry={() => {
-          setLoadAttempts(0);
-          retryLoading();
-        }}
-      />
-    );
-  }
-
-  // If no user after loading completed, redirect to login
-  if (!user && !isLoading) {
-    console.log("[ProtectedRoute] No user after loading, redirecting to login");
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check admin requirement
-  if (requireAdmin) {
-    const { profile } = useUser();
-    
-    if (!profile?.is_admin) {
-      console.log("[ProtectedRoute] Admin access required but user is not admin");
-      return <Navigate to="/dashboard" replace />;
-    }
+  // Admin-Anforderung prüfen
+  if (requireAdmin && !profile?.is_admin) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
 };
 
 const App = () => {
+  console.log("App rendering started");
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <LanguageProvider>
           <PersonalizationProvider>
             <OnboardingProvider>
-              <ApiErrorBoundary>
-                <BrowserRouter>
+              <BrowserRouter>
+                <ApiErrorBoundary>
                   <div className="min-h-screen bg-background text-foreground flex flex-col">
                     <Navbar />
                     <div className="flex-1">
@@ -138,8 +105,8 @@ const App = () => {
                   <Sonner />
                   <CookieManager />
                   <Onboarding />
-                </BrowserRouter>
-              </ApiErrorBoundary>
+                </ApiErrorBoundary>
+              </BrowserRouter>
             </OnboardingProvider>
           </PersonalizationProvider>
         </LanguageProvider>

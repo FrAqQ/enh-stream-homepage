@@ -6,7 +6,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/LanguageContext";
 
-// Custom fallback component for API errors
+// Benutzerdefinierte Fallback-Komponente für API-Fehler
 const ApiFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => {
   const { language } = useLanguage();
   
@@ -43,7 +43,7 @@ export function ApiErrorBoundary({ children }: ApiErrorBoundaryProps) {
   const { language } = useLanguage();
   const [networkError, setNetworkError] = useState<boolean>(false);
 
-  // Monitor network status
+  // Netzwerkstatus überwachen
   useEffect(() => {
     const handleOnline = () => {
       setNetworkError(false);
