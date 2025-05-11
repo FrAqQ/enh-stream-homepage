@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
@@ -187,12 +186,22 @@ export const useUser = () => {
     }
   }, [user?.id]);
 
-  // Add the updateUserChatters function
+  // Update the updateUserChatters function to respect limits
   const updateUserChatters = useCallback(async (streamUrl: string, chattersToAdd: number) => {
     if (!user?.id || !streamUrl) return false;
     
     try {
-      // First, get current stats
+      // Profil mit Limits abrufen
+      const { data: profile } = await databaseService.getProfile(user.id);
+      
+      if (!profile) {
+        console.error("Profil nicht gefunden beim Aktualisieren der Chatter");
+        return false;
+      }
+      
+      const chatterLimit = profile.chatter_limit || 1;
+      
+      // Aktuelle Chatter-Statistiken abrufen
       const { data: currentStats, error: statsError } = await supabase
         .from('chatter_stats')
         .select('enhanced_chatters, natural_chatters, total_chatters')
@@ -200,45 +209,65 @@ export const useUser = () => {
         .eq('stream_url', streamUrl)
         .single();
       
-      if (statsError) {
-        console.error("Error getting current chatter stats:", statsError);
+      if (statsError && statsError.code !== 'PGRST116') {
+        console.error("Fehler beim Abrufen der aktuellen Chatter-Statistiken:", statsError);
         return false;
       }
       
-      // Calculate new values
-      const newEnhancedChatters = (currentStats?.enhanced_chatters || 0) + chattersToAdd;
-      const newTotalChatters = (currentStats?.natural_chatters || 0) + newEnhancedChatters;
-      
-      // Update the database
-      const { error: updateError } = await supabase
-        .from('chatter_stats')
-        .upsert({
+      // Wenn keine Daten gefunden wurden, initialisieren
+      if (!currentStats || statsError?.code === 'PGRST116') {
+        const { error: insertError } = await supabase.from('chatter_stats').insert([{
           user_id: user.id,
           stream_url: streamUrl,
-          enhanced_chatters: newEnhancedChatters,
-          natural_chatters: currentStats?.natural_chatters || 0,
-          total_chatters: newTotalChatters,
+          enhanced_chatters: 0,
+          natural_chatters: 0,
+          total_chatters: 0,
           updated_at: new Date().toISOString()
-        });
-      
-      if (updateError) {
-        console.error("Error updating chatter stats:", updateError);
+        }]);
+        
+        if (insertError) {
+          console.error("Fehler beim Initialisieren der Chatter-Statistiken:", insertError);
+          return false;
+        }
+        
+        // Dann direkt mit der databaseService.addChatters-Funktion hinzufügen, die Limits respektiert
+        const { success, adjustedCount } = await databaseService.addChatters(user.id, streamUrl, chattersToAdd);
+        
+        if (success) {
+          await loadChatterStats(streamUrl);
+          return true;
+        }
+        
         return false;
       }
       
-      // Update local state
-      setChatterStats({
-        enhanced_chatters: newEnhancedChatters,
-        natural_chatters: currentStats?.natural_chatters || 0,
-        total_chatters: newTotalChatters
-      });
+      // Limit überprüfen
+      const currentEnhancedChatters = currentStats?.enhanced_chatters || 0;
+      const remainingCapacity = Math.max(0, chatterLimit - currentEnhancedChatters);
       
-      return true;
+      if (remainingCapacity === 0) {
+        console.log("Chatter-Limit erreicht, keine weiteren Chatter können hinzugefügt werden");
+        return false;
+      }
+      
+      // Berechne angepasste Anzahl, um Limit nicht zu überschreiten
+      const adjustedChattersToAdd = Math.min(chattersToAdd, remainingCapacity);
+      
+      // databaseService.addChatters verwenden, die jetzt die Limits respektiert
+      const { success } = await databaseService.addChatters(user.id, streamUrl, adjustedChattersToAdd);
+      
+      if (success) {
+        // Aktualisiere die lokalen Chatter-Statistiken
+        await loadChatterStats(streamUrl);
+        return true;
+      }
+      
+      return false;
     } catch (error) {
-      console.error("Error in updateUserChatters:", error);
+      console.error("Fehler in updateUserChatters:", error);
       return false;
     }
-  }, [user?.id]);
+  }, [user?.id, loadChatterStats]);
 
   // Retry loading function
   const retryLoading = useCallback(() => {

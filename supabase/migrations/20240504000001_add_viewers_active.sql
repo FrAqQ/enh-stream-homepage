@@ -75,3 +75,39 @@ BEGIN
   WHERE id = user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create a function to set viewer count to a specific value while respecting plan limits
+CREATE OR REPLACE FUNCTION set_viewer_count(user_id UUID, count INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+  plan_limit INTEGER;
+  new_count INTEGER;
+BEGIN
+  -- Get the plan limit
+  SELECT 
+    CASE 
+      WHEN subscription_status = 'active' THEN
+        CASE 
+          WHEN plan LIKE '%Ultimate%' THEN 1000
+          WHEN plan LIKE '%Expert%' THEN 300
+          WHEN plan LIKE '%Professional%' THEN 200
+          WHEN plan LIKE '%Basic%' THEN 50
+          WHEN plan LIKE '%Starter%' THEN 25
+          ELSE 4
+        END
+      ELSE 4
+    END INTO plan_limit
+  FROM profiles
+  WHERE id = user_id;
+  
+  -- Ensure the count doesn't exceed the plan limit
+  new_count := LEAST(plan_limit, count);
+  
+  -- Update the count
+  UPDATE profiles
+  SET viewers_active = new_count
+  WHERE id = user_id;
+  
+  RETURN new_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

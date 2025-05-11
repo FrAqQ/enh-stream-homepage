@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Users, Clock } from "lucide-react";
 import { Slider } from "@/components/ui/slider"
@@ -48,6 +49,18 @@ const ViewerControls = ({
       : (viewerCount / viewerLimit)
   ) * 100);
 
+  // Berechnen der maximal möglichen hinzuzufügenden Viewer/Chatter
+  const maxAddable = type === "chatter" && chatterStats
+    ? Math.max(0, viewerLimit - chatterStats.enhanced_chatters)
+    : Math.max(0, viewerLimit - viewerCount);
+
+  // Wenn der aktuelle amount größer als maxAddable ist, setzen wir ihn auf maxAddable
+  useEffect(() => {
+    if (amount > maxAddable) {
+      setAmount(maxAddable || 1); // Setze auf maxAddable oder 1 wenn maxAddable 0 ist
+    }
+  }, [maxAddable, viewerCount, chatterStats]);
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
     
@@ -91,6 +104,7 @@ const ViewerControls = ({
       return;
     }
 
+    // Prüfen, ob das Limit bereits erreicht ist
     if (isLimitReached) {
       toast({
         title: "Limit Reached",
@@ -100,11 +114,37 @@ const ViewerControls = ({
       return;
     }
 
-    onAdd(amount);
-    toast({
-      title: "Success",
-      description: `Added ${amount} ${type === "viewer" ? "viewers" : "chatters"}`,
-    });
+    // Prüfen, ob die Hinzufügung das Limit überschreiten würde
+    const currentCount = type === "chatter" && chatterStats ? chatterStats.enhanced_chatters : viewerCount;
+    const potentialTotal = currentCount + amount;
+
+    if (potentialTotal > viewerLimit) {
+      // Hier passen wir die Menge an, um genau auf das Limit zu kommen
+      const adjustedAmount = viewerLimit - currentCount;
+      
+      if (adjustedAmount <= 0) {
+        toast({
+          title: "Limit Reached",
+          description: `You cannot add more ${type === "viewer" ? "viewers" : "chatters"} as you've reached your plan limit`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Füge nur die angepasste Menge hinzu
+      onAdd(adjustedAmount);
+      toast({
+        title: "Limit Adjusted",
+        description: `Added ${adjustedAmount} ${type === "viewer" ? "viewers" : "chatters"} (adjusted to stay within your plan limit)`,
+      });
+    } else {
+      // Füge die volle angeforderte Menge hinzu
+      onAdd(amount);
+      toast({
+        title: "Success",
+        description: `Added ${amount} ${type === "viewer" ? "viewers" : "chatters"}`,
+      });
+    }
   };
 
   const handleResetViewers = () => {
@@ -124,7 +164,12 @@ const ViewerControls = ({
   };
 
   const handlePresetClick = (percentage: number) => {
-    const newAmount = Math.max(1, Math.floor((viewerLimit * percentage) / 100));
+    // Maximale Anzahl basierend auf dem verbleibenden Limit berechnen
+    const remainingLimit = type === "chatter" && chatterStats
+      ? Math.max(0, viewerLimit - chatterStats.enhanced_chatters)
+      : Math.max(0, viewerLimit - viewerCount);
+
+    const newAmount = Math.max(1, Math.floor((remainingLimit * percentage) / 100));
     setAmount(newAmount);
   };
 
@@ -217,7 +262,7 @@ const ViewerControls = ({
               <Slider
                 value={[amount]}
                 min={1}
-                max={viewerLimit}
+                max={maxAddable || 1} // Hier verwenden wir maxAddable oder 1 als Minimum, wenn maxAddable 0 ist
                 step={1}
                 onValueChange={(values) => setAmount(values[0])}
                 disabled={isLimitReached}
@@ -227,7 +272,7 @@ const ViewerControls = ({
                 <div 
                   className="absolute text-xs px-2 py-1 rounded bg-primary text-primary-foreground shadow-sm" 
                   style={{ 
-                    left: `${(amount / viewerLimit) * 100}%`, 
+                    left: `${(amount / (maxAddable || 1)) * 100}%`, 
                     transform: 'translateX(-50%) translateY(-100%)',
                     top: '0'
                   }}
@@ -283,6 +328,7 @@ const ViewerControls = ({
                 size="sm" 
                 onClick={() => handlePresetClick(25)}
                 className="flex-1"
+                disabled={isLimitReached}
               >
                 Low (25%)
               </Button>
@@ -291,6 +337,7 @@ const ViewerControls = ({
                 size="sm" 
                 onClick={() => handlePresetClick(50)}
                 className="flex-1"
+                disabled={isLimitReached}
               >
                 Normal (50%)
               </Button>
@@ -383,7 +430,7 @@ const ViewerControls = ({
           >
             <Button 
               onClick={handleAddViewers}
-              disabled={isLimitReached || !streamUrl}
+              disabled={isLimitReached || !streamUrl || maxAddable === 0}
             >
               Add {amount} {type === "viewer" ? "Viewer" : "Chatter"}
               {amount !== 1 ? "s" : ""}

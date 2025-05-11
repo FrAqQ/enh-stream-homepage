@@ -1,3 +1,4 @@
+
 import { supabase } from './supabaseClient';
 
 /**
@@ -143,35 +144,46 @@ export const databaseService = {
   },
 
   /**
-   * Aktive Zuschauerzahl aktualisieren
+   * Aktive Zuschauerzahl aktualisieren unter Berücksichtigung des Plan-Limits
    */
   async updateViewersActive(userId: string, count: number) {
     try {
+      // Zuerst Profildaten holen, um Limit zu prüfen
+      const { data: profile } = await this.getProfile(userId);
+      
+      if (!profile) {
+        console.error("Profil nicht gefunden beim Aktualisieren der Viewerzahl");
+        return { success: false, error: new Error("Profil nicht gefunden") };
+      }
+      
+      // Sicherstellen, dass die Zahl das Limit nicht überschreitet
+      const viewerLimit = profile.viewer_limit || 4;
+      const adjustedCount = Math.min(count, viewerLimit);
+      
+      // Direkt die neue Funktion verwenden, die das Limit respektiert
+      const { data, error } = await supabase.rpc('set_viewer_count', {
+        user_id: userId,
+        count: adjustedCount
+      });
+      
       // Cache aktualisieren, unabhängig vom Datenbankstatus
       const cacheKey = `profile-${userId}`;
       if (this.cache.has(cacheKey)) {
         const cachedData = this.cache.get(cacheKey);
         if (cachedData) {
           this.cache.set(cacheKey, {
-            data: { ...cachedData.data, viewers_active: count },
+            data: { ...cachedData.data, viewers_active: adjustedCount },
             timestamp: Date.now()
           });
         }
       }
-      
-      // Datenbank aktualisieren
-      // Hier aktualisieren wir immer noch die profiles Tabelle, nicht die View
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ viewers_active: count })
-        .eq('id', userId);
 
       if (error) {
         console.error("Fehler beim Aktualisieren der aktiven Zuschauer:", error);
-        return { success: false, error };
+        return { success: false, error, count: adjustedCount };
       }
       
-      return { success: true, data };
+      return { success: true, data, count: adjustedCount };
     } catch (error) {
       console.error("Fehler in updateViewersActive:", error);
       return { success: false, error };
@@ -259,8 +271,30 @@ export const databaseService = {
    */
   async addChatters(userId: string, streamUrl: string, count: number) {
     try {
+      // Zuerst Profildaten holen, um Limit zu prüfen
+      const { data: profile } = await this.getProfile(userId);
+      
+      if (!profile) {
+        console.error("Profil nicht gefunden beim Hinzufügen von Chattern");
+        return { success: false, error: new Error("Profil nicht gefunden") };
+      }
+      
+      // Aktuelle Chatter-Statistiken abrufen
+      const { data: chatterStats } = await this.getChatterStats(userId, streamUrl);
+      
+      // Sicherstellen, dass die Zahl das Limit nicht überschreitet
+      const chatterLimit = profile.chatter_limit || 1;
+      const currentEnhancedChatters = chatterStats.enhanced_chatters || 0;
+      const remainingCapacity = Math.max(0, chatterLimit - currentEnhancedChatters);
+      const adjustedCount = Math.min(count, remainingCapacity);
+      
+      if (adjustedCount === 0) {
+        console.log("Keine weiteren Chatter können hinzugefügt werden - Limit erreicht");
+        return { success: false, error: new Error("Chatter-Limit erreicht"), adjustedCount: 0 };
+      }
+      
       // Verwende die neue RPC-Funktion zum Hochzählen
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < adjustedCount; i++) {
         const { error } = await supabase.rpc('increment_chatter_count', {
           user_id: userId,
           stream_url: streamUrl
@@ -268,14 +302,14 @@ export const databaseService = {
         
         if (error) {
           console.error("Fehler beim Hinzufügen eines Chatters:", error);
-          return { success: false, error };
+          return { success: false, error, adjustedCount: i };
         }
       }
       
-      return { success: true, error: null };
+      return { success: true, error: null, adjustedCount };
     } catch (error) {
       console.error("Fehler in addChatters:", error);
-      return { success: false, error };
+      return { success: false, error, adjustedCount: 0 };
     }
   },
 

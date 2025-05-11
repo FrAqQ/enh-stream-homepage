@@ -1,3 +1,4 @@
+
 import { Users, MessageSquare, Activity, Clock, Calendar } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useUser } from "@/lib/useUser"
@@ -55,7 +56,8 @@ const Dashboard = () => {
       console.log("[Dashboard] Profil geladen:", {
         plan: profile.plan,
         status: profile.subscription_status,
-        viewers: profile.viewers_active
+        viewers: profile.viewers_active,
+        viewer_limit: profile.viewer_limit
       });
     }
   }, [profile, profileIsLoading]);
@@ -370,9 +372,13 @@ const Dashboard = () => {
   const addViewers = (count: number) => {
     if (!profile) return;
     
+    // Holen des Viewer-Limits aus dem Profil
     const viewerLimit = profile.viewer_limit || 4;
     
-    if (enhancedViewerCount + count > viewerLimit) {
+    // Berechne, wie viele Viewer noch hinzugefügt werden können, ohne das Limit zu überschreiten
+    const remainingCapacity = Math.max(0, viewerLimit - enhancedViewerCount);
+    
+    if (remainingCapacity === 0) {
       toast({
         title: "Plan Limit Reached",
         description: `Your ${userPlan} plan allows a maximum of ${viewerLimit} enhanced viewers`,
@@ -381,7 +387,27 @@ const Dashboard = () => {
       return;
     }
     
-    setEnhancedViewerCount(prev => prev + count);
+    // Wenn der gewünschte Wert das verbleibende Limit überschreitet, füge nur so viele hinzu, wie möglich
+    const adjustedCount = Math.min(count, remainingCapacity);
+    
+    // Wenn die Anzahl angepasst wurde, informiere den Benutzer
+    if (adjustedCount < count) {
+      toast({
+        title: "Limit Adjusted",
+        description: `Added ${adjustedCount} viewers (adjusted from ${count} to stay within your plan limit of ${viewerLimit})`,
+      });
+    }
+    
+    // Aktualisiere die Anzahl der aktiven Viewer
+    setEnhancedViewerCount(prev => prev + adjustedCount);
+    
+    // Update databaseService
+    if (user) {
+      const updatedCount = enhancedViewerCount + adjustedCount;
+      const { updateViewersActive } = require("@/lib/databaseService").databaseService;
+      updateViewersActive(user.id, updatedCount)
+        .catch(err => console.error("Error updating viewers active:", err));
+    }
 
     // Update viewer history with new data point
     const now = new Date();
@@ -392,7 +418,7 @@ const Dashboard = () => {
       if (newHistory.length > 0) {
         // Update the last entry
         const lastEntry = newHistory[newHistory.length - 1];
-        lastEntry.botViewers = enhancedViewerCount + count;
+        lastEntry.botViewers = enhancedViewerCount + adjustedCount;
         lastEntry.total = lastEntry.botViewers + lastEntry.actualViewers;
       }
       return newHistory;
@@ -402,16 +428,13 @@ const Dashboard = () => {
   const addChatters = async (count: number) => {
     if (!profile || !streamUrl || !user) return;
     
-    const chatterLimit = profile.plan ? 
-      (profile.subscription_status === 'active' ?
-        PLAN_CHATTER_LIMITS[profile.plan as keyof typeof PLAN_CHATTER_LIMITS] :
-        PLAN_CHATTER_LIMITS.Free) :
-      PLAN_CHATTER_LIMITS.Free;
+    const chatterLimit = profile.chatter_limit || 1;
     
     // Prüfe, ob das Hinzufügen das Limit überschreiten würde
     const currentChatters = chatterStats?.enhanced_chatters || 0;
+    const remainingCapacity = Math.max(0, chatterLimit - currentChatters);
     
-    if (currentChatters + count > chatterLimit) {
+    if (remainingCapacity === 0) {
       toast({
         title: "Plan Limit Reached",
         description: `Your ${userPlan} plan allows a maximum of ${chatterLimit} enhanced chatters`,
@@ -420,14 +443,27 @@ const Dashboard = () => {
       return;
     }
     
-    // Nutze die neue Funktion im useUser hook
-    const success = await updateUserChatters(streamUrl, count);
+    // Wenn der gewünschte Wert das verbleibende Limit überschreitet, füge nur so viele hinzu, wie möglich
+    const adjustedCount = Math.min(count, remainingCapacity);
+    
+    // Wenn die Anzahl angepasst wurde, informiere den Benutzer
+    if (adjustedCount < count) {
+      toast({
+        title: "Limit Adjusted",
+        description: `Added ${adjustedCount} chatters (adjusted from ${count} to stay within your plan limit of ${chatterLimit})`,
+      });
+    }
+    
+    // Nutze die neue Funktion im useUser hook mit der angepassten Anzahl
+    const success = await updateUserChatters(streamUrl, adjustedCount);
     
     if (success) {
-      toast({
-        title: "Success",
-        description: `Added ${count} chatters to your stream`,
-      });
+      if (adjustedCount === count) {
+        toast({
+          title: "Success",
+          description: `Added ${adjustedCount} chatters to your stream`,
+        });
+      }
     } else {
       toast({
         title: "Error",
