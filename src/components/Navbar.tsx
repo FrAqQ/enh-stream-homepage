@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,45 @@ const Navbar = () => {
   };
 
   const t = translations[language];
+
+  // Function to handle navigation
+  const handleNavigation = (path) => {
+    navigate(path);
+    // Close the sheet if it's open
+    if (isSheetOpen) {
+      setIsSheetOpen(false);
+    }
+  };
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    const { success } = await logout();
+    if (success) {
+      toast.success(language === 'en' ? "Logged out successfully" : "Erfolgreich abgemeldet");
+      navigate('/');
+    } else {
+      toast.error(language === 'en' ? "Failed to log out" : "Abmelden fehlgeschlagen");
+    }
+  };
+
+  // Handle chat request submission
+  const handleChatRequest = () => {
+    if (!message.trim()) {
+      toast.error(language === 'en' ? "Please enter a message" : "Bitte geben Sie eine Nachricht ein");
+      return;
+    }
+
+    // Here you would typically send the message to your support system
+    // For now, we'll just show a success toast and close the dialog
+    toast.success(
+      language === 'en' 
+        ? "Your support request has been sent. We'll get back to you soon." 
+        : "Ihre Support-Anfrage wurde gesendet. Wir melden uns in Kürze bei Ihnen."
+    );
+    
+    setMessage("");
+    setIsChatOpen(false);
+  };
 
   // Navigation links with improved handling
   const NavLinks = () => (
