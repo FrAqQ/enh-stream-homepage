@@ -61,53 +61,65 @@ export const databaseService = {
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
 
-      // 5. Versuche, View-Daten abzurufen (mit max 3 Versuchen)
-      let data = null, error = null;
-      const maxRetries = 3;
-      const retryDelay = 150;
+      // 5. Versuche direkt aus der profiles Tabelle zu laden, falls die View nicht funktioniert
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, plan, subscription_status, viewers_active, chatters_active, is_admin')
+        .eq('id', userId)
+        .maybeSingle();
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const result = await supabase
+      if (profileError) {
+        console.error("Fehler beim Abrufen des Profils:", profileError);
+        return { data: null, error: profileError };
+      }
+
+      if (!profileData) {
+        console.error("Profil konnte nicht gefunden werden nach dem Anlegen");
+        return { data: null, error: new Error("Profil nicht gefunden") };
+      }
+
+      try {
+        // 6. Versuche dennoch die View für die berechneten Limits zu nutzen
+        const { data: viewData } = await supabase
           .from('profiles_with_limit')
-          .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit, is_admin') // is_admin hinzugefügt
+          .select('computed_viewer_limit, chatter_limit')
           .eq('id', userId)
           .maybeSingle();
 
-        data = result.data;
-        error = result.error;
+        // 7. Zusammenführen & Rückgabe
+        const completeProfile = {
+          ...profileData,
+          viewer_limit: viewData?.computed_viewer_limit ?? this.calculateViewerLimit(profileData.plan, profileData.subscription_status),
+          chatter_limit: viewData?.chatter_limit ?? 1,
+          is_admin: profileData.is_admin ?? false // Sicherstellen, dass is_admin einen Standardwert hat
+        };
 
-        if (data || attempt === maxRetries) break;
+        // In Cache speichern
+        this.cache.set(cacheKey, {
+          data: completeProfile,
+          timestamp: Date.now()
+        });
 
-        console.log(`[DB] View retry ${attempt}/${maxRetries}...`);
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        return { data: completeProfile, error: null };
+      } catch (viewError) {
+        // Bei View-Fehler nutzen wir berechnete Werte
+        console.warn("Fehler beim Abrufen der View, verwende berechnete Limits:", viewError);
+        
+        const completeProfile = {
+          ...profileData,
+          viewer_limit: this.calculateViewerLimit(profileData.plan, profileData.subscription_status),
+          chatter_limit: 1,
+          is_admin: profileData.is_admin ?? false
+        };
+
+        // In Cache speichern
+        this.cache.set(cacheKey, {
+          data: completeProfile,
+          timestamp: Date.now()
+        });
+
+        return { data: completeProfile, error: null };
       }
-
-      if (error) {
-        console.error("Fehler beim Abrufen aus View:", error);
-        return { data: null, error };
-      }
-
-      if (!data) {
-        console.warn("Profil konnte auch nach Retries nicht geladen werden.");
-        return { data: null, error: new Error("Profil nicht sichtbar in View") };
-      }
-
-      // 6. Zusammenführen & Rückgabe
-      const completeProfile = {
-        ...data,
-        viewer_limit: data.computed_viewer_limit,
-        viewers_active: data.viewers_active ?? 0,
-        chatters_active: data.chatters_active ?? 0,
-        is_admin: data.is_admin ?? false // Sicherstellen, dass is_admin einen Standardwert hat
-      };
-
-      // 7. In Cache speichern
-      this.cache.set(cacheKey, {
-        data: completeProfile,
-        timestamp: Date.now()
-      });
-
-      return { data: completeProfile, error: null };
     } catch (unknownError) {
       console.error("Unbekannter Fehler in getProfile:", unknownError);
       return { data: null, error: unknownError };
