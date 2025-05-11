@@ -5,11 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/LanguageContext";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // Custom fallback component for API errors
 const ApiFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   
   return (
     <Alert variant="destructive" className="mb-4">
@@ -26,7 +27,7 @@ const ApiFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBo
           <Button onClick={resetErrorBoundary}>
             {language === 'en' ? "Try Again" : "Erneut versuchen"}
           </Button>
-          <Button variant="outline" onClick={() => window.location.href = "/"}>
+          <Button variant="outline" onClick={() => navigate("/")}>
             {language === 'en' ? "Go to Home" : "Zur Startseite"}
           </Button>
         </div>
