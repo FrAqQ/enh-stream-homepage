@@ -7,6 +7,7 @@ SELECT
   p.subscription_status,
   COALESCE(p.viewers_active, 0) AS viewers_active,
   COALESCE(p.chatters_active, 0) AS chatters_active,
+  p.is_admin, -- Explizit das is_admin Feld einschließen
   -- Viewer Limit
   CASE
     WHEN p.subscription_status != 'active' THEN 4

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,15 @@ import { OnboardingTooltip } from "./ui/onboarding-tooltip";
 
 const Navbar = () => {
   const { user, logout, profile } = useUser();
+  // Admin-Status aus dem Profil abrufen und Debug-Log hinzufügen
+  const isAdmin = profile?.is_admin === true;
+  
+  console.log("[Navbar] Profil geladen:", {
+    profile,
+    isAdmin,
+    hasAdminField: profile ? 'is_admin' in profile : false
+  });
+  
   const { language } = useLanguage();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,52 +42,6 @@ const Navbar = () => {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
   const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
-
-  // Admin-Status aus dem Profil abrufen
-  const isAdmin = profile?.is_admin || false;
-
-  const handleChatRequest = async () => {
-    if (!user) {
-      toast(language === 'en' ? 'Please login to chat with us' : 'Bitte melden Sie sich an, um mit uns zu chatten');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('chat_requests')
-        .insert([{ user_id: user.id, message }]);
-
-      if (error) throw error;
-
-      toast.success(language === 'en' ? 'Chat request sent' : 'Chat-Anfrage wurde gesendet');
-      setIsChatOpen(false);
-      setMessage("");
-    } catch (error) {
-      toast.error(language === 'en' ? 'Error sending chat request' : 'Fehler beim Senden der Chat-Anfrage');
-    }
-  };
-
-  // Improved navigation with proper event handling
-  const handleNavigation = (path: string) => {
-    setIsSheetOpen(false); // Close mobile menu
-    navigate(path);
-  };
-
-  // Logout with redirect to home
-  const handleLogout = async () => {
-    try {
-      console.log("[Navbar] Starting logout");
-      await logout();
-      console.log("[Navbar] Logout successful");
-      toast.success(language === 'en' ? 'Successfully signed out' : 'Erfolgreich abgemeldet');
-      
-      // Direct navigation after logout
-      navigate("/", { replace: true });
-    } catch (error) {
-      console.error("[Navbar] Logout error:", error);
-      toast.error(language === 'en' ? 'Error signing out' : 'Fehler beim Abmelden');
-    }
-  };
 
   const translations = {
     en: {

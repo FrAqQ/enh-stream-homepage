@@ -1,4 +1,3 @@
-
 import { supabase } from './supabaseClient';
 
 /**
@@ -49,7 +48,8 @@ export const databaseService = {
             plan: 'Free',
             subscription_status: 'inactive',
             viewers_active: 0,
-            chatters_active: 0
+            chatters_active: 0,
+            is_admin: false  // Explizit is_admin auf false setzen für neue Profile
           });
 
         if (insertError) {
@@ -69,7 +69,7 @@ export const databaseService = {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const result = await supabase
           .from('profiles_with_limit')
-          .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit')
+          .select('id, plan, subscription_status, viewers_active, chatters_active, computed_viewer_limit, chatter_limit, is_admin') // is_admin hinzugefügt
           .eq('id', userId)
           .maybeSingle();
 
@@ -97,7 +97,8 @@ export const databaseService = {
         ...data,
         viewer_limit: data.computed_viewer_limit,
         viewers_active: data.viewers_active ?? 0,
-        chatters_active: data.chatters_active ?? 0
+        chatters_active: data.chatters_active ?? 0,
+        is_admin: data.is_admin ?? false // Sicherstellen, dass is_admin einen Standardwert hat
       };
 
       // 7. In Cache speichern
